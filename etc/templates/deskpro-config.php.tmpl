@@ -1,0 +1,333 @@
+<?php
+
+$CONFIG = [];
+$CONFIG['settings'] = [];
+$CONFIG['app_settings'] = [];
+
+#######################################################################
+# database
+#######################################################################
+
+$pdo_options = [];
+
+{{if
+    and
+    (file.Exists "/srv/deskpro/INSTANCE_DATA/mysql-client.crt")
+    (file.Exists "/srv/deskpro/INSTANCE_DATA/mysql-client.key")
+}}
+    $pdo_options[\PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+    $pdo_options[\PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs';
+    $pdo_options[\PDO::MYSQL_ATTR_SSL_CERT] = "/srv/deskpro/INSTANCE_DATA/mysql-client.crt";
+    $pdo_options[\PDO::MYSQL_ATTR_SSL_KEY] = "/srv/deskpro/INSTANCE_DATA/mysql-client.key";
+{{end}}
+
+$CONFIG['database'] = [
+    'host'        => {{ (getenv "DESKPRO_DB_HOST" "mysql") | squote }},
+    'port'        => {{ (getenv "DESKPRO_DB_PORT" "3306") | squote }},
+    'user'        => {{ (getenv "DESKPRO_DB_USER" "root") | squote }},
+    'password'    => <<<'__VAL__'
+{{ getenv "DESKPRO_DB_PASS" "deskpro" }}
+__VAL__,
+    'dbname'      => {{ (getenv "DESKPRO_DB_NAME" "deskpro") | squote }},
+    'pdo_options' => $pdo_options ?? [],
+];
+
+$CONFIG['database_advanced'] = [];
+
+{{if getenv "DESKPRO_DB_READ_HOST" }}
+$CONFIG['database_advanced']['read'] = [
+  'host'        => {{ getenv "DESKPRO_DB_READ_HOST" | squote }},
+  'port'        => {{ (getenv "DESKPRO_DB_READ_PORT" (getenv "DESKPRO_DB_PORT")) | default "3306" | squote }},
+  'user'        => {{ (getenv "DESKPRO_DB_READ_USER" (getenv "DESKPRO_DB_USER")) | default "root" | squote }},
+  'password'    => <<<'__VAL__'
+{{ (getenv "DESKPRO_DB_READ_PASS" (getenv "DESKPRO_DB_PASS")) | default "deskpro" }}
+__VAL__,
+  'dbname'      => {{ (getenv "DESKPRO_DB_READ_NAME" (getenv "DESKPRO_DB_NAME")) | default "deskpro" | squote }},
+  'pdo_options' => $pdo_options ?? [],
+];
+{{end}}
+{{if getenv "DESKPRO_DB_REPORTS_HOST" }}
+$CONFIG['database_advanced']['read_reports'] = [
+  'host'        => {{ (getenv "DESKPRO_DB_REPORTS_HOST") | squote }},
+  'port'        => {{ (getenv "DESKPRO_DB_REPORTS_PORT" (getenv "DESKPRO_DB_PORT")) | default "3306" | squote }},
+  'user'        => {{ (getenv "DESKPRO_DB_REPORTS_USER" (getenv "DESKPRO_DB_USER")) | default "root" | squote }},
+  'password'    => <<<'__VAL__'
+{{ (getenv "DESKPRO_DB_REPORTS_PASS" (getenv "DESKPRO_DB_PASS")) | default "deskpro" }}
+__VAL__,
+  'dbname'      => {{ (getenv "DESKPRO_DB_REPORTS_NAME" (getenv "DESKPRO_DB_NAME")) | default "deskpro" | squote }},
+  'pdo_options' => $pdo_options ?? [],
+];
+{{end}}
+
+$CONFIG['elastic'] = [
+    {{if getenv "DESKPRO_ES_URL"}}
+    'hosts' => [{{ (getenv "DESKPRO_ES_URL") | squote }}],
+    {{else}}
+    'hosts' => [],
+    {{end}}
+
+    'verify_ssl' => false,
+    'retries' => 3,
+    'index_name' => {{ (getenv "DESKPRO_ES_INDEX_NAME" "deskpro") | squote }},
+    'tenant_id' => {{ (getenv "DESKPRO_ES_TENANT_ID" (getenv "DESKPRO_DB_NAME" "deskpro")) | squote }},
+];
+
+#######################################################################
+# broadcaster
+#######################################################################
+
+$CONFIG['broadcaster'] = [
+    'driver' => 'db',
+    'ttl' => 30,
+];
+
+#######################################################################
+# paths
+#######################################################################
+
+$CONFIG['paths'] = [
+    // path to 'var' where things like logs should go
+    'var_path'   => '/srv/deskpro/INSTANCE_DATA/var',
+
+    // where to put blobs on the fs
+    'blobs_path' => {{ (getenv "DESKPRO_BLOBS_PATH" "/srv/deskpro/INSTANCE_DATA/attachments") | squote }},
+
+    // paths to system binaries
+    'php_path'       => '/usr/bin/php',
+    'mysqldump_path' => '/usr/bin/mysqldump',
+    'mysql_path'     => '/usr/bin/mysql',
+];
+
+#######################################################################
+# env
+#######################################################################
+
+$CONFIG['env'] = [
+    'set_umask'   => 0000,
+    'environment' => 'production',
+    'debug_mode'  => {{ (getenv "DESKPRO_DEBUG_MODE" "false") | conv.ToBool | ternary "true" "false" }},
+    'allow_custom_app_host' => {{ (getenv "DESKPRO_ALLOW_CUSTOM_APP_HOST" "false") | conv.ToBool | ternary "true" "false" }},
+    'trust_proxy_data' => ['0.0.0.0/0'],
+    'app_environment' => 'production',
+];
+
+#######################################################################
+# logs
+#######################################################################
+
+$CONFIG['logs'] = ['channels' => [], 'transports' => []];
+
+$CONFIG['logs']['transports'] = [
+    'tr-app' => [
+        'driver' => 'single',
+        'path' => '/var/log/deskpro/app.log',
+        'level' => 'debug',
+        'bubble' => true,
+    ],
+    'tr-app-v5' => [
+        'driver' => 'single',
+        'path' => '/var/log/deskpro/app-v5.log',
+        'level' => 'debug',
+        'bubble' => true,
+    ],
+    'tr-app-v5-errors' => [
+        'driver' => 'single',
+        'path' => '/var/log/deskpro/app-v5-errors.log',
+        'level' => 'debug',
+        'bubble' => true,
+    ],
+    'tr-migrations' => [
+        'driver' => 'single',
+        'path' => '/var/log/deskpro/migrations.log',
+        'level' => 'debug',
+        'bubble' => true,
+    ],
+    'tr-email-collection' => [
+        'driver' => 'single',
+        'path' => '/var/log/deskpro/email-collection.log',
+        'level' => 'debug',
+        'bubble' => true,
+    ],
+    'tr-email-processing' => [
+        'driver' => 'single',
+        'path' => '/var/log/deskpro/email-processing.log',
+        'level' => 'debug',
+        'bubble' => true,
+    ]
+];
+
+$CONFIG['logs']['channels'] = [
+    'general' => [
+        'transports' => ['tr-app'],
+        'level'  => {{ (getenv "DESKPRO_LOG_LEVEL" "warning") | squote }}
+    ],
+    'graphql' => [
+        'transports' => ['tr-app'],
+        'level'  => {{ (getenv "DESKPRO_LOG_LEVEL" "warning") | squote }}
+    ],
+    'dpv5API' => [
+        'transports' => ['tr-app'],
+        'level'  => {{ (getenv "DESKPRO_LOG_LEVEL" "warning") | squote }}
+    ],
+    'search_indexing' => [
+        'transports' => ['tr-app'],
+        'level'  => {{ (getenv "DESKPRO_LOG_LEVEL" "warning") | squote }}
+    ],
+    'ticket_channels' => [
+        'transports' => ['tr-app'],
+        'level'  => {{ (getenv "DESKPRO_LOG_LEVEL" "warning") | squote }}
+    ],
+    'email_collection' => [
+        'transports' => ['tr-email-collection'],
+        'level'  => {{ (getenv "DESKPRO_LOG_LEVEL_EMAIL_COLLECTION" "warning") | squote }}
+    ],
+    'email_processing' => [
+        'transports' => ['tr-email-processing'],
+        'level'  => {{ (getenv "DESKPRO_LOG_LEVEL_EMAIL_PROCESSING" "warning") | squote }}
+    ],
+    'migrations' => [
+        'transports' => ['tr-migrations'],
+        'level' => 'debug'
+    ],
+];
+
+$CONFIG['logs']['dpv5'] = [
+    'error' => [
+        'transports' => ['tr-app-v5-errors'],
+        'level' => 'debug'
+    ],
+    'general' => [
+        'transports' => ['tr-app-v5'],
+        'level'  => {{ (getenv "DESKPRO_LOG_LEVEL" "warning") | squote }}
+    ],
+    'blobstorage' => [
+        'transports' => ['tr-app-v5'],
+        'level'  => 'warning'
+    ],
+    'usersource' => [
+        'transports' => ['tr-app-v5'],
+        'level'  => 'warning'
+    ],
+    'voice' => [
+        'transports' => ['tr-app-v5'],
+        'level'  => 'warning'
+    ],
+    'task_router' => [
+        'transports' => ['tr-app-v5'],
+        'level'  => 'warning'
+    ],
+];
+
+{{if not (conv.ToBool (getenv "DESKPRO_DISABLE_TELEMETRY" "false")) }}
+#######################################################################
+# Sentry
+#######################################################################
+$CONFIG['sentry'] = [
+    'php' => [
+        'dsn' => {{ (getenv "DESKPRO_SENTRY_BACKEND_DSN" "https://5de185dae16a44d282a14a1de1a8736e@o311856.ingest.sentry.io/5892936") | squote }},
+        'deprecated_dsn' => {{ (getenv "DESKPRO_SENTRY_DEPRECATED_BACKEND_DSN" "https://5de185dae16a44d282a14a1de1a8736e:27b65740fb35475b8d83bf2f680bf51d@o311856.ingest.sentry.io/5892936") | squote }},
+    ],
+
+    'browser' => [
+        'dsn' => {{ (getenv "DESKPRO_SENTRY_FRONTEND_DSN" "https://27e0abb58c2a46cdb30bbaec4da00ce9@o311856.ingest.sentry.io/5891499") | squote }},
+    ],
+];
+{{end}}
+
+
+#######################################################################
+# security
+#######################################################################
+
+$CONFIG['app_key'] = <<<'__VAL__'
+{{ getenv "DESKPRO_APP_KEY" }}
+__VAL__;
+
+#######################################################################
+# file storage
+#######################################################################
+
+{{ $storageType := getenv "DESKPRO_STORAGE_TYPE" }}
+{{ $stroageOpts := data.JSON (getenv "DESKPRO_STORAGE_SETTINGS") }}
+
+{{if and (eq $storageType "s3") ($stroageOpts)}}
+    $CONFIG['settings']['core.filestorage_method'] = 's3';
+    $CONFIG['settings']['core.filestorage_s3_bucket'] = {{ $stroageOpts.bucket_name | squote }};
+    $CONFIG['settings']['core.filestorage_s3_region'] = {{ $stroageOpts.bucket_region | squote }};
+    $CONFIG['settings']['core.filestorage_s3_credentials_source'] = 'key';
+    $CONFIG['settings']['core.filestorage_s3_key'] = {{ $stroageOpts.access_key | squote }};
+    $CONFIG['settings']['core.filestorage_s3_secret'] = {{ $stroageOpts.secret_key | squote }};
+{{else if eq $storageType "fs"}}
+    $CONFIG['settings']['core.filestorage_method'] = 'fs';
+{{else}}
+$CONFIG['settings']['core.filestorage_method'] = 'db';
+{{end}}
+
+
+{{if getenv "DESKPRO_TWITTER_APP_ID"}}
+//######################################################################
+// Twitter
+//######################################################################
+$CONFIG['twitter'] = [
+    'app_id' => {{ (getenv "DESKPRO_TWITTER_APP_ID") | squote }},
+    'api_key' => {{ (getenv "DESKPRO_TWITTER_APP_KEY") | squote }},
+    'api_key_secret' => {{ (getenv "DESKPRO_TWITTER_APP_KEY_SECRET") | squote }}
+];
+{{end}}
+
+#######################################################################
+# api urls
+#######################################################################
+
+$CONFIG['api_urls']['base_url_private'] = {{ (getenv "DESKPRO_API_BASE_URL_PRIVATE" "http://127.0.0.1:80") | squote }};
+
+#######################################################################
+# testing components
+#######################################################################
+
+{{if conv.ToBool (getenv "DESKPRO_ENABLE_TEST_SUPPORT" "false") }}
+  $CONFIG['app_settings']['enable_test_support'] = true;
+  $CONFIG['app_settings']['test_reset_db_script'] = {{ (getenv "DESKPRO_TEST_RESET_DB_SCRIPT") | squote }} ?: null;
+{{end}}
+
+{{if or ((getenv "DESKPRO_ENABLE_TEST_SUPPORT") | conv.ToBool) ((getenv "DESKPRO_ENABLE_TEST_HEADER") | conv.ToBool)}}
+$CONFIG['settings']['enable_test_user_context_header'] = true;
+{{end}}
+
+#######################################################################
+# settings
+#######################################################################
+
+{{if getenv "DESKPRO_LICENSE_KEY"}}
+$CONFIG['license_code'] = <<<'__VAL__'
+{{ getenv "DESKPRO_LICENSE_KEY" }}
+__VAL__;
+
+{{else if conv.ToBool (getenv "DESKPRO_LICENSE_KEY_INSTALL") }}
+$CONFIG['license_code_install'] = <<<'__VAL__'
+{{ getenv "DESKPRO_LICENSE_KEY_INSTALL" }}
+__VAL__;
+{{end}}
+
+{{if getenv "TASKS_DISABLE_EMAIL_IN_JOB"}}
+$CONFIG['app_settings']['disable_email_in_job'] = true;
+{{end}}
+
+#######################################################################
+# extensions
+#######################################################################
+
+{{/*
+  Dynamically load extra config from a file from DESKPRO_CONFIG_EXTENSIONS env var
+  - DESKPRO_CONFIG_EXTENSIONS may contain multiple values separated by a colon.
+  - May use the special string %ROOT% to represent the root of the Deskpro files
+  Example: DESKPRO_CONFIG_EXTENSIONS="%ROOT%/some-thing/load.php:/other-example/thing.php"
+*/}}
+{{if getenv "DESKPRO_CONFIG_EXTENSIONS"}}
+{{range ((getenv "DESKPRO_CONFIG_EXTENSIONS") | strings.Split ":") }}
+  {{ $file := . | (strings.ReplaceAll "%ROOT%" "/srv/deskpro") | trimSpace }}
+  {{if and $file (file.Exists $file)}}
+  if (is_file({{ . | squote }})) require_once {{ . | squote }};
+  {{end}}
+{{end}}
+{{end}}

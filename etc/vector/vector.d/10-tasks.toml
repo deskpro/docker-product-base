@@ -1,0 +1,34 @@
+[sources.deskpro_tasks_raw]
+type = "file"
+include = [
+  "/var/log/supervisor/tasks.log",
+  "/var/log/supervisor/tasks.log.1",
+  "/var/log/supervisor/email_collect.log",
+  "/var/log/supervisor/email_collect.log.1",
+  "/var/log/supervisor/email_process.log",
+  "/var/log/supervisor/email_process.log.1",
+]
+ignore_not_found = true
+max_line_bytes = 2000000
+
+[transforms.deskpro_tasks]
+type = "remap"
+inputs = ["deskpro_tasks_raw"]
+source = '''
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+parsedName = parse_regex(.file, r'/(?P<filename>[\w\.\-]+)\.log(\.\d+)?$') ?? {}
+
+appFromName = string(parsedName.filename) ?? null
+
+if !is_nullish(appFromName) {
+  .app = "deskpro-tasks-" + appFromName
+} else {
+  .app = "deskpro-tasks"
+}
+
+.parsed = parse_json(.message) ?? {}
+.chan = string(.parsed.channel) ?? "process"
+'''

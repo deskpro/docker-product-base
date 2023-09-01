@@ -1,0 +1,41 @@
+#!/bin/bash
+
+usage() {
+  echo "Usage: $0 [options]"
+  echo
+  echo "Show PHP-FPM configuration"
+  echo
+  echo "Options:"
+  echo "  --help      Show this help message"
+}
+
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -h|--help)
+      usage
+      exit
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+set -- "${POSITIONAL_ARGS[@]}"
+
+# log level has to be notice for this to produce any output
+# so we will create a temp file to pass to it directly
+tmpfile=$(mktemp -p /etc/php81/php-fpm.d zzzz-XXXXXX.conf)
+trap 'rm -f -- "$tmpfile"' EXIT
+{
+  echo '[global]'
+  echo 'log_level = notice'
+} > "$tmpfile"
+
+php-fpm -tt

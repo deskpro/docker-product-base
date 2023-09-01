@@ -1,0 +1,10 @@
+<?php
+
+// OPC is behind a reverse proxy on the host machine
+// so we always trust the headers
+$CONFIG['env']['trust_proxy_data'] = [
+    '0.0.0.0/0'
+];
+
+// Internal API requests should use the web task
+$CONFIG['api_urls']['base_url_private'] = {{ (getenv "DESKPRO_API_BASE_URL_PRIVATE" "http://127.0.0.1:80") | squote }};

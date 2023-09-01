@@ -1,0 +1,120 @@
+[transforms.all]
+type = "remap"
+inputs = [
+  "process_supervisord",
+  "process_php_fpm",
+  "process_nginx",
+
+  "nginx_access",
+  "nginx_error",
+  "php_error",
+  "php_fpm_error",
+
+  "deskpro_logs",
+  "deskpro_tasks",
+]
+source = '''
+
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+if is_nullish(.lvl) {
+  .lvl = string(.parsed.lvl) ?? string(.parsed.level) ?? string(.parsed.level_name) ?? string(.parsed.severity) ?? "INFO"
+}
+
+.ts = to_timestamp(.parsed.ts) ?? to_timestamp(.parsed.timestamp) ?? to_timestamp(.ts) ?? now()
+.lvl = upcase(.lvl) ?? .lvl
+
+.app = string(.app) ?? null
+if is_nullish(.app) {
+  .app = string(.source) ?? "unknown"
+}
+
+.chan = string(.chan) ?? null
+if is_nullish(.chan) {
+  .chan = "general"
+}
+
+.container_name = "{{ getenv "CONTAINER_NAME" }}"
+
+data = {
+  "ts": format_timestamp(.ts, format: "%Y-%m-%dT%H:%M:%SZ") ?? .ts,
+  "lvl": .lvl,
+  "container_name": .container_name,
+  "app": .app,
+  "chan": .chan,
+  "msg": string(.parsed.msg) ?? string(.parsed.message) ?? string(.message) ?? ""
+}
+
+if is_string(data.message) && contains(string!(data.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+extra = {}
+
+if is_object(.parsed) {
+  del(.parsed.app)
+  del(.parsed.chan)
+  del(.parsed.msg)
+  del(.parsed.message)
+  del(.parsed.timestamp)
+  del(.parsed.ts)
+  del(.parsed.lvl)
+  del(.parsed.level)
+  del(.parsed.level_name)
+  del(.parsed.severity)
+
+  for_each(object!(.parsed)) -> |key, value| {
+    extra = set(extra, [key], value) ?? extra
+  }
+
+  del(.parsed)
+}
+
+.logprops = compact(merge(data, extra))
+'''
+
+{{if eq "logfmt" (getenv "LOGS_OUTPUT_FORMAT") }}
+[transforms.all_formatted]
+type = "remap"
+inputs = ["all"]
+source = '''
+logfmt_order=["ts", "app", "chan", "lvl", "msg", "container_name"]
+if is_array(.logfmt_order) {
+  logfmt_order = unique(append(logfmt_order, .logfmt_order) ?? logfmt_order)
+}
+.orig_message = .message
+.message = encode_logfmt(.logprops, logfmt_order) ?? .orig_message
+'''
+{{else}}
+[transforms.all_formatted]
+type = "remap"
+inputs = ["all"]
+source = '''
+
+.orig_message = .message
+.message = encode_json(.logprops)
+'''
+{{end}}
+
+{{if getenv "LOGS_EXPORT_DIR"}}
+  {{if eq (getenv "LOGS_EXPORT_DIR") "/dev/null" }}
+    # LOGS_EXPORT_DIR=/dev/null
+    # So we wont enable any sinks.out_file
+  {{else}}
+    [sinks.out_file]
+    type = "file"
+    inputs = ["all_formatted"]
+    path = "{{getenv "LOGS_EXPORT_DIR"}}/{{ getenv "LOGS_EXPORT_FILENAME" "{{.app}}/{{.chan}}.log" }}"
+    encoding.codec = "raw_message"
+    encoding.timestamp_format = "rfc3339"
+  {{end}}
+{{else}}
+[sinks.out_docker]
+type = "console"
+inputs = ["all_formatted"]
+encoding.codec = "raw_message"
+encoding.timestamp_format = "rfc3339"
+target = "stdout"
+{{end}}

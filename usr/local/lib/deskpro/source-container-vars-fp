@@ -1,0 +1,19 @@
+#!/bin/bash
+(return 0 2>/dev/null) && true || {
+  echo "This file can be sourced to load container vars into the current environment"
+  echo "as *_FILE variables that contain the path to the file containing the value."
+  echo "(This is different from source-container-vars which loads the values directly.)"
+  echo
+  echo "For example, from Bash you would write:"
+  echo
+  echo "source /usr/local/lib/deskpro/source-container-vars-fp"
+  echo
+  exit 1
+}
+
+while read -r varname; do
+  if [ -f "/run/container-config/$varname" ]; then
+    declare -gx "${varname}_FILE"="/run/container-config/$varname"
+  fi
+done < /usr/local/share/deskpro/container-var-list
+unset varname

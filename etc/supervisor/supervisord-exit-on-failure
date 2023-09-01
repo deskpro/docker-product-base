@@ -1,0 +1,40 @@
+#!/bin/bash
+
+printf "READY\n";
+
+while read -r header; do
+  echo "" >&2
+  echo "" >&2
+  echo "------------------------------" >&2
+  echo "" >&2
+  echo "" >&2
+  
+  echo "$header" >&2
+  bytes=$(echo "$header" | sed 's/.*\://')
+  read -r -n "$bytes" event
+  echo "$event" >&2
+
+  # if vector itself failed then we should output those logs here
+  # in case vector failure caused the image to fail to start,
+  # this is the only time you'd see the logs unless you mounted the log dir
+  if [[ "$event" == *"processname:vector"* ]]; then
+    echo "" >&2
+    echo "Last 200 lines of /var/log/vector.log" >&2
+    echo "" >&2
+    tail -n200 /var/log/vector.log >&2
+    echo "" >&2
+    echo "" >&2
+
+    # but dont consider this a failure
+    printf "RESULT 2\nOK"
+    printf "READY\n"
+    continue
+  fi
+
+  echo "Last 200 lines of /var/log/supervisor/supervisord.log" >&2
+  echo "" >&2
+  tail -n200 /var/log/supervisor/supervisord.log >&2
+  echo "" >&2
+
+  kill -3 "$(cat "/run/supervisord.pid")"
+done < /dev/stdin

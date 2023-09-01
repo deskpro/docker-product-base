@@ -1,0 +1,107 @@
+#!/bin/bash
+
+finish_next_iter=0
+is_sleeping=0
+run_once=0
+
+cron_bin="/srv/deskpro/bin/cron"
+pause_sentinel_file="/deskpro/config/PAUSE_CRON"
+status_file="/run/deskpro-cron-status.json"
+
+usage() {
+  echo "Usage: $0 [options]"
+  echo "  --once        Only run once (instead of forever)"
+}
+
+_term() {
+  finish_next_iter=1
+  if [[ "$is_sleeping" == "0" ]]; then
+    echo
+    echo "!!! Will exit once current iteration has finished"
+    echo
+  fi
+}
+
+updateStatusFile() {
+  tmp=$(mktemp)
+  val=$(date -u "+%Y-%m-%dT%H:%M:%SZ")
+  jq --arg a "$val" ".$1 = \$a" "$status_file" > "$tmp" \
+    && cat "$tmp" > "$status_file" \
+    && rm "$tmp"
+
+  # copy to custom status file (opc uses this)
+  if [ -n "$CRON_STATUS_FILEPATH" ]; then
+    cat "$status_file" > "$CRON_STATUS_FILEPATH"
+  fi
+}
+
+# Parse flags
+PARSED_ARGUMENTS=$(getopt -n "$0" -o '' -l once,help -- "$@")
+VALID_ARGUMENTS=$?
+if [ "$VALID_ARGUMENTS" != "0" ]; then
+  usage
+  exit 1
+fi
+
+eval set -- "$PARSED_ARGUMENTS"
+
+while true; do
+  case "$1" in
+    --once)
+      run_once=1
+      shift
+      ;;
+
+    --help)
+      usage
+      exit 0
+      ;;
+
+    --)
+      shift
+      break
+      ;;
+
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+trap _term SIGINT SIGTERM SIGQUIT
+
+while [[ "$finish_next_iter" != "1" ]]; do
+  is_sleeping=0
+  if [[ -f "$pause_sentinel_file" ]]; then
+    echo "PAUSE_CRON file exists - will not run"
+  elif [[ ! -x "$cron_bin" ]]; then
+    echo "$cron_bin is not a valid executable"
+    updateStatusFile "lastError"
+  else
+    updateStatusFile "lastStart"
+
+    $cron_bin --verbose &
+    wait $!
+    RET=$?
+
+    updateStatusFile "lastFinish"
+    if [ $RET -eq 0 ]; then
+      updateStatusFile "lastSuccess"
+    else
+      updateStatusFile "lastError"
+    fi
+  fi
+
+  if [ "$run_once" -eq 1 ]; then
+    # Run only once and exit
+    break
+  fi
+
+  is_sleeping=1
+
+  sleep 20 &
+  wait $!
+done
+
+echo "Done"

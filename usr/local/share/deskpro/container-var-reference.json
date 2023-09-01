@@ -1,0 +1,323 @@
+[
+  {
+    "name": "CUSTOM_MOUNT_BASEDIR",
+    "type": "boolean",
+    "description": "Base path for all the various custom mounts. Default is /deskpro.",
+    "isPrivate": true
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_ALLOW_CUSTOM_APP_HOST"
+  },
+  {
+    "description": "Base URL to use when calling Deskpro APIs from itself (i.e. internal API calls between services). Defaults to http://127.0.0.1:80.",
+    "name": "DESKPRO_API_BASE_URL_PRIVATE"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_APP_KEY"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_BLOBS_PATH"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_CONFIG_EXTENSIONS"
+  },
+  {
+    "name": "DESKPRO_CONFIG_FILE",
+    "type": "boolean",
+    "description": "Path to the default/main config file. Not usually changed because users can use the .d dir to override.",
+    "isPrivate": true
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_DB_HOST"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_DB_NAME"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_DB_PASS"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_DB_PORT"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_DB_READ_HOST"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_DB_READ_NAME"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_DB_READ_PASS"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_DB_READ_PORT"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_DB_READ_USER"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_DB_USER"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_DEBUG_MODE"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_DISABLE_TELEMETRY"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_ENABLE_TEST_SUPPORT"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_ES_INDEX_NAME"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_ES_TENANT_ID"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_ES_URL"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_LICENSE_KEY"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_LICENSE_KEY_INSTALL"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_LOG_LEVEL"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_LOG_LEVEL_EMAIL_COLLECTION"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_LOG_LEVEL_EMAIL_PROCESSING"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_SENTRY_BACKEND_DSN"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_SENTRY_DEPRECATED_BACKEND_DSN"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_SENTRY_FRONTEND_DSN"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_STORAGE_SETTINGS"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_STORAGE_TYPE"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_TEST_RESET_DB_SCRIPT"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_TWITTER_APP_ID"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_TWITTER_APP_KEY"
+  },
+  {
+    "description": "",
+    "name": "DESKPRO_TWITTER_APP_KEY_SECRET"
+  },
+  {
+    "name": "HTTP_INTERNAL_MODE",
+    "type": "boolean",
+    "description": "Set in 11-run-mode.sh and used in nginx config file. Determines if nginx should only listen on localhost for internal api calls.",
+    "isPrivate": true
+  },
+  {
+    "name": "HTTP_SERVE_HOST",
+    "type": "string",
+    "description": "Set the HTTP host used for web requests."
+  },
+  {
+    "name": "HTTP_USER_REAL_HOST_HEADER",
+    "type": "string",
+    "description": "The header to use for the users real host name.",
+    "example": "X-Forwarded-Host"
+  },
+  {
+    "name": "HTTP_USER_REAL_IP_HEADER",
+    "type": "string",
+    "description": "The header to use for the users real IP address.",
+    "example": "X-Forwarded-For"
+  },
+  {
+    "name": "HTTP_USER_REAL_PORT_HEADER",
+    "type": "string",
+    "description": "The header to use for the users real port.",
+    "example": "X-Forwarded-Port"
+  },
+  {
+    "name": "HTTP_USER_REAL_PROTO_HEADER",
+    "type": "string",
+    "description": "The header to use for the users real protocol.",
+    "example": "X-Forwarded-Proto"
+  },
+  {
+    "name": "HTTP_USER_SET_HTTPS_PORT",
+    "type": "string",
+    "description": "For web requests coming through a secure https connection, set the end-user port being used.",
+    "example": "12345"
+  },
+  {
+    "name": "HTTP_USER_SET_HTTPS_PROTO",
+    "type": "string",
+    "description": "For web requests coming through a secure https connection, set the end-user protocol being used.",
+    "example": "https"
+  },
+  {
+    "name": "HTTP_USER_SET_HTTP_PORT",
+    "type": "string",
+    "description": "For web requests coming through a http connection, set the end-user port being used.",
+    "example": "12345"
+  },
+  {
+    "name": "HTTP_USER_SET_HTTP_PROTO",
+    "type": "string",
+    "description": "For web requests coming through a http connection, set the end-user protocol being used.",
+    "example": "http"
+  },
+  {
+    "name": "HTTP_USE_TESTING_CERTIFICATE",
+    "type": "boolean",
+    "description": "Set true to use the built-in (non-secure) testing certificate for HTTPS/443."
+  },
+  {
+    "description": "",
+    "name": "NGINX_ERROR_LOG_LEVEL"
+  },
+  {
+    "description": "",
+    "name": "NGINX_REAL_IP_HEADER"
+  },
+  {
+    "description": "",
+    "name": "NGINX_WORKER_CONNECTIONS"
+  },
+  {
+    "description": "",
+    "name": "NGINX_WORKER_PROCESSES"
+  },
+  {
+    "name": "NO_SHUTDOWN_ON_ERROR",
+    "type": "boolean",
+    "description": "By default, the container will shutdown if any of the services fail. Set this to true to stop this behaviour. This can help debugging/troubleshooting."
+  },
+  {
+    "description": "",
+    "name": "PHP_FPM_DP_BROADCASTER_MAX_CHILDREN"
+  },
+  {
+    "description": "",
+    "name": "PHP_FPM_DP_BROADCASTER_OVERRIDES"
+  },
+  {
+    "description": "",
+    "name": "PHP_FPM_DP_DEFAULT_MAX_CHILDREN"
+  },
+  {
+    "description": "",
+    "name": "PHP_FPM_DP_DEFAULT_OVERRIDES"
+  },
+  {
+    "description": "",
+    "name": "PHP_FPM_DP_GQL_MAX_CHILDREN"
+  },
+  {
+    "description": "",
+    "name": "PHP_FPM_DP_GQL_OVERRIDES"
+  },
+  {
+    "description": "",
+    "name": "PHP_FPM_DP_INTERNAL_MAX_CHILDREN"
+  },
+  {
+    "description": "",
+    "name": "PHP_FPM_DP_INTERNAL_OVERRIDES"
+  },
+  {
+    "description": "",
+    "name": "PHP_FPM_LOG_LEVEL"
+  },
+  {
+    "description": "",
+    "name": "PHP_FPM_OVERRIDES"
+  },
+  {
+    "description": "",
+    "name": "PHP_FPM_POOL_OVERRIDES"
+  },
+  {
+    "description": "",
+    "name": "PHP_INI_OVERRIDES"
+  },
+  {
+    "description": "",
+    "name": "PHP_MEMORY_LIMIT"
+  },
+  {
+    "description": "",
+    "name": "PHP_OPCACHE_ENABLED"
+  },
+  {
+    "description": "",
+    "name": "PHP_OPCACHE_MEMORY_CONSUMPTION"
+  },
+  {
+    "description": "",
+    "name": "PHP_OPCACHE_VALIDATE_TIMESTAMPS"
+  },
+  {
+    "description": "",
+    "name": "SVC_EMAIL_COLLECT_ARGS_MAX_TIME"
+  },
+  {
+    "description": "",
+    "name": "SVC_EMAIL_COLLECT_NUMPROCS"
+  },
+  {
+    "description": "",
+    "name": "SVC_EMAIL_PROCESS_ARGS_RESERVE_TIME"
+  },
+  {
+    "description": "",
+    "name": "SVC_EMAIL_PROCESS_NUMPROCS"
+  },
+  {
+    "description": "Dont perform email collection/processing as part of cron (i.e. indicates that email services are being used instead)",
+    "name": "TASKS_DISABLE_EMAIL_IN_JOB"
+  }
+]

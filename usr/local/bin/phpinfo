@@ -1,0 +1,45 @@
+#!/bin/bash
+
+usage() {
+  echo "Usage: $0 [options]"
+  echo
+  echo "Show PHP Info"
+  echo
+  echo "Options:"
+  echo "  --fpm       Get PHP info from php-fpm (will be HTML output)"
+  echo "  --help      Show this help message"
+}
+
+use_php_fpm=0
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -h|--help)
+      usage
+      exit
+      ;;
+    --fpm)
+      use_php_fpm=1
+      shift
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+set -- "${POSITIONAL_ARGS[@]}"
+
+if [[ $use_php_fpm -eq 1 ]]; then
+  SCRIPT_NAME=/usr/local/share/deskpro/phpinfo.php \
+    SCRIPT_FILENAME=/usr/local/share/deskpro/phpinfo.php \
+    REQUEST_METHOD=GET \
+    cgi-fcgi -bind -connect /run/php_fpm_dp_default.sock
+else
+  php /usr/local/share/deskpro/phpinfo.php
+fi

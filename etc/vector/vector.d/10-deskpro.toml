@@ -1,0 +1,58 @@
+[sources.deskpro_logs_raw]
+type = "file"
+include = ["/var/log/deskpro/*.log", "/var/log/deskpro/*.log.1"]
+max_line_bytes = 2000000
+
+[transforms.deskpro_logs]
+type = "remap"
+inputs = ["deskpro_logs_raw"]
+source = '''
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+.app = "deskpro"
+.chan = "general"
+.lvl = "ERROR"
+
+json = parse_json(.message) ?? null
+if !is_nullish(object(json) ?? null) {
+  appName = string(json.extra.app.name) ?? ""
+  if !is_nullish(appName) {
+    .app = "deskpro-" + appName
+  }
+
+  .chan = string(json.channel) ?? "ERROR"
+  .lvl = string(json.level_name) ?? string(json.level) ?? "ERROR"
+
+  if !is_nullish(string(json.datetime.date) ?? null) {
+    .ts = to_timestamp(string(json.datetime.date) ?? null) ?? null
+  }
+
+  request_id = string(json.context.request_id) ?? string(json.extra.request_id) ?? null
+  transaction_id = string(json.context.transaction_id) ?? string(json.extra.transaction_id) ?? null
+  trace = string(json.context.trace) ?? null
+
+  # remove reduntant fields
+  del(json.channel)
+  del(json.level)
+  del(json.level_name)
+  del(json.datetime)
+  del(json.extra.request_id)
+  del(json.extra.log_id)
+  del(json.extra.app.name)
+  del(json.context.request_id)
+  del(json.extra.transaction_id)
+  del(json.context.transaction_id)
+  del(json.context.trace)
+  del(json.context.errno)
+  del(json.context.errstr)
+  del(json.context.errname)
+  del(json.context.type)
+
+  .parsed = json
+  .parsed.request_id = request_id
+  .parsed.transaction_id = transaction_id
+  .parsed.trace = trace
+}
+'''

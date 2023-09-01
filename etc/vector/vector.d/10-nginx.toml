@@ -1,0 +1,46 @@
+[sources.nginx_access_logfmt]
+type = "file"
+include = ["/var/log/nginx/access.log", "/var/log/log/nginx/access.log.1"]
+ignore_not_found = true
+
+[transforms.nginx_access]
+type = "remap"
+inputs = ["nginx_access_logfmt"]
+source = '''
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+.app = "nginx"
+.chan = "access"
+.lvl = "INFO"
+
+.parsed = parse_logfmt!(.message)
+.parsed.msg = ""
+.logfmt_order = ["method", "request_uri", "status", "host", "scheme"]
+
+status_int = int(.parsed.status) ?? 200
+if status_int >= 500 {
+  .lvl = "ERROR"
+} else if status_int >= 400 {
+  .lvl = "NOTICE"
+}
+'''
+
+[sources.nginx_error_raw]
+type = "file"
+include = ["/var/log/nginx/error.log", "/var/log/nginx/error.log.1"]
+ignore_not_found = true
+
+[transforms.nginx_error]
+type = "remap"
+inputs = ["nginx_error_raw"]
+source = '''
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+.app = "nginx"
+.chan = "error"
+.parsed = parse_nginx_log(.message, "error") ?? {}
+'''

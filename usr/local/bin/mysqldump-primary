@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ ! -f "/$HOME/.my-auto.cnf" ]; then
+  eval-tpl --file "/etc/templates/user.my.cnf.tmpl" --out "/$HOME/.my-auto.cnf"
+fi
+
+exec mysqldump --defaults-extra-file="/$HOME/.my-auto.cnf" --defaults-group-suffix="_mysqldump" "$(container-var DESKPRO_DB_NAME)" "$@"

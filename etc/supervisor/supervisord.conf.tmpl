@@ -1,0 +1,45 @@
+[unix_http_server]
+file=/run/supervisord.sock
+chmod=0700
+
+[supervisord]
+user=root
+loglevel=info
+logfile=/var/log/supervisor/supervisord.log
+logfile_backups=0
+stdout_logfile_maxbytes=10000000
+childlogdir=/var/log/supervisor
+pidfile=/run/supervisord.pid
+
+[rpcinterface:supervisor]
+supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+
+[supervisorctl]
+serverurl=unix:///run/supervisord.sock
+
+[program:ready_state]
+command=/etc/supervisor/container-ready-state
+user=root
+autostart=true
+autorestart=false
+exitcodes=0
+stopwaitsecs=0
+startsecs=0
+logfile=/var/log/supervisor/ready_state.log
+
+[eventlistener:exit_on_failure]
+command=/etc/supervisor/supervisord-exit-on-failure
+events=PROCESS_STATE_FATAL
+{{if conv.ToBool (getenv "NO_SHUTDOWN_ON_ERROR" "false")}}
+autostart=false
+{{else}}
+autostart={{ getenv "IS_EXEC_MODE" "false" | ternary "false" "true" }}
+{{end}}
+stderr_logfile=/proc/1/fd/1
+stderr_logfile_maxbytes=0
+priority=-1
+stopsignal=KILL
+stopwaitsecs=0
+
+[include]
+files = /etc/supervisor/conf.d/*.conf

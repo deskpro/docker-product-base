@@ -1,0 +1,26 @@
+#!/bin/bash
+
+usage() {
+  echo "Usage: $0 [OPTIONS] VAR_NAME"
+  echo "Loads container variables into the current environment, and then printenv to stdout."
+
+  echo "Options:"
+  echo "  -h, --help      Show this help"
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      # ignore
+      shift
+      ;;
+  esac
+done
+
+source /usr/local/lib/deskpro/source-container-vars
+
+printenv

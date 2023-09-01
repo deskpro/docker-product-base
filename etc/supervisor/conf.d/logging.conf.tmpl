@@ -1,0 +1,31 @@
+[program:vector]
+command=/usr/local/bin/vector --quiet --config /etc/vector/vector.toml --config /etc/vector/vector.d/*.toml --color never --log-format json
+user=vector
+numprocs=1
+autostart=true
+autorestart=true
+# output would be from console sink, which we want to pass
+# on to stdout on the container (which would get consumed by docker logs)
+stdout_logfile=/dev/fd/1
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/fd/2
+stderr_logfile_maxbytes=0
+redirect_stderr=false
+stopsignal=TERM
+stopwaitsecs=8
+# makes vector start first and shut down last so it
+# will read logs from other processes during shutdown
+priority=0
+environment=VECTOR_MARKER="{{ getenv "VECTOR_MARKER" "" }}"
+
+[eventlistener:rotate_logs]
+command=/etc/supervisor/rotate-logs
+events=TICK_60
+autorestart=true
+buffer_size=1
+stderr_logfile=/var/log/supervisor/rotate_logs.log
+stdout_logfile_maxbytes=10000000
+stdout_logfile_backups=1
+stopsignal=KILL
+stopwaitsecs=0
+environment=VECTOR_MARKER="{{ getenv "VECTOR_MARKER" "" }}"

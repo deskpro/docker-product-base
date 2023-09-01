@@ -1,0 +1,42 @@
+{{/*
+Email processing services here regularly recycle themselves cleanly every --max-time seconds.
+They will exit cleanly (0), and then supervisor will restart them due to autorestart=true.
+
+The timeout wrapper is used to ensure that these processes can never become "stuck". We want
+them to exit cleanly, but if they don't, we can rely on timeout as a fallback to
+try sending a TERM signal, and eventually a KILL signal.
+*/}}
+
+[program:email_collect]
+process_name=%(program_name)s_%(process_num)02d
+command=timeout --kill-after={{ add (getenv "SVC_EMAIL_COLLECT_ARGS_MAX_TIME" "600") 90 }} --signal=TERM {{ add (getenv "SVC_EMAIL_COLLECT_ARGS_MAX_TIME" "600") 10 }} /usr/bin/php /srv/deskpro/services/email-processing/artisan email:collect-queue --max-time={{ getenv "SVC_EMAIL_COLLECT_ARGS_MAX_TIME" "600" }} --each-max-time={{ getenv "SVC_EMAIL_COLLECT_ARGS_EACH_MAX_TIME" "30" }} --timeout={{ getenv "SVC_EMAIL_COLLECT_ARGS_TIMEOUT" "45" }} --account-rest={{ getenv "SVC_EMAIL_COLLECT_ARGS_ACCOUNT_REST" "15" }} {{ getenv "SVC_EMAIL_COLLECT_ARGS_EXTRA" "" }}
+autostart={{ getenv "SVC_EMAIL_COLLECT_ENABLED" "false" | ternary "true" "false" }}
+autorestart=true
+exitcodes=0
+user=dp_app
+group=dp_app
+startsecs=3
+numprocs={{ getenv "SVC_EMAIL_COLLECT_NUMPROCS" "1" }}
+stopsignal=INT
+stopwaitsecs=30
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/email_collect.log
+stdout_logfile_maxbytes=10000000
+stdout_logfile_backups=1
+
+[program:email_process]
+process_name=%(program_name)s_%(process_num)02d
+command=timeout --kill-after={{ add (getenv "SVC_EMAIL_PROCESS_ARGS_MAX_TIME" "600") 90 }} --signal=TERM {{ add (getenv "SVC_EMAIL_PROCESS_ARGS_MAX_TIME" "600") 10 }} /usr/bin/php /srv/deskpro/services/email-processing/artisan email:process-queue --reserve-size={{ getenv "SVC_EMAIL_PROCESS_ARGS_RESERVE_TIME" "5" }} --max-time={{ getenv "SVC_EMAIL_PROCESS_ARGS_MAX_TIME" "600" }} --max-jobs={{ getenv "SVC_EMAIL_PROCESS_ARGS_MAX_JOBS" "300" }} --timeout={{ getenv "SVC_EMAIL_PROCESS_ARGS_TIMEOUT" "300" }} --tries={{ getenv "SVC_EMAIL_PROCESS_ARGS_TRIES" "3" }} {{ getenv "SVC_EMAIL_PROCESS_ARGS_EXTRA" "" }}
+autostart={{ getenv "SVC_EMAIL_PROCESS_ENABLED" "false" | ternary "true" "false" }}
+autorestart=true
+exitcodes=0
+user=dp_app
+group=dp_app
+startsecs=3
+numprocs={{ getenv "SVC_EMAIL_PROCESS_NUMPROCS" "1" }}
+stopsignal=INT
+stopwaitsecs=30
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/email_process.log
+stdout_logfile_maxbytes=10000000
+stdout_logfile_backups=1

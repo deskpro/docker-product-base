@@ -1,0 +1,48 @@
+[sources.php_error_raw]
+type = "file"
+include = ["/var/log/php/error.log", "/var/log/php/error.log.1"]
+ignore_not_found = true
+max_line_bytes = 2000000
+  [sources.php_error_raw.multiline]
+  start_pattern = '^\[\d+\-\w+\-\d+ \d+:\d+:\d+ .*?\] '
+  mode = "halt_before"
+  condition_pattern = '^\[\d+\-\w+\-\d+ \d+:\d+:\d+ .*?\] '
+  timeout_ms = 1000
+
+[transforms.php_error]
+type = "remap"
+inputs = ["php_error_raw"]
+source = '''
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+.lvl = "ERROR"
+.app = "php"
+.chan = "error"
+
+.parsed = parse_regex(.message, r'^(?P<ts>\[\d+\-\w+\-\d+ \d+:\d+:\d+ .*?\]) (?P<msg>.*)$') ?? {}
+
+if !is_nullish(.parsed.msg) {
+  msg = string(.parsed.msg) ?? ""
+  if (contains(msg, "PHP Deprecated:") || contains(msg, "PHP Notice:")) {
+    .lvl = "NOTICE"
+  } else if contains(msg, "PHP Warning:") {
+    .lvl = "WARNING"
+  }
+}
+'''
+
+[sources.php_fpm_error_raw]
+type = "file"
+include = ["/var/log/php/fpm_error.log", "/var/log/php/fpm_error.log.1"]
+ignore_not_found = true
+
+[transforms.php_fpm_error]
+type = "remap"
+inputs = ["php_fpm_error_raw"]
+source = '''
+.app = "php_fpm"
+.chan = "error"
+.parsed = parse_regex(.message, r'^(?P<ts>\[\d+\-\w+\-\d+ \d+:\d+:\d+\]) (?P<lvl>\w+): (?P<msg>.*)$') ?? {}
+'''

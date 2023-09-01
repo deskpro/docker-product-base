@@ -1,0 +1,117 @@
+#!/bin/bash
+
+usage() {
+  echo "Usage: $0 [OPTIONS] VAR_NAME"
+  echo "Read a container variable VAR_NAME and output its value."
+
+  echo "Options:"
+  echo "  -r, --required  Exit with code 33 if the variable is not set. Note that empty is not the same as unset. An empty value is still set. Use --not-empty to check for empty values."
+  echo "  -n, --not-empty Exit with code 34 if the variable is empty."
+  echo "  -l <VALUE>, --default <VALUE> Use a default value if the variable is not set (making --required useless because there will always be a value). When used with --not-empty, an empty (but set) value will also get replaced with this default value instead of producing an error."
+  echo "  --no-env        Always read the value from /run/container-config (ignore current environment variable that may be set)"
+  echo "  --debug         Show debug info on stderr"
+  echo "  -h, --help      Show this help"
+
+  echo "For example, to assign a value to a local variable:"
+  echo "  MY_VAR=\$(container-var DESKPRO_DB_PASS --default foo)"
+  echo
+  echo "Note that if you want to load all container variables into the current environment,"
+  echo "then source source-container-vars instead:"
+  echo "  source /usr/local/lib/deskpro/source-container-vars"
+  echo
+}
+
+varname=""
+default_value=""
+is_debug=false
+is_required=false
+ignore_env=false
+check_not_empty=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -r|--required)
+      is_required=true
+      shift
+      ;;
+    -n|--not-empty)
+      check_not_empty=true
+      shift
+      ;;
+    --ignore-env)
+      ignore_env=true
+      shift
+      ;;
+    -l|--default)
+      default_value="$2"
+      shift
+      shift
+      ;;
+    --debug)
+      is_debug=true
+      shift
+      ;;
+    *)
+      # varname is already set
+      if [ -n "$varname" ]; then
+        usage
+        exit 1
+      fi
+
+      varname="$1"
+      shift
+      ;;
+  esac
+done
+
+debug_message() {
+  if [ "$is_debug" == "true" ]; then
+    echo "$1" >&2
+  fi
+}
+
+# varname is required
+if [ -z "$varname" ]; then
+  usage
+  exit 1
+fi
+
+if [ -v "$varname" ] && [ "$ignore_env" != "true" ]; then
+  debug_message "Reading value from environment variable: $varname"
+  value="${!varname}"
+elif [ -f "/run/container-config/$varname" ]; then
+  debug_message "Reading value from file: /run/container-config/$varname"
+  value=$(<"/run/container-config/$varname")
+else
+  if [ -n "$default_value" ]; then
+    debug_message "No value for $varname. Using default value."
+    value="$default_value"
+  elif [ "$is_required" == "true" ]; then
+    echo "Error: No value for required $varname" >&2
+    exit 33
+  fi
+fi
+
+if [ "$check_not_empty" == "true" ] && [ -z "$value" ]; then
+  if [ -n "$default_value" ]; then
+    debug_message "Empty value for $varname. Using default value."
+    value="$default_value"
+  else
+    echo "Error: Value for $varname is empty" >&2
+    exit 34
+  fi
+fi
+
+if [ "$is_debug" == "true" ]; then
+  echo "Value ${#value} bytes:" >&2
+  echo "-------------------------------------------" >&2
+  printf '%s' "$value"
+  echo "" >&2
+  echo "-------------------------------------------" >&2
+else
+  printf '%s' "$value"
+fi

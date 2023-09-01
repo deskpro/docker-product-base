@@ -1,0 +1,80 @@
+#!/bin/bash
+
+usage() {
+  echo "Usage: $0 [options]"
+  echo "Checks to see if the container is ready to start running tasks or requests."
+  echo "A return value of 0 means the container is ready, any other value is not ready."
+  echo
+  echo "Options:"
+  echo " --wait        If not ready yet, block until the container is ready."
+  echo " --timeout     Used with --wait. The max time (seconds) to wait before giving up."
+  echo " -v, --verbose Enable verbose output (e.g. wait ticks)."
+}
+
+declare -i wait=0
+declare -i wait_timeout=31556952
+declare -i is_verbose=0
+
+ready_file="/run/container-ready"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -v|--verbose)
+      is_verbose=1
+      shift
+      ;;
+    --wait)
+      wait=1
+      shift
+      ;;
+    --timeout)
+      wait_timeout="$2"
+      shift
+      shift
+      ;;
+    *)
+      # ignore
+      shift
+      ;;
+  esac
+done
+
+output() {
+  if [ "$is_verbose" = "1" ]; then
+    echo "$@"
+  fi
+}
+
+check_ready() {
+  if [ ! -f "$ready_file" ]; then
+    return 1
+  fi
+
+  return 0
+}
+
+if check_ready; then
+  output "Container is ready"
+  exit 0
+fi
+
+if [ "$wait" -gt "0" ]; then
+  for ((n=0;n<wait_timeout;n++)); do
+    if check_ready; then
+      output "Container is ready"
+      exit 0
+    fi
+
+    echo "Waiting ..."
+    sleep 1
+  done
+fi
+
+if ! check_ready; then
+  output "Container is not ready"
+  exit 1
+fi

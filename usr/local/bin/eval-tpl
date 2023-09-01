@@ -1,0 +1,6 @@
+#!/bin/bash
+
+(
+  source /usr/local/lib/deskpro/source-container-vars-fp
+  gomplate "$@"
+)

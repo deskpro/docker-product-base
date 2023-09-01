@@ -1,0 +1,16 @@
+#!/bin/bash
+(return 0 2>/dev/null) && true || {
+  echo "This file can be sourced to unset container vars in the current environment."
+  echo "This can be used after sourcing source-container-vars to clean the environment."
+  echo
+  echo "For example, from Bash you would write:"
+  echo
+  echo "source /usr/local/lib/deskpro/source-container-vars-unset"
+  echo
+  exit 1
+}
+
+while read -r varname; do
+  unset "${varname}" "${varname}_FILE"
+done < /usr/local/share/deskpro/container-var-list
+unset varname

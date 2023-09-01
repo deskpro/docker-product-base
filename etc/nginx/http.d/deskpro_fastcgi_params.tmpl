@@ -1,0 +1,53 @@
+fastcgi_param  QUERY_STRING       $query_string;
+fastcgi_param  REQUEST_METHOD     $request_method;
+fastcgi_param  CONTENT_TYPE       $content_type;
+fastcgi_param  CONTENT_LENGTH     $content_length;
+fastcgi_param  SCRIPT_NAME        $fastcgi_script_name;
+fastcgi_param  REQUEST_URI        $request_uri;
+fastcgi_param  DOCUMENT_URI       $document_uri;
+fastcgi_param  DOCUMENT_ROOT      $document_root;
+fastcgi_param  SERVER_PROTOCOL    $server_protocol;
+fastcgi_param  REQUEST_SCHEME     $scheme;
+fastcgi_param  HTTPS              $https if_not_empty;
+fastcgi_param  GATEWAY_INTERFACE  CGI/1.1;
+fastcgi_param  SERVER_ADDR        $server_addr;
+fastcgi_param  SERVER_PORT        $server_port;
+fastcgi_param  SERVER_NAME        $server_name;
+fastcgi_param  REDIRECT_STATUS    200;
+
+fastcgi_param SCRIPT_FILENAME $document_root/index.php;
+fastcgi_param REMOTE_ADDR     $remote_addr;
+fastcgi_param REMOTE_PORT     $remote_port;
+
+fastcgi_request_buffering off;
+fastcgi_buffering off;
+fastcgi_split_path_info ^(.+\.php)(/.*)$;
+
+# unset these headers to avoid them ever being used
+fastcgi_param HTTP_PROXY "";
+fastcgi_param HTTP_FORWARDED "";
+fastcgi_param HTTP_X_FORWARDED "";
+
+# these headers are never relevant because they'll be handled
+# via nginx's realip module (which means $remote_addr above will be the real client IP already)
+# we unset them to make sure they don't get read by Deskpro itself
+fastcgi_param HTTP_X_FORWARDED_FOR "";
+fastcgi_param HTTP_TRUE_CLIENT_IP "";
+
+{{if getenv "HTTP_USER_REAL_PROTO_HEADER"}}
+  fastcgi_param HTTP_X_FORWARDED_PROTO $http_{{ (getenv "HTTP_USER_REAL_PROTO_HEADER") | toLower | replaceAll "-" "_" }} if_not_empty;
+{{else}}
+  fastcgi_param HTTP_X_FORWARDED_PROTO $proto_for_scheme;
+{{end}}
+
+{{if getenv "HTTP_USER_REAL_HOST_HEADER"}}
+  fastcgi_param HTTP_X_FORWARDED_HOST $http_{{ (getenv "HTTP_USER_REAL_HOST_HEADER") | toLower | replaceAll "-" "_" }} if_not_empty;
+{{else if getenv "HTTP_SERVE_HOST"}}
+  fastcgi_param HTTP_X_FORWARDED_HOST "{{ getenv "HTTP_SERVE_HOST" "$http_host" }}";
+{{end}}
+
+{{if getenv "HTTP_USER_REAL_PORT_HEADER"}}
+  fastcgi_param HTTP_X_FORWARDED_PORT $http_{{ (getenv "HTTP_USER_REAL_PORT_HEADER") | toLower | replaceAll "-" "_" }} if_not_empty;
+{{else}}
+  fastcgi_param HTTP_X_FORWARDED_PORT $port_for_scheme;
+{{end}}

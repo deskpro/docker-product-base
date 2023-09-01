@@ -1,0 +1,45 @@
+# This file is used by the mysql-primary and mysql-read helper utilities
+# that run mysql client with credentials from ~/.my-auto.cnf
+
+[mysql]
+no-auto-rehash
+
+{{if getenv "DESKPRO_DB_READ_HOST" }}
+[client_read]
+host={{ (getenv "DESKPRO_DB_READ_HOST" "mysql") | quote }}
+port={{ (getenv "DESKPRO_DB_READ_PORT" (getenv "DESKPRO_DB_PORT")) | default "3306" | quote }}
+user={{ (getenv "DESKPRO_DB_READ_USER" (getenv "DESKPRO_DB_USER")) | default "root" | quote }}
+password={{ (getenv "DESKPRO_DB_READ_PASS" (getenv "DESKPRO_DB_PASS")) | default "deskpro" | quote }}
+database={{ (getenv "DESKPRO_DB_READ_NAME" (getenv "DESKPRO_DB_NAME")) | default "deskpro" | quote }}
+
+[client_primary]
+host={{ (getenv "DESKPRO_DB_HOST" "mysql") | quote }}
+port={{ (getenv "DESKPRO_DB_PORT" "3306") | quote }}
+user={{ (getenv "DESKPRO_DB_USER" "root") | quote }}
+password={{ (getenv "DESKPRO_DB_PASS" "deskpro") | quote }}
+database={{ (getenv "DESKPRO_DB_NAME" "deskpro") | quote }}
+
+{{else}}
+
+[client_read]
+host={{ (getenv "DESKPRO_DB_HOST" "mysql") | quote }}
+port={{ (getenv "DESKPRO_DB_PORT" "3306") | quote }}
+user={{ (getenv "DESKPRO_DB_USER" "root") | quote }}
+password={{ (getenv "DESKPRO_DB_PASS" "deskpro") | quote }}
+database={{ (getenv "DESKPRO_DB_NAME" "deskpro") | quote }}
+init_command="SET SESSION TRANSACTION READ ONLY;"
+
+[client_primary]
+host={{ (getenv "DESKPRO_DB_HOST" "mysql") | quote }}
+port={{ (getenv "DESKPRO_DB_PORT" "3306") | quote }}
+user={{ (getenv "DESKPRO_DB_USER" "root") | quote }}
+password={{ (getenv "DESKPRO_DB_PASS" "deskpro") | quote }}
+database={{ (getenv "DESKPRO_DB_NAME" "deskpro") | quote }}
+{{end}}
+
+[client_mysqldump]
+no-tablespaces
+host={{ (getenv "DESKPRO_DB_HOST" "mysql") | quote }}
+port={{ (getenv "DESKPRO_DB_PORT" "3306") | quote }}
+user={{ (getenv "DESKPRO_DB_USER" "root") | quote }}
+password={{ (getenv "DESKPRO_DB_PASS" "deskpro") | quote }}

@@ -1,0 +1,16 @@
+[program:tasks]
+command=/usr/local/sbin/tasksd
+autostart={{ getenv "SVC_TASKS_ENABLED" "false" | ternary "true" "false" }}
+autorestart=true
+exitcodes=0
+user=dp_app
+group=dp_app
+startsecs=1
+stopsignal=INT
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/tasks.log
+stdout_logfile_maxbytes=10000000
+stdout_logfile_backups=1
+stopsignal=TERM
+stopwaitsecs=60
+environment=CRON_STATUS_FILEPATH="{{ getenv "CRON_STATUS_FILEPATH" "" }}"

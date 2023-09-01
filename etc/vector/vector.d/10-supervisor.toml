@@ -1,0 +1,72 @@
+[sources.supervisord_raw]
+type = "file"
+include = [
+  "/var/log/supervisor/supervisord.log",
+  "/var/log/supervisor/supervisord.log.1",
+]
+ignore_not_found = true
+
+[transforms.process_supervisord]
+type = "remap"
+inputs = ["supervisord_raw"]
+source = '''
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+.app = "supervisord"
+.chan = "process"
+.parsed = parse_regex(.message, r'^(?P<ts>\d+\-\d+\-\d+ \d+:\d+:\d+),\d+ (?P<lvl>\w+) (?P<msg>.*)$') ?? {}
+.ts = to_timestamp(.parsed.ts) ?? now()
+'''
+
+[sources.vector_raw]
+type = "internal_logs"
+
+[sinks.vector_logs]
+type = "file"
+inputs = ["vector_raw"]
+path = "/var/log/vector.log"
+encoding.codec = "json"
+
+[sources.nginx_process_raw]
+type = "file"
+include = [
+  "/var/log/supervisor/nginx.log",
+  "/var/log/supervisor/nginx.log.1",
+]
+ignore_not_found = true
+
+[transforms.process_nginx]
+type = "remap"
+inputs = ["nginx_process_raw"]
+source = '''
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+.app = "nginx"
+.chan = "process"
+.lvl = "INFO"
+'''
+
+[sources.php_fpm_raw]
+type = "file"
+include = [
+  "/var/log/supervisor/php_fpm.log",
+  "/var/log/supervisor/php_fpm.log.1",
+]
+ignore_not_found = true
+
+[transforms.process_php_fpm]
+type = "remap"
+inputs = ["php_fpm_raw"]
+source = '''
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+.app = "php_fpm"
+.chan = "process"
+.lvl = "INFO"
+'''

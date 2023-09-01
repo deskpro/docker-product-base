@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# This runs at container startup and sets the /run/container-ready file
+# that indicates when the container is ready to start accepting tasks/requests.
+#
+# This is used by the is-ready utility to determine if the container is ready to
+# start performing tasks/requests.
+
+check_web_ready() {
+  echo "Checking discovery endpoint ..."
+  curl -sS -m 5 http://127.0.0.1:80/api/v2/helpdesk/discover
+}
+
+# if web service is enabled, wait for it to be ready
+if [ "$SVC_NGINX_ENABLED" == "true" ]; then
+  while ! check_web_ready; do
+      echo "Waiting ..."
+      sleep 1
+  done
+fi
+
+echo "OK" > /run/container-ready
+chmod 0644 /run/container-ready
+
+exit 0
