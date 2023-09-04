@@ -1,4 +1,10 @@
+.git/
 test/
 scratch/
 docs/
+
+.editorconfig
+.gitignore
+
+Earthfile
 README.md
