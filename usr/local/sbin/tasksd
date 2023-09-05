@@ -75,6 +75,8 @@ while [[ "$finish_next_iter" != "1" ]]; do
   is_sleeping=0
   if [[ -f "$pause_sentinel_file" ]]; then
     echo "PAUSE_CRON file exists - will not run"
+  elif [[ ! -f "/run/container-ready" ]]; then
+    echo "Container is not ready"
   elif [[ ! -x "$cron_bin" ]]; then
     echo "$cron_bin is not a valid executable"
     updateStatusFile "lastError"

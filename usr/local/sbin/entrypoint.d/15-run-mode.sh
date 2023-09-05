@@ -1,4 +1,4 @@
-ntainer#!/bin/bash
+#!/bin/bash
 #######################################################################
 # This source looks at the DOCKER_CMD and DOCKER_CMD_ARGS to determine
 # what services should be started.
