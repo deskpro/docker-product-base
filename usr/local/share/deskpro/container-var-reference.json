@@ -1,5 +1,15 @@
 [
   {
+    "name": "AUTO_RUN_INSTALLER",
+    "type": "boolean",
+    "description": "Automatically run the installer when the container starts for the first time and the database is empty. You may also want to set: INSTALL_ADMIN_EMAIL, INSTALL_ADMIN_PASSWORD, INSTALL_URL."
+  },
+  {
+    "name": "AUTO_RUN_MIGRATIONS",
+    "type": "boolean",
+    "description": "When the container starts, if there are any migrations that need to be run, they will be run automatically. Note: There are no locking controls so only enable this on a single container at a time (e.g. the tasks container)."
+  },
+  {
     "name": "CUSTOM_MOUNT_BASEDIR",
     "type": "boolean",
     "description": "Base path for all the various custom mounts. Default is /deskpro.",
@@ -152,6 +162,16 @@
     "name": "DESKPRO_TWITTER_APP_KEY_SECRET"
   },
   {
+    "name": "HEALTHCHECK_TEST_DB_CONNECTION",
+    "type": "boolean",
+    "description": "Enable checking the database connection with the healthcheck. This confirms that the container can connect to the configured database."
+  },
+  {
+    "name": "HEALTHCHECK_TEST_DISCOVER",
+    "type": "boolean",
+    "description": "Enable checking the discover endpoint with the healthcheck. This confirms that the container can connect to the database and serve a web request which can be a good indicator of health."
+  },
+  {
     "name": "HTTP_INTERNAL_MODE",
     "type": "boolean",
     "description": "Set in 11-run-mode.sh and used in nginx config file. Determines if nginx should only listen on localhost for internal api calls.",
@@ -214,6 +234,21 @@
     "name": "HTTP_USE_TESTING_CERTIFICATE",
     "type": "boolean",
     "description": "Set true to use the built-in (non-secure) testing certificate for HTTPS/443."
+  },
+  {
+    "name": "INSTALL_ADMIN_EMAIL",
+    "type": "string",
+    "description": "Used with AUTO_RUN_INSTALLER. The email address of the initial admin user. If not provided, will default to admin@deskprodemo.com."
+  },
+  {
+    "name": "INSTALL_ADMIN_PASSWORD",
+    "type": "string",
+    "description": "Used with AUTO_RUN_INSTALLER. The account password of the initial admin user. If not provided, will default to a random string."
+  },
+  {
+    "name": "INSTALL_URL",
+    "type": "string",
+    "description": "Used with AUTO_RUN_INSTALLER. The URL of the Deskpro instance. If not provided, will default to http://127.0.0.1/"
   },
   {
     "description": "",
