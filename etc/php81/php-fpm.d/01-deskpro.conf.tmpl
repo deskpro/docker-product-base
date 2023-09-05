@@ -15,6 +15,8 @@ request_terminate_timeout_track_finished = yes
 security.limit_extensions = ".php"
 env[DP_FPM_POOL] = {{.}}
 php_admin_value[max_execution_time] = 60
+php_admin_value[display_errors] = Off
+php_admin_value[display_startup_errors] = Off
 {{- end -}}
 
 
