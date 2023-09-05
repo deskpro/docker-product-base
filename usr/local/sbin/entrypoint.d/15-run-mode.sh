@@ -114,7 +114,7 @@ function run_mode_main() {
   # ... if we may be calling internal APIs,
   # and the internal API is configured as localhost (default)
   # and it's not already running -> then we need to run locally
-  if [ "$uses_internal_api" == "true" ] && [ -z "$SVC_NGINX_ENABLED" ] && [ "${DESKPRO_API_BASEURL_PRIVATE:-http://127.0.0.1:80}" == "http://127.0.0.1:80" ]; then
+  if [ "$uses_internal_api" == "true" ] && [ -z "$SVC_NGINX_ENABLED" ] && [ "${DESKPRO_API_BASE_URL_PRIVATE:-http://127.0.0.1:80}" == "http://127.0.0.1:80" ]; then
     boot_log_message TRACE "Starting nginx and fpm for internal api calls"
     export SVC_NGINX_ENABLED=true
     export SVC_PHP_FPM_ENABLED=true
