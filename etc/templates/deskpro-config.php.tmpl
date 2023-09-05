@@ -313,6 +313,22 @@ __VAL__;
 $CONFIG['app_settings']['disable_email_in_job'] = true;
 {{end}}
 
+$CONFIG['app_settings']['fixture_opts'] = [
+  'CustomSeederDirs' => [],
+  'CustomSqlSeedDirs' => [],
+  'CustomAppSeedDirs' => [],
+];
+
+{{if file.IsDir "/deskpro/install/apps.d"}}
+$CONFIG['app_settings']['fixture_opts']['CustomAppSeedDirs'][] = "/deskpro/install/apps.d";
+{{end}}
+{{if file.IsDir "/deskpro/install/sql.d"}}
+$CONFIG['app_settings']['fixture_opts']['CustomSqlSeedDirs'][] = "/deskpro/install/sql.d";
+{{end}}
+{{if file.IsDir "/deskpro/install/seeders.d"}}
+$CONFIG['app_settings']['fixture_opts']['CustomSeederDirs'][] = "/deskpro/install/seeders.d";
+{{end}}
+
 #######################################################################
 # extensions
 #######################################################################
