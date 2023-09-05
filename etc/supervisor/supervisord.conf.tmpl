@@ -17,15 +17,18 @@ supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 [supervisorctl]
 serverurl=unix:///run/supervisord.sock
 
-[program:ready_state]
-command=/etc/supervisor/container-ready-state
+[program:container_ready]
+command=/usr/local/sbin/container-ready.sh
 user=root
 autostart=true
 autorestart=false
 exitcodes=0
 stopwaitsecs=0
 startsecs=0
-logfile=/var/log/supervisor/ready_state.log
+stderr_logfile=/proc/1/fd/1
+stderr_logfile_maxbytes=0
+stdout_logfile=/proc/1/fd/2
+stdout_logfile_maxbytes=0
 
 [eventlistener:exit_on_failure]
 command=/etc/supervisor/supervisord-exit-on-failure

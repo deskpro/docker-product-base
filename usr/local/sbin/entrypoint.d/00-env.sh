@@ -5,14 +5,6 @@
 
 export PYTHONDONTWRITEBYTECODE=1
 
-# If there is no root, we will create it now (e.g. base image without Deskpro on it yet)
-if [ ! -d /srv/deskpro/serve/www ]; then
-  boot_log_message ERROR "Source files not detected."
-
-  mkdir -p /srv/deskpro/serve/www
-  echo "Missing source files." > /srv/deskpro/serve/www/index.php
-fi
-
 if [ ! -d "/run/container-config" ]; then
   mkdir /run/container-config
   chmod 1711 /run/container-config

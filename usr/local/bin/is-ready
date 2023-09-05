@@ -2,12 +2,17 @@
 
 usage() {
   echo "Usage: $0 [options]"
-  echo "Checks to see if the container is ready to start running tasks or requests."
-  echo "A return value of 0 means the container is ready, any other value is not ready."
+  echo "Checks to see if the container services have brought up and are ready."
+  echo
+  echo "This is not the same as the healthcheck utility which actually checks container health."
+  echo "is-ready only checks to see that services have actually started, and any automatic boot-time tasks"
+  echo "such as database migrations have completed."
+  echo
+  echo "In many cases, you may actually want to use the healthcheck utility instead of is-ready."
   echo
   echo "Options:"
-  echo " --wait        If not ready yet, block until the container is ready."
-  echo " --timeout     Used with --wait. The max time (seconds) to wait before giving up."
+  echo " --wait          If not ready yet, block until the container is ready."
+  echo " --timeout SECS  Used with --wait. The max time (seconds) to wait before giving up. Default: No timeout."
   echo " -v, --verbose Enable verbose output (e.g. wait ticks)."
 }
 
@@ -69,7 +74,7 @@ if [ "$wait" -gt "0" ]; then
       exit 0
     fi
 
-    echo "Waiting ..."
+    output "Waiting ..."
     sleep 1
   done
 fi

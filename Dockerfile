@@ -122,6 +122,9 @@ RUN <<EOT
     chmod 644 /usr/local/share/deskpro/*
 EOT
 
+HEALTHCHECK --interval=10s --timeout=10s --start-period=30s --retries=3 \
+    CMD /usr/local/bin/healthcheck
+
 # http/https
 EXPOSE 80/tcp
 EXPOSE 443/tcp
