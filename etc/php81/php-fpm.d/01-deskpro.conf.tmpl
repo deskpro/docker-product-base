@@ -30,6 +30,7 @@ log_level = {{ getenv "PHP_FPM_LOG_LEVEL" "notice" }}
 pm = ondemand
 pm.max_children = {{ getenv "PHP_FPM_DP_DEFAULT_MAX_CHILDREN" "20" }}
 pm.process_idle_timeout = 15s
+pm.max_requests=1000
 {{ getenv "PHP_FPM_POOL_OVERRIDES" }}
 {{ getenv "PHP_FPM_DP_DEFAULT_OVERRIDES" }}
 
@@ -39,6 +40,7 @@ pm.process_idle_timeout = 15s
 pm = ondemand
 pm.max_children = {{ getenv "PHP_FPM_DP_INTERNAL_MAX_CHILDREN" "1000" }}
 pm.process_idle_timeout = 15s
+pm.max_requests=1000
 {{ getenv "PHP_FPM_POOL_OVERRIDES" }}
 {{ getenv "PHP_FPM_DP_INTERNAL_OVERRIDES" }}
 
@@ -48,6 +50,7 @@ pm.process_idle_timeout = 15s
 pm = ondemand
 pm.max_children = {{ getenv "PHP_FPM_DP_GQL_MAX_CHILDREN" "20" }}
 pm.process_idle_timeout = 15s
+pm.max_requests=1000
 php_admin_value[disable_functions] = system, exec, shell_exec, passthru, phpinfo, popen, proc_open, fopen_with_path, dbase_open, move_uploaded_file, posix_mkfifo
 {{ getenv "PHP_FPM_POOL_OVERRIDES" }}
 {{ getenv "PHP_FPM_DP_GQL_OVERRIDES" }}
@@ -58,6 +61,7 @@ php_admin_value[disable_functions] = system, exec, shell_exec, passthru, phpinfo
 pm = ondemand
 pm.max_children = {{ getenv "PHP_FPM_DP_BROADCASTER_MAX_CHILDREN" "1000" }}
 pm.process_idle_timeout = 5s
+pm.max_requests=200
 request_terminate_timeout = 65
 php_admin_value[max_execution_time] = 65
 php_admin_value[post_max_size] = 2M
@@ -74,21 +78,17 @@ php_admin_value[disable_functions] = system, exec, shell_exec, passthru, phpinfo
 
 [dp_default]
 pm = ondemand
-pm.process_idle_timeout = 1s
 php_admin_value[opcache.enable]=0
 
 [dp_internal]
 pm = ondemand
-pm.process_idle_timeout = 1s
 php_admin_value[opcache.enable]=0
 
 [dp_gql]
 pm = ondemand
-pm.process_idle_timeout = 1s
 php_admin_value[opcache.enable]=0
 
 [dp_broadcaster]
 pm = ondemand
-pm.process_idle_timeout = 1s
 php_admin_value[opcache.enable]=0
 {{end}}
