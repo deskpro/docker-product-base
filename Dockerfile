@@ -67,8 +67,8 @@ RUN <<EOT
     find /usr/lib/python3.11 -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
     # Remove default configs because we will install our own
-    rm -f /etc/php/php.ini \
-        /etc/php/php-fpm.d/www.conf \
+    rm -f /etc/php81/php.ini \
+        /etc/php81/php-fpm.d/www.conf \
         /etc/nginx/nginx.conf \
         /etc/nginx/fastcgi_params \
         /etc/nginx/http.d/default.conf \
