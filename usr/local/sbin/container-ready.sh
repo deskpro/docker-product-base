@@ -141,6 +141,7 @@ run_installer() {
     exit $status
   fi
 
+  log_message INFO "Installer completed successfully"
   remove_sentinel_runfile installer
   rm -f /run/sim/needs-installer
 }
@@ -161,6 +162,7 @@ run_migrations() {
     exit $status
   fi
 
+  log_message INFO "Migrations completed successfully"
   remove_sentinel_runfile migrations
   rm -f /run/sim/needs-migrations
 }

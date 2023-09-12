@@ -127,7 +127,7 @@ EOT);
     private function simCliInstall(): void
     {
         echo "Simulating command: install\n";
-        $this->cliWait('SIM_INSTALL_WAIT', 10);
+        $this->cliWait('SIM_INSTALL_WAIT', 3);
         $this->cliExit(0, 'DB is ready');
     }
 
@@ -161,7 +161,7 @@ EOT);
     {
         echo "Simulating command: migrations:exec\n";
 
-        $this->cliWait('SIM_MIGRATION_WAIT', 10);
+        $this->cliWait('SIM_MIGRATION_WAIT', 3);
         $this->cliExit(0, 'Done');
     }
 

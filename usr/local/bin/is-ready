@@ -13,12 +13,14 @@ usage() {
   echo "Options:"
   echo " --wait          If not ready yet, block until the container is ready."
   echo " --timeout SECS  Used with --wait. The max time (seconds) to wait before giving up. Default: No timeout."
+  echo " --check-tasks   Check there are no post-boot tasks (such as auto-install or migrations) running. By default, the container is considered ready as soon as services are running but you may want to check that tasks have completed too."
   echo " -v, --verbose Enable verbose output (e.g. wait ticks)."
 }
 
 declare -i wait=0
 declare -i wait_timeout=31556952
 declare -i is_verbose=0
+declare -i check_tasks=0
 
 ready_file="/run/container-ready"
 
@@ -30,6 +32,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -v|--verbose)
       is_verbose=1
+      shift
+      ;;
+    --check-tasks)
+      check_tasks=1
       shift
       ;;
     --wait)
@@ -57,6 +63,18 @@ output() {
 check_ready() {
   if [ ! -f "$ready_file" ]; then
     return 1
+  fi
+
+  if [ "$check_tasks" = "1" ]; then
+    if [ -f "/run/container-running-installer" ]; then
+      output "Installer is running"
+      return 1
+    fi
+
+    if [ -f "/run/container-running-migrations" ]; then
+      output "Migrations are running"
+      return 1
+    fi
   fi
 
   return 0

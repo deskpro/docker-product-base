@@ -100,8 +100,8 @@ log_message() {
 run_checks() {
   log_message "Running checks"
 
-  if [ -f "/run/healthcheck-force-failure" ]; then
-    log_message "<RESULT:FAIL> /run/healthcheck-force-failure file is set"
+  if [ -f "/run/sim/healthcheck-force-failure" ]; then
+    log_message "<RESULT:FAIL> /run/sim/healthcheck-force-failure file is set"
     return 1
   fi
 

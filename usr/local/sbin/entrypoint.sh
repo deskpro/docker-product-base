@@ -43,7 +43,8 @@ main() {
 
   # move an old boot log if it exists (e.g. from a previous boot)
   if [ -f /var/log/docker-boot.log ]; then
-    mv /var/log/docker-boot.log "/var/log/docker-boot.log.$(date +%s%N)"
+    cat /var/log/docker-boot.log >> "/var/log/docker-boot.full.log"
+    rm /var/log/docker-boot.log
   fi
 
   boot_log_message TRACE "--- STARTING DESKPRO CONTAINER ---"
