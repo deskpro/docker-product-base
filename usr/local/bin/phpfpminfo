@@ -6,16 +6,23 @@ usage() {
   echo "Show PHP-FPM configuration"
   echo
   echo "Options:"
-  echo "  --help      Show this help message"
+  echo "  --help       Show this help message"
+  echo "  --pool POOL  Only return output for given pool"
 }
 
 POSITIONAL_ARGS=()
+SHOW_POOL=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
     -h|--help)
       usage
       exit
+      ;;
+    --pool)
+      SHOW_POOL="$2"
+      shift
+      shift
       ;;
     -*|--*)
       echo "Unknown option $1"
@@ -38,4 +45,14 @@ trap 'rm -f -- "$tmpfile"' EXIT
   echo 'log_level = notice'
 } > "$tmpfile"
 
-php-fpm -tt
+if [ -n "$SHOW_POOL" ]; then
+  # uses awk to prefix each line with the [section]
+  # then use rg to filter to only the desired section
+  # then use sed to remove the section prefix again
+  php-fpm -tt 2>&1 | sed "s/^.*\] NOTICE: //g" | sed "s/^\t//g" \
+    | awk '/^\[/{prefix=$0; next} $1{print prefix $0}' \
+    | rg -F "[$SHOW_POOL]" \
+    | sed "s/^\[$SHOW_POOL\]//g"
+else
+  php-fpm -tt 2>&1 | sed "s/^.*\] NOTICE: //g" | sed "s/^\t//g"
+fi
