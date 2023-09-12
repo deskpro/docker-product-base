@@ -42,6 +42,10 @@
     "isPrivate": true
   },
   {
+    "description": "Raw PHP code to add to a Deskpro config file. Helpful when you want custom config but do not want to mount a file.",
+    "name": "DESKPRO_CONFIG_RAW_PHP"
+  },
+  {
     "description": "",
     "name": "DESKPRO_DB_HOST"
   },

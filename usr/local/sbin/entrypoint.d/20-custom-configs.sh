@@ -8,6 +8,7 @@
 
 custom_configs_main() {
   install_custom_config_dirs
+  install_deskpro_config_raw_php
   install_deskpro_config_file
 }
 
@@ -43,6 +44,19 @@ install_deskpro_config_file() {
   chmod 0644 "/srv/deskpro/INSTANCE_DATA/$fname"
 }
 
+# Writes DESKPRO_CONFIG_RAW_PHP to a file in /srv/deskpro/INSTANCE_DATA/deskpro-config.d
+install_deskpro_config_raw_php() {
+  local DESKPRO_CONFIG_RAW_PHP=$(container-var DESKPRO_CONFIG_RAW_PHP)
+  if [ -z "$DESKPRO_CONFIG_RAW_PHP" ]; then
+    return 0
+  fi
+
+  boot_log_message INFO "Installing DESKPRO_CONFIG_RAW_PHP to /srv/deskpro/INSTANCE_DATA/deskpro-config.d/DESKPRO_CONFIG_RAW_PHP.php"
+  printf '<?php\n%s\n' "$DESKPRO_CONFIG_RAW_PHP" > "/srv/deskpro/INSTANCE_DATA/deskpro-config.d/DESKPRO_CONFIG_RAW_PHP.php"
+  chown root:root "/srv/deskpro/INSTANCE_DATA/$fname"
+  chmod 0644 "/srv/deskpro/INSTANCE_DATA/$fname"
+}
+
 #######################################################################
 # Copy files from a directory to another directory, and set permissions
 # so they are owned by root.
@@ -69,4 +83,4 @@ copy_custom_config_dir() {
 }
 
 custom_configs_main
-unset custom_configs_main install_custom_config_dirs install_deskpro_config_file copy_custom_config_dir
+unset custom_configs_main install_custom_config_dirs install_deskpro_config_raw_php install_deskpro_config_file copy_custom_config_dir
