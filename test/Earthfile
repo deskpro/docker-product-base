@@ -4,6 +4,10 @@ FROM scratch
 # save-base-image saves the test image (that have all the test sources)
 # as deskpro/docker-product-base:test. Useful if you want to run the
 # image manually for some reason.
+#
+# Example usage:
+#  earthly +save-base-image
+#  docker run --rm -it deskpro/docker-product-base:test bash
 save-base-image:
     FROM +base-image
     SAVE IMAGE deskpro/docker-product-base:test

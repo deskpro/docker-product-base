@@ -101,57 +101,57 @@ run_checks() {
   log_message "Running checks"
 
   if [ -f "/run/sim/healthcheck-force-failure" ]; then
-    log_message "<RESULT:FAIL> /run/sim/healthcheck-force-failure file is set"
+    log_message "<RESULT:ready:FAIL> /run/sim/healthcheck-force-failure file is set"
     return 1
   fi
 
   if [ "$test_ready" == "true" ]; then
-    log_message "<TEST> /run status files"
+    log_message "<TEST:ready> /run status files"
 
     # if we're running any container-ready tasks (installer, migrations)
     # then consider this container healthy
     if [ -f "/run/container-running-installer" ]; then
-      log_message "<RESULT:OK> Installer is running - the container is considered healthy while this is happening"
+      log_message "<RESULT:ready:OK> Installer is running - the container is considered healthy while this is happening"
       return 0
     fi
 
     if [ -f "/run/container-running-migrations" ]; then
-      log_message "<RESULT:OK> Migrations are running - the container is considered healthy while this is happening"
+      log_message "<RESULT:ready:OK> Migrations are running - the container is considered healthy while this is happening"
       return 0
     fi
 
     # If the container isn't marked as "ready" yet, then it's unhealthy
     # (note: default HEALTHCHECK has --start-period=30s grace period)
     if [ ! -f "/run/container-ready" ]; then
-      log_message "<RESULT:FAIL> Container is not ready yet"
+      log_message "<RESULT:ready:FAIL> Container is not ready yet"
       return 1
     fi
 
-    log_message "<RESULT> Container run status is ready"
+    log_message "<RESULT:ready:OK> Container run status is ready"
   fi
 
   # otherwise, we just confirm the container can serve the discover endpoint
   if [ "$(container-var SVC_NGINX_ENABLED)" == "true" ]; then
     if [ "$test_http" == "true" ]; then
-      log_message "<TEST> Checking nginx status"
+      log_message "<TEST:http> Checking nginx status"
       if ! curl -sS --fail-with-body -m 5 http://127.0.0.1:10001/nginx/status; then
-        log_message "<RESULT:FAIL> nginx status failed"
+        log_message "<RESULT:http:FAIL> nginx status failed"
         return 1
       else
-        log_message "<RESULT:OK> nginx ok"
+        log_message "<RESULT:http:OK> nginx ok"
       fi
 
-      log_message "<TEST> Checking FPM status"
+      log_message "<TEST:phpfpm> Checking FPM status"
       if ! curl -sS --fail-with-body -m 5 http://127.0.0.1:10001/fpm/dp_default/status; then
-        log_message "<RESULT:FAIL> fpm status failed"
+        log_message "<RESULT:phpfpm:FAIL> fpm status failed"
         return 1
       else
-        log_message "<RESULT:OK> fpm ok"
+        log_message "<RESULT:phpfpm:OK> fpm ok"
       fi
     fi
 
     if [ "$test_discover" == "true" ]; then
-      log_message "<TEST> Checking discover endpoint"
+      log_message "<TEST:discover> Checking discover endpoint"
       tempfile=$(mktemp)
       status_code=$(curl -sS -m 5 http://127.0.0.1:80/api/v2/helpdesk/discover --write-out '%{http_code}' -o $tempfile)
       cat $tempfile
@@ -159,23 +159,23 @@ run_checks() {
       rm -f $tempfile
 
       if [[ "$status_code" -eq 429 ]] ; then
-        log_message "<RESULT:OK> Deskpro discover endpoint returned 429 (migrations pending). Container is considered healthy while this is happening."
+        log_message "<RESULT:discover:OK> Deskpro discover endpoint returned 429 (migrations pending). Container is considered healthy while this is happening."
       elif [[ "$status_code" -gt 400 ]] ; then
-        log_message "<RESULT:FAIL> Deskpro discover endpoint returned an error status $status_code"
+        log_message "<RESULT:discover:FAIL> Deskpro discover endpoint returned an error status $status_code"
         return 1
       else
-        log_message "<RESULT:OK> Deskpro discover endpoint success"
+        log_message "<RESULT:discover:OK> Deskpro discover endpoint success"
       fi
     fi
   fi
 
   if [ "$test_db" == "true" ]; then
-    log_message "<TEST> Checking DB connection"
+    log_message "<TEST:dbconn> Checking DB connection"
     if ! sudo -E -u dp_app -D /srv/deskpro php tools/fixtures/artisan test:wait-db --timeout 30; then
-      log_message "<RESULT:FAIL> Failed to connect to DB"
+      log_message "<RESULT:dbconn:FAIL> Failed to connect to DB"
       return 1
     else
-      log_message "<RESULT:OK> DB connection ok"
+      log_message "<RESULT:dbcon:OK> DB connection ok"
     fi
   fi
 }
