@@ -8,8 +8,6 @@ charset utf-8;
 disable_symlinks off;
 index index.html index.php;
 
-location = /robots.txt  { access_log off; log_not_found off; }
-
 gzip on;
 gzip_vary on;
 gzip_comp_level 4;
@@ -24,57 +22,57 @@ proxy_buffering off;
 client_max_body_size 100M;
 
 location / {
-    try_files $uri $uri/ /index.php?$query_string;
+try_files $uri $uri/ /index.php?$query_string;
 }
 
 location ^~ /sys/services/broadcaster/ {
-    fastcgi_pass unix:/run/php_fpm_dp_broadcaster.sock;
-    include /etc/nginx/http.d/deskpro_fastcgi_params;
+fastcgi_pass unix:/run/php_fpm_dp_broadcaster.sock;
+include /etc/nginx/http.d/deskpro_fastcgi_params;
 }
 
 location ~ ^/(admin\-api|agent\-api|sys/services)/ {
-    fastcgi_pass unix:/run/php_fpm_dp_gql.sock;
-    include /etc/nginx/http.d/deskpro_fastcgi_params;
+fastcgi_pass unix:/run/php_fpm_dp_gql.sock;
+include /etc/nginx/http.d/deskpro_fastcgi_params;
 }
 
 location ^~ /sys/services/search-indexing/ {
-    fastcgi_pass unix:/run/php_fpm_dp_internal.sock;
-    include /etc/nginx/http.d/deskpro_fastcgi_params;
+fastcgi_pass unix:/run/php_fpm_dp_internal.sock;
+include /etc/nginx/http.d/deskpro_fastcgi_params;
 }
 
 location ^~ /api/ {
-    fastcgi_pass $dpv5_api_backend;
-    include /etc/nginx/http.d/deskpro_fastcgi_params;
+fastcgi_pass $dpv5_api_backend;
+include /etc/nginx/http.d/deskpro_fastcgi_params;
 }
 
 location ~ \.php$ {
-    fastcgi_pass unix:/run/php_fpm_dp_default.sock;
-    include /etc/nginx/http.d/deskpro_fastcgi_params;
+fastcgi_pass unix:/run/php_fpm_dp_default.sock;
+include /etc/nginx/http.d/deskpro_fastcgi_params;
 }
 
 location ~ /assets/[a-zA-Z0-9_\-\.]+/(pub|web)/.*?$ {
-    add_header 'Access-Control-Allow-Origin' '*';
-    add_header 'Access-Control-Allow-Headers' '*';
-    add_header 'Access-Control-Allow-Methods' 'GET,OPTIONS';
-    add_header 'Access-Control-Max-Age' '1728000';
+add_header 'Access-Control-Allow-Origin' '*';
+add_header 'Access-Control-Allow-Headers' '*';
+add_header 'Access-Control-Allow-Methods' 'GET,OPTIONS';
+add_header 'Access-Control-Max-Age' '1728000';
 
-    if ($request_method = 'OPTIONS') {
-        add_header 'Content-Type' 'text/plain charset=UTF-8';
-        add_header 'Content-Length' 0;
-        return 204;
-    }
+if ($request_method = 'OPTIONS') {
+add_header 'Content-Type' 'text/plain charset=UTF-8';
+add_header 'Content-Length' 0;
+return 204;
+}
 }
 
 location ~ ^/horizon\-ui/app/assets/ {
-    add_header 'Access-Control-Allow-Origin' '*';
-    add_header 'Access-Control-Allow-Headers' '*';
-    add_header 'Access-Control-Allow-Methods' 'GET,OPTIONS';
-    add_header 'Access-Control-Max-Age' '1728000';
-    add_header 'Cache-Control' 'public, max-age=31536000, immutable';
+add_header 'Access-Control-Allow-Origin' '*';
+add_header 'Access-Control-Allow-Headers' '*';
+add_header 'Access-Control-Allow-Methods' 'GET,OPTIONS';
+add_header 'Access-Control-Max-Age' '1728000';
+add_header 'Cache-Control' 'public, max-age=31536000, immutable';
 
-    if ($request_method = 'OPTIONS') {
-        add_header 'Content-Type' 'text/plain charset=UTF-8';
-        add_header 'Content-Length' 0;
-        return 204;
-    }
+if ($request_method = 'OPTIONS') {
+add_header 'Content-Type' 'text/plain charset=UTF-8';
+add_header 'Content-Length' 0;
+return 204;
+}
 }
