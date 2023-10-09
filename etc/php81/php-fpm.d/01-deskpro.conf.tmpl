@@ -3,7 +3,7 @@ user = dp_app
 group = dp_app
 chdir = /srv/deskpro
 listen = /run/php_fpm_{{.}}.sock
-listen.backlog = 511
+listen.backlog = {{ getenv "PHP_FPM_LISTEN_BACKLOG" "1000" }}
 listen.mode = 0666
 
 pm.status_listen = /run/php_fpm_{{.}}.status.sock
