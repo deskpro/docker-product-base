@@ -8,7 +8,7 @@ pcre_jit on;
 pid /run/nginx.pid;
 
 events {
-    worker_connections {{ getenv "NGINX_WORKER_CONNECTIONS" "1000" }};
+    worker_connections {{ getenv "NGINX_WORKER_CONNECTIONS" "10000" }};
     multi_accept on;
 }
 
