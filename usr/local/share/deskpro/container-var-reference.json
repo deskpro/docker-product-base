@@ -269,6 +269,10 @@
     "name": "PHP_FPM_DP_INTERNAL_OVERRIDES"
   },
   {
+    "description": "Listen backlog size for each PHP-FPM pool (default: 1000)",
+    "name": "PHP_FPM_LISTEN_BACKLOG"
+  },
+  {
     "description": "",
     "name": "PHP_FPM_LOG_LEVEL"
   },
