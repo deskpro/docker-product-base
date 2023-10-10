@@ -10,9 +10,8 @@ opcache.validate_timestamps = {{ getenv "PHP_OPCACHE_VALIDATE_TIMESTAMPS" "On" }
 opcache.revalidate_freq = 5
 opcache.use_cwd = On
 
-{{if conv.ToBool (getenv "IS_EXEC_MODE") }}
+; note: turned off on web requests via php_value in the pools
 display_errors = On
 display_startup_errors = On
-{{end}}
 
 {{ getenv "PHP_INI_OVERRIDES" }}

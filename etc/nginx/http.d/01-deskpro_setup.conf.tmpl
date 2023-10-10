@@ -1,15 +1,29 @@
-upstream dpv5_api {
-  server unix:/run/php_fpm_dp_default.sock max_fails=0 fail_timeout=0;
+upstream dp_default {
+  random two least_conn;
+  {{range math.Seq (getenv "PHP_FPM_DP_DEFAULT_NUM_POOLS" "4")}}
+  server unix:/run/php_fpm_dp_default_{{.}}.sock max_fails=0 fail_timeout=0;
+  {{end}}
 }
 
-upstream dpv5_api_internal {
+upstream dp_agent {
+  random two least_conn;
+  {{range math.Seq (getenv "PHP_FPM_DP_AGENT_NUM_POOLS" "6") }}
+  server unix:/run/php_fpm_dp_agent_{{.}}.sock max_fails=0 fail_timeout=0;
+  {{end}}
+}
+
+upstream dp_internal {
   server unix:/run/php_fpm_dp_internal.sock max_fails=0 fail_timeout=0;
+}
+
+upstream dp_broadcaster {
+  server unix:/run/php_fpm_dp_broadcaster.sock max_fails=0 fail_timeout=0;
 }
 
 # dpv5_api_backend: Use separate fpm-pool for internal requests
 map $http_authorization $dpv5_api_backend {
-    ~internal "dpv5_api_internal";
-    default   "dpv5_api";
+    ~internal "dp_internal";
+    default   "dp_default";
 }
 
 # ports to use for each protocol

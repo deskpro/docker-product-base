@@ -26,17 +26,22 @@ location / {
 }
 
 location ^~ /sys/services/broadcaster/ {
-    fastcgi_pass unix:/run/php_fpm_dp_broadcaster.sock;
+    fastcgi_pass dp_broadcaster;
     include /etc/nginx/http.d/deskpro_fastcgi_params;
 }
 
-location ~ ^/(admin\-api|agent\-api|sys/services)/ {
-    fastcgi_pass unix:/run/php_fpm_dp_gql.sock;
+location ~ ^/sys/services/(health\-check|passport|workflow\-engine|search\-indexing)/ {
+    fastcgi_pass dp_internal;
     include /etc/nginx/http.d/deskpro_fastcgi_params;
 }
 
-location ^~ /sys/services/search-indexing/ {
-    fastcgi_pass unix:/run/php_fpm_dp_internal.sock;
+location ~ ^/(admin\-api|agent\-api|sys/services|apps\-proxy|apps\-oauth)/ {
+    fastcgi_pass dp_agent;
+    include /etc/nginx/http.d/deskpro_fastcgi_params;
+}
+
+location ~ ^/app/?$ {
+    fastcgi_pass dp_agent;
     include /etc/nginx/http.d/deskpro_fastcgi_params;
 }
 
@@ -46,7 +51,7 @@ location ^~ /api/ {
 }
 
 location ~ \.php$ {
-    fastcgi_pass unix:/run/php_fpm_dp_default.sock;
+    fastcgi_pass dp_default;
     include /etc/nginx/http.d/deskpro_fastcgi_params;
 }
 

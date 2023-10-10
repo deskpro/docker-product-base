@@ -238,15 +238,7 @@
   },
   {
     "description": "",
-    "name": "PHP_FPM_DP_BROADCASTER_MAX_CHILDREN"
-  },
-  {
-    "description": "",
     "name": "PHP_FPM_DP_BROADCASTER_OVERRIDES"
-  },
-  {
-    "description": "",
-    "name": "PHP_FPM_DP_DEFAULT_MAX_CHILDREN"
   },
   {
     "description": "",
@@ -254,15 +246,7 @@
   },
   {
     "description": "",
-    "name": "PHP_FPM_DP_GQL_MAX_CHILDREN"
-  },
-  {
-    "description": "",
-    "name": "PHP_FPM_DP_GQL_OVERRIDES"
-  },
-  {
-    "description": "",
-    "name": "PHP_FPM_DP_INTERNAL_MAX_CHILDREN"
+    "name": "PHP_FPM_DP_AGENT_OVERRIDES"
   },
   {
     "description": "",
@@ -323,5 +307,13 @@
   {
     "description": "Dont perform email collection/processing as part of cron (i.e. indicates that email services are being used instead)",
     "name": "TASKS_DISABLE_EMAIL_IN_JOB"
+  },
+  {
+    "description": "Number of FPM pools for default services. Each pool has 5 children by default. Default is 4 pools.",
+    "name": "PHP_FPM_DP_DEFAULT_NUM_POOLS"
+  },
+  {
+    "description": "Number of FPM pools for endpoints used by agent/admin clients. Each pool has 5 children by default. Default is 6 pools.",
+    "name": "PHP_FPM_DP_AGENT_NUM_POOLS"
   }
 ]
