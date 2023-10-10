@@ -11,6 +11,7 @@
 backwards_compat_main() {
   bc_run_mode
   bc_var_renames
+  bc_pool_config
   bc_custom_php_config
   bc_deskpro_custom_config
   bc_deskpro_full_config_override
@@ -35,6 +36,24 @@ bc_var_renames() {
 
   bc_rename_container_var DESKPRO_APIURL_BASEURL_PRIVATE DESKPRO_API_BASE_URL_PRIVATE
   bc_rename_container_var DESKPRO_USE_TEST_SSL_CERT HTTP_USE_TESTING_CERTIFICATE
+}
+
+bc_pool_config() {
+  if [ -n "$PHP_FPM_DP_DEFAULT_MAX_CHILDREN" ]; then
+    (( result=(PHP_FPM_DP_DEFAULT_MAX_CHILDREN+5-1)/5 ))
+    export PHP_FPM_DP_DEFAULT_NUM_POOLS="$result"
+    boot_log_message DEBUG "[backwards-compat] PHP_FPM_DP_DEFAULT_NUM_POOLS=$PHP_FPM_DP_DEFAULT_NUM_POOLS (from PHP_FPM_DP_DEFAULT_MAX_CHILDREN=$PHP_FPM_DP_DEFAULT_MAX_CHILDREN)"
+    unset PHP_FPM_DP_DEFAULT_MAX_CHILDREN
+  fi
+
+  if [ -n "$PHP_FPM_DP_GQL_MAX_CHILDREN" ]; then
+    (( result=(PHP_FPM_DP_GQL_MAX_CHILDREN+5-1)/5 ))
+    export PHP_FPM_DP_AGENT_NUM_POOLS="$result"
+    boot_log_message DEBUG "[backwards-compat] PHP_FPM_DP_AGENT_NUM_POOLS=$PHP_FPM_DP_AGENT_NUM_POOLS (from PHP_FPM_DP_GQL_MAX_CHILDREN=$PHP_FPM_DP_GQL_MAX_CHILDREN)"
+    unset PHP_FPM_DP_GQL_MAX_CHILDREN
+  fi
+
+  bc_rename_container_var PHP_FPM_DP_GQL_OVERRIDES PHP_FPM_DP_AGENT_OVERRIDES
 }
 
 # Old container php.ini and php-fpm.conf config overrides
@@ -127,4 +146,4 @@ bc_rename_container_var() {
 }
 
 backwards_compat_main
-unset backwards_compat_main bc_run_mode bc_var_renames bc_custom_php_config bc_deskpro_custom_config bc_deskpro_full_config_override bc_rename_container_var
+unset backwards_compat_main bc_run_mode bc_var_renames bc_pool_config bc_custom_php_config bc_deskpro_custom_config bc_deskpro_full_config_override bc_rename_container_var
