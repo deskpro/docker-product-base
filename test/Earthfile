@@ -1,0 +1,86 @@
+VERSION 0.7
+FROM scratch
+
+# save-base-image saves the test image (that have all the test sources)
+# as deskpro/docker-product-base:test. Useful if you want to run the
+# image manually for some reason.
+#
+# Example usage:
+#  earthly +save-base-image
+#  docker run --rm -it deskpro/docker-product-base:test bash
+save-base-image:
+    FROM +base-image
+    SAVE IMAGE deskpro/docker-product-base:test
+
+# test runs all tests
+test:
+    BUILD +test-serverspec-web
+    BUILD +test-autoinstall
+    BUILD +test-automigrations
+
+# test-serverspec-web runs serverspec tests against the base image in web mode
+# with no customization options enabled. That is, these specs apply against
+# a pristine environment when not even basic conifg has been provided.
+test-serverspec-web:
+    FROM earthly/dind:alpine
+    WITH DOCKER --load deskpro/docker-product-base:test=+base-image
+        RUN docker run -d --name test deskpro/docker-product-base:test web \
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/always spec/default_web'
+    END
+
+# test-autoinstall checks the behaviour of AUTO_RUN_INSTALLER=true to ensure
+# the installer runs when it should, and that it doesn't run when it shouldn't.
+test-autoinstall:
+    FROM earthly/dind:alpine
+    # this test relies on simulating the installer based on a sentinel file
+    # that is cleared after the instsalation has run.
+    RUN mkdir /tmp/sim && touch /tmp/sim/needs-installer
+    WITH DOCKER --load deskpro/docker-product-base:test=+base-image
+        RUN \
+            # first run - simulate that the installer needs to run
+            docker run -d --name test \
+                -e AUTO_RUN_INSTALLER=true \
+                -v /tmp/sim:/run/sim \
+                deskpro/docker-product-base:test web \
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/autoinstall/01_installer_spec.rb' \
+            && docker stop test \
+            # second run - verify that the installer doesn't run again
+            && docker start test \
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/autoinstall/02_post_installer_spec.rb'
+    END
+
+# test-automigrations checks the behaviour of AUTO_RUN_MIGRATIONS=true to ensure
+# the installer runs when it should.
+test-automigrations:
+    FROM earthly/dind:alpine
+    # this test relies on simulating the installer based on a sentinel file
+    # that is cleared after the instsalation has run.
+    RUN mkdir /tmp/sim && touch /tmp/sim/needs-migrations
+    WITH DOCKER --load deskpro/docker-product-base:test=+base-image
+        RUN \
+            # first run - simulate that the migrations need to run
+            docker run -d --name test \
+                -e AUTO_RUN_MIGRATIONS=true \
+                -v /tmp/sim:/run/sim \
+                deskpro/docker-product-base:test web \
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/automigrations/01_migrations_spec.rb' \
+            && docker stop test \
+            # second run - verify that migrations doesn't run again
+            && docker start test \
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/automigrations/02_post_migrations_spec.rb'
+    END
+
+# Built on top of the product base image, this just adds test sources
+# and simulation sources used when testing various container features.
+base-image:
+    FROM ../+docker-product-base
+    RUN apk --no-cache add ruby && gem install bundler serverspec rake
+    ENV BOOT_LOG_LEVEL=TRACE
+    ENV BOOT_LOG_LEVEL_EXEC=TRACE
+    ENV HTTP_USE_TESTING_CERTIFICATE=true
+    COPY --dir serverspec /test/serverspec
+    COPY --dir simulate-release/* /srv/deskpro
+    RUN \
+        echo "true" > /run/is-container-test \
+        && cd /test/serverspec \
+        && bundler install

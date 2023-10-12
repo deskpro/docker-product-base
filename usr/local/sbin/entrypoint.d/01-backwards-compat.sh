@@ -43,7 +43,7 @@ bc_custom_php_config() {
   bc_rename_container_var FPM_APPEND PHP_FPM_POOL_OVERRIDES prepend
   bc_rename_container_var FPM_APPEND_DP_DEFAULT PHP_FPM_DP_DEFAULT_OVERRIDES prepend
   bc_rename_container_var FPM_APPEND_DP_BROADCASTER PHP_FPM_DP_BROADCASTER_OVERRIDES prepend
-  bc_rename_container_var FPM_APPEND_DP_GQL PHP_FPM_DP_BROADCASTER_OVERRIDES prepend
+  bc_rename_container_var FPM_APPEND_DP_GQL PHP_FPM_DP_GQL_OVERRIDES prepend
   bc_rename_container_var FPM_APPEND_DP_INTERNAL PHP_FPM_DP_INTERNAL_OVERRIDES prepend
 }
 

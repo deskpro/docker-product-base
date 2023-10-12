@@ -2,18 +2,25 @@
 
 usage() {
   echo "Usage: $0 [options]"
-  echo "Checks to see if the container is ready to start running tasks or requests."
-  echo "A return value of 0 means the container is ready, any other value is not ready."
+  echo "Checks to see if the container services have brought up and are ready."
+  echo
+  echo "This is not the same as the healthcheck utility which actually checks container health."
+  echo "is-ready only checks to see that services have actually started, and any automatic boot-time tasks"
+  echo "such as database migrations have completed."
+  echo
+  echo "In many cases, you may actually want to use the healthcheck utility instead of is-ready."
   echo
   echo "Options:"
-  echo " --wait        If not ready yet, block until the container is ready."
-  echo " --timeout     Used with --wait. The max time (seconds) to wait before giving up."
+  echo " --wait          If not ready yet, block until the container is ready."
+  echo " --timeout SECS  Used with --wait. The max time (seconds) to wait before giving up. Default: No timeout."
+  echo " --check-tasks   Check there are no post-boot tasks (such as auto-install or migrations) running. By default, the container is considered ready as soon as services are running but you may want to check that tasks have completed too."
   echo " -v, --verbose Enable verbose output (e.g. wait ticks)."
 }
 
 declare -i wait=0
 declare -i wait_timeout=31556952
 declare -i is_verbose=0
+declare -i check_tasks=0
 
 ready_file="/run/container-ready"
 
@@ -25,6 +32,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -v|--verbose)
       is_verbose=1
+      shift
+      ;;
+    --check-tasks)
+      check_tasks=1
       shift
       ;;
     --wait)
@@ -54,6 +65,18 @@ check_ready() {
     return 1
   fi
 
+  if [ "$check_tasks" = "1" ]; then
+    if [ -f "/run/container-running-installer" ]; then
+      output "Installer is running"
+      return 1
+    fi
+
+    if [ -f "/run/container-running-migrations" ]; then
+      output "Migrations are running"
+      return 1
+    fi
+  fi
+
   return 0
 }
 
@@ -69,7 +92,7 @@ if [ "$wait" -gt "0" ]; then
       exit 0
     fi
 
-    echo "Waiting ..."
+    output "Waiting ..."
     sleep 1
   done
 fi

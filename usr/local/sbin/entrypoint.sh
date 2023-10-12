@@ -37,6 +37,16 @@ export BOOT_LOG_LEVEL_EXEC="${BOOT_LOG_LEVEL_EXEC:-WARNING}"
 export CONTAINER_NAME="${CONTAINER_NAME:-$(hostname)}"
 
 main() {
+  # remove sentinel files that may be set from previous boots
+  # (normally set in container-ready.sh - we want to remove them here, early, because they are used in healthcheck)
+  rm -f /run/container-ready /run/container-running-installer /run/container-running-migrations
+
+  # move an old boot log if it exists (e.g. from a previous boot)
+  if [ -f /var/log/docker-boot.log ]; then
+    cat /var/log/docker-boot.log >> "/var/log/docker-boot.full.log"
+    rm /var/log/docker-boot.log
+  fi
+
   boot_log_message TRACE "--- STARTING DESKPRO CONTAINER ---"
 
   # If LOGS_EXPORT_DIR not explicitly set
@@ -102,12 +112,16 @@ main() {
   unset DOCKER_EXEC DOCKER_EXEC_ARGS DOCKER_CMD DOCKER_CMD_ARGS
 
   # store the fact that we've booted once (can be used to check if we're rebooting)
-  echo $(date -u +"%Y-%m-%dT%H:%M:%SZ") >> /run/container-booted
+  date -u +"%Y-%m-%dT%H:%M:%SZ" >> /run/container-booted
+  chmod 0644 /run/container-booted
 
   case "$l_docker_exec" in
     exec)
       boot_log_message INFO "Starting services"
       /usr/bin/supervisord --silent --configuration=/etc/supervisor/supervisord.conf
+
+      boot_log_message INFO "Waiting for is-ready"
+      is-ready --wait
 
       boot_log_message INFO "[run] Running: ${l_exec_args[*]}"
       set +o errexit
@@ -127,6 +141,9 @@ main() {
     bash)
       boot_log_message INFO "Starting services"
       /usr/bin/supervisord --silent --configuration=/etc/supervisor/supervisord.conf
+
+      boot_log_message INFO "Waiting for is-ready"
+      is-ready --wait
 
       boot_log_message INFO "[bash] Starting"
       set +o errexit

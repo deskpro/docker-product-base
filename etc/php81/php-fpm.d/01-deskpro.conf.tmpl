@@ -15,10 +15,8 @@ request_terminate_timeout_track_finished = yes
 security.limit_extensions = ".php"
 env[DP_FPM_POOL] = {{.}}
 php_admin_value[max_execution_time] = 60
-
-pm = dynamic
-pm.start_servers = 1
-pm.max_requests = 1000
+php_admin_value[display_errors] = Off
+php_admin_value[display_startup_errors] = Off
 {{- end -}}
 
 
@@ -29,76 +27,68 @@ log_level = {{ getenv "PHP_FPM_LOG_LEVEL" "notice" }}
 
 [dp_default]
 {{ template "pool_defaults" "dp_default" }}
-pm = dynamic
+pm = ondemand
 pm.max_children = {{ getenv "PHP_FPM_DP_DEFAULT_MAX_CHILDREN" "20" }}
-pm.start_servers = 2
-pm.min_spare_servers = 2
-pm.max_spare_servers = 20
+pm.process_idle_timeout = 15s
+pm.max_requests=1000
 {{ getenv "PHP_FPM_POOL_OVERRIDES" }}
 {{ getenv "PHP_FPM_DP_DEFAULT_OVERRIDES" }}
 
 
 [dp_internal]
 {{ template "pool_defaults" "dp_internal" }}
-pm = dynamic
+pm = ondemand
 pm.max_children = {{ getenv "PHP_FPM_DP_INTERNAL_MAX_CHILDREN" "1000" }}
-pm.start_servers = 5
-pm.min_spare_servers = 5
-pm.max_spare_servers = 30
+pm.process_idle_timeout = 15s
+pm.max_requests=1000
 {{ getenv "PHP_FPM_POOL_OVERRIDES" }}
 {{ getenv "PHP_FPM_DP_INTERNAL_OVERRIDES" }}
 
 
 [dp_gql]
 {{ template "pool_defaults" "dp_gql" }}
-pm = dynamic
+pm = ondemand
 pm.max_children = {{ getenv "PHP_FPM_DP_GQL_MAX_CHILDREN" "20" }}
-pm.start_servers = 5
-pm.min_spare_servers = 5
-pm.max_spare_servers = 20
-php_admin_value[disable_functions] = system, exec, shell_exec, passthru, phpinfo, show_source, highlight_file, popen, proc_open, fopen_with_path, dbase_open, move_uploaded_file, posix_mkfifo
+pm.process_idle_timeout = 15s
+pm.max_requests=1000
+php_admin_value[disable_functions] = system, exec, shell_exec, passthru, phpinfo, popen, proc_open, fopen_with_path, dbase_open, move_uploaded_file, posix_mkfifo
 {{ getenv "PHP_FPM_POOL_OVERRIDES" }}
 {{ getenv "PHP_FPM_DP_GQL_OVERRIDES" }}
 
 
 [dp_broadcaster]
 {{ template "pool_defaults" "dp_broadcaster" }}
-pm = dynamic
+pm = ondemand
 pm.max_children = {{ getenv "PHP_FPM_DP_BROADCASTER_MAX_CHILDREN" "1000" }}
-pm.start_servers = 5
-pm.min_spare_servers = 5
-pm.max_spare_servers = 30
+pm.process_idle_timeout = 5s
+pm.max_requests=200
 request_terminate_timeout = 65
 php_admin_value[max_execution_time] = 65
 php_admin_value[post_max_size] = 2M
 php_admin_flag[file_uploads] = false
 php_admin_value[max_input_time] = 10
-php_admin_value[disable_functions] = system, exec, shell_exec, passthru, phpinfo, show_source, highlight_file, popen, proc_open, fopen_with_path, dbase_open, move_uploaded_file, posix_mkfifo
+php_admin_value[disable_functions] = system, exec, shell_exec, passthru, phpinfo, popen, proc_open, fopen_with_path, dbase_open, move_uploaded_file, posix_mkfifo
 {{ getenv "PHP_FPM_POOL_OVERRIDES" }}
 {{ getenv "PHP_FPM_DP_BROADCASTER_OVERRIDES" }}
 
 
 {{if conv.ToBool (getenv "HTTP_INTERNAL_MODE" "false")}}
-; SVC_WEB_INTERNAL_MODE=true so we make all pools ondemand
-; because they are only relevant when called by a task
+; HTTP_INTERNAL_MODE=true so we make all pools ondemand
+; because they are only relevant internally when called by a CLI task / worker
 
 [dp_default]
 pm = ondemand
-pm.process_idle_timeout = 5s
 php_admin_value[opcache.enable]=0
 
 [dp_internal]
 pm = ondemand
-pm.process_idle_timeout = 5s
 php_admin_value[opcache.enable]=0
 
 [dp_gql]
 pm = ondemand
-pm.process_idle_timeout = 5s
 php_admin_value[opcache.enable]=0
 
 [dp_broadcaster]
 pm = ondemand
-pm.process_idle_timeout = 5s
 php_admin_value[opcache.enable]=0
 {{end}}

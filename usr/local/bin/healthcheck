@@ -1,0 +1,197 @@
+#!/bin/bash
+
+usage() {
+  echo "Usage: $0 [options]"
+  echo "Checks to see if the container is healthy and able to accept requests and perform tasks."
+  echo
+  echo "Options:"
+  echo " --wait           If not ready yet, block until the container is ready."
+  echo " --timeout SECS   Used with --wait. The max time (seconds) to wait before giving up. Default: No timeout."
+  echo
+  echo " --only           Disable all tests except those enabled after this flag"
+  echo " --ignore-env     Disable tests that were enabled via HEALTHCHECK_TEST_* environment variables"
+  echo
+  echo " --test-ready     (Default: on) Checks that the /run/container-ready file exists"
+  echo " --test-http      (Default: on) If http web service is running, then check that it is up and responding"
+  echo " --test-db        (Default: off) Check DB connection (also enable with HEALTHCHECK_TEST_DB_CONNECTION=true)"
+  echo " --test-discover  (Default: off) If nginx service is running, check Deskpro discover endpoint (also enable with HEALTHCHECK_TEST_DISCOVER=true)"
+  echo
+  echo "Any of the --test-* options can be disabled by specifying --no-test-*"
+}
+
+declare -i wait=0
+declare -i wait_timeout=31556952
+
+test_ready=true
+test_http=true
+test_db=$(container-var HEALTHCHECK_TEST_DB_CONNECTION)
+test_discover=$(container-var HEALTHCHECK_TEST_DISCOVER)
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --wait)
+      wait=1
+      shift
+      ;;
+    --timeout)
+      wait_timeout="$2"
+      shift
+      shift
+      ;;
+    --ignore-env)
+      test_db=false
+      test_discover=false
+      shift
+      ;;
+    --only)
+      test_ready=false
+      test_http=false
+      test_db=false
+      test_discover=false
+      shift
+      ;;
+    --test-db)
+      test_db=true
+      shift
+      ;;
+    --no-test-db)
+      test_db=false
+      shift
+      ;;
+    --test-ready)
+      test_ready=true
+      shift
+      ;;
+    --no-test-ready)
+      test_ready=false
+      shift
+      ;;
+    --test-http)
+      test_http=true
+      shift
+      ;;
+    --no-test-http)
+      test_http=false
+      shift
+      ;;
+    --test-discover)
+      test_discover=true
+      shift
+      ;;
+    --no-test-discover)
+      test_discover=false
+      shift
+      ;;
+    *)
+      # ignore
+      shift
+      ;;
+  esac
+done
+
+log_message() {
+  echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] $1"
+}
+
+run_checks() {
+  log_message "Running checks"
+
+  if [ -f "/run/sim/healthcheck-force-failure" ]; then
+    log_message "<RESULT:ready:FAIL> /run/sim/healthcheck-force-failure file is set"
+    return 1
+  fi
+
+  if [ "$test_ready" == "true" ]; then
+    log_message "<TEST:ready> /run status files"
+
+    # if we're running any container-ready tasks (installer, migrations)
+    # then consider this container healthy
+    if [ -f "/run/container-running-installer" ]; then
+      log_message "<RESULT:ready:OK> Installer is running - the container is considered healthy while this is happening"
+      return 0
+    fi
+
+    if [ -f "/run/container-running-migrations" ]; then
+      log_message "<RESULT:ready:OK> Migrations are running - the container is considered healthy while this is happening"
+      return 0
+    fi
+
+    # If the container isn't marked as "ready" yet, then it's unhealthy
+    # (note: default HEALTHCHECK has --start-period=30s grace period)
+    if [ ! -f "/run/container-ready" ]; then
+      log_message "<RESULT:ready:FAIL> Container is not ready yet"
+      return 1
+    fi
+
+    log_message "<RESULT:ready:OK> Container run status is ready"
+  fi
+
+  # otherwise, we just confirm the container can serve the discover endpoint
+  if [ "$(container-var SVC_NGINX_ENABLED)" == "true" ]; then
+    if [ "$test_http" == "true" ]; then
+      log_message "<TEST:http> Checking nginx status"
+      if ! curl -sS --fail-with-body -m 5 http://127.0.0.1:10001/nginx/status; then
+        log_message "<RESULT:http:FAIL> nginx status failed"
+        return 1
+      else
+        log_message "<RESULT:http:OK> nginx ok"
+      fi
+
+      log_message "<TEST:phpfpm> Checking FPM status"
+      if ! curl -sS --fail-with-body -m 5 http://127.0.0.1:10001/fpm/dp_default/status; then
+        log_message "<RESULT:phpfpm:FAIL> fpm status failed"
+        return 1
+      else
+        log_message "<RESULT:phpfpm:OK> fpm ok"
+      fi
+    fi
+
+    if [ "$test_discover" == "true" ]; then
+      log_message "<TEST:discover> Checking discover endpoint"
+      tempfile=$(mktemp)
+      status_code=$(curl -sS -m 5 http://127.0.0.1:80/api/v2/helpdesk/discover --write-out '%{http_code}' -o $tempfile)
+      cat $tempfile
+      echo
+      rm -f $tempfile
+
+      if [[ "$status_code" -eq 429 ]] ; then
+        log_message "<RESULT:discover:OK> Deskpro discover endpoint returned 429 (migrations pending). Container is considered healthy while this is happening."
+      elif [[ "$status_code" -gt 400 ]] ; then
+        log_message "<RESULT:discover:FAIL> Deskpro discover endpoint returned an error status $status_code"
+        return 1
+      else
+        log_message "<RESULT:discover:OK> Deskpro discover endpoint success"
+      fi
+    fi
+  fi
+
+  if [ "$test_db" == "true" ]; then
+    log_message "<TEST:dbconn> Checking DB connection"
+    if ! sudo -E -u dp_app -D /srv/deskpro php tools/fixtures/artisan test:wait-db --timeout 30; then
+      log_message "<RESULT:dbconn:FAIL> Failed to connect to DB"
+      return 1
+    else
+      log_message "<RESULT:dbcon:OK> DB connection ok"
+    fi
+  fi
+}
+
+for ((n=0;n<wait_timeout;n++)); do
+  if run_checks; then
+    log_message "Container is HEALTHY"
+    exit 0
+  elif [ "$wait" -eq "0" ]; then
+    log_message "Container is UNHEALTHY"
+    exit 1
+  fi
+
+  log_message "Waiting ..."
+  sleep 1
+done
+
+log_message "Container is UNHEALTHY and wait timeout has expired"
+exit 1

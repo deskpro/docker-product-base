@@ -3,7 +3,7 @@ command=/usr/sbin/nginx -g "daemon off;"
 autostart={{ getenv "SVC_NGINX_ENABLED" "false" | ternary "true" "false" }}
 autorestart=true
 exitcodes=0
-startsecs=3
+startsecs=1
 startretries=3
 redirect_stderr=true
 stdout_logfile=/var/log/supervisor/nginx.log
@@ -11,7 +11,7 @@ stdout_logfile_maxbytes=10000000
 stdout_logfile_backups=1
 {{if conv.ToBool (getenv "HTTP_INTERNAL_MODE") }}
 stopsignal=TERM
-stopwaitsecs=1
+stopwaitsecs=0
 {{else}}
 stopsignal=QUIT
 stopwaitsecs=60
@@ -22,7 +22,7 @@ command=/usr/sbin/php-fpm81 -F
 autostart={{ getenv "SVC_PHP_FPM_ENABLED" "false" | ternary "true" "false" }}
 autorestart=true
 exitcodes=0
-startsecs=3
+startsecs=1
 startretries=3
 redirect_stderr=true
 stdout_logfile=/var/log/supervisor/php_fpm.log
@@ -30,7 +30,7 @@ stdout_logfile_maxbytes=10000000
 stdout_logfile_backups=1
 {{if conv.ToBool (getenv "HTTP_INTERNAL_MODE") }}
 stopsignal=TERM
-stopwaitsecs=1
+stopwaitsecs=0
 {{else}}
 stopsignal=TERM
 stopwaitsecs=60

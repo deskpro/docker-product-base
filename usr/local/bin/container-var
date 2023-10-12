@@ -8,7 +8,7 @@ usage() {
   echo "  -r, --required  Exit with code 33 if the variable is not set. Note that empty is not the same as unset. An empty value is still set. Use --not-empty to check for empty values."
   echo "  -n, --not-empty Exit with code 34 if the variable is empty."
   echo "  -l <VALUE>, --default <VALUE> Use a default value if the variable is not set (making --required useless because there will always be a value). When used with --not-empty, an empty (but set) value will also get replaced with this default value instead of producing an error."
-  echo "  --no-env        Always read the value from /run/container-config (ignore current environment variable that may be set)"
+  echo "  --ignore-env    Always read the value from /run/container-config (ignore current environment variable that may be set)"
   echo "  --debug         Show debug info on stderr"
   echo "  -h, --help      Show this help"
 

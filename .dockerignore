@@ -1,7 +1,5 @@
 .git/
-test/
-scratch/
-docs/
+.scratch/
 
 .editorconfig
 .gitignore
