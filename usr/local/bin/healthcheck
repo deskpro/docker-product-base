@@ -171,11 +171,11 @@ run_checks() {
 
   if [ "$test_db" == "true" ]; then
     log_message "<TEST:dbconn> Checking DB connection"
-    if ! sudo -E -u dp_app -D /srv/deskpro php tools/fixtures/artisan test:wait-db --timeout 30; then
+    if ! sudo -E -u dp_app php /srv/deskpro/tools/fixtures/artisan test:wait-db --timeout 30; then
       log_message "<RESULT:dbconn:FAIL> Failed to connect to DB"
       return 1
     else
-      log_message "<RESULT:dbcon:OK> DB connection ok"
+      log_message "<RESULT:dbconn:OK> DB connection ok"
     fi
   fi
 }
