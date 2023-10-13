@@ -69,7 +69,7 @@ $CONFIG['elastic'] = [
     'verify_ssl' => false,
     'retries' => 3,
     'index_name' => {{ (getenv "DESKPRO_ES_INDEX_NAME" "deskpro") | squote }},
-    'tenant_id' => {{ (getenv "DESKPRO_ES_TENANT_ID" (getenv "DESKPRO_DB_NAME" "deskpro")) | squote }},
+    'tenant_id' => {{ (getenv "DESKPRO_ES_TENANT_ID" (printf (getenv "DESKPRO_ES_INDEX_NAME" "deskpro") "_tenant")) | squote }},
 ];
 
 #######################################################################
