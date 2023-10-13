@@ -1,17 +1,6 @@
 require 'spec_helper'
 require 'fileutils'
 
-def restore_run_state
-  FileUtils.touch('/run/container-ready')
-  FileUtils.remove_file('/run/container-running-installer', true)
-  FileUtils.remove_file('/run/container-running-migrations', true)
-  FileUtils.remove_file('/run/container-config/HEALTHCHECK_TEST_DISCOVER', true)
-  FileUtils.remove_file('/run/container-config/HEALTHCHECK_TEST_DB_CONNECTION', true)
-
-  ENV.delete('HEALTHCHECK_TEST_DISCOVER')
-  ENV.delete('HEALTHCHECK_TEST_DB_CONNECTION')
-end
-
 def parse_health_output(output)
   result = { :tests => [], :results => {} }
 
@@ -37,8 +26,26 @@ describe "Check behaviour of healthcheck utility" do
     system('/usr/local/bin/is-ready --check-tasks --wait --timeout 60 -v') or raise "is-ready failed"
   end
 
+  before(:each) do
+    FileUtils.touch('/run/container-ready')
+    FileUtils.remove_file('/run/container-running-installer', true)
+    FileUtils.remove_file('/run/container-running-migrations', true)
+    FileUtils.remove_file('/run/container-config/HEALTHCHECK_TEST_DISCOVER', true)
+    FileUtils.remove_file('/run/container-config/HEALTHCHECK_TEST_DB_CONNECTION', true)
+
+    ENV.delete('HEALTHCHECK_TEST_DISCOVER')
+    ENV.delete('HEALTHCHECK_TEST_DB_CONNECTION')
+  end
+
   after(:each) do
-    restore_run_state()
+    FileUtils.touch('/run/container-ready')
+    FileUtils.remove_file('/run/container-running-installer', true)
+    FileUtils.remove_file('/run/container-running-migrations', true)
+    FileUtils.remove_file('/run/container-config/HEALTHCHECK_TEST_DISCOVER', true)
+    FileUtils.remove_file('/run/container-config/HEALTHCHECK_TEST_DB_CONNECTION', true)
+
+    ENV.delete('HEALTHCHECK_TEST_DISCOVER')
+    ENV.delete('HEALTHCHECK_TEST_DB_CONNECTION')
   end
 
   # This suite (default_web) has web service running. So default

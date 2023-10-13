@@ -1,19 +1,15 @@
 require 'spec_helper'
 require 'fileutils'
 
-def restore_run_state
-  FileUtils.touch('/run/container-ready')
-  FileUtils.remove_file('/run/container-running-installer', true)
-  FileUtils.remove_file('/run/container-running-migrations', true)
-end
-
 describe "Check behaviour of is-ready utility" do
   before(:all) do
     system('is-ready --check-tasks --wait --timeout 60 -v') or raise "is-ready failed"
   end
 
   after(:each) do
-    restore_run_state()
+    FileUtils.touch('/run/container-ready')
+    FileUtils.remove_file('/run/container-running-installer', true)
+    FileUtils.remove_file('/run/container-running-migrations', true)
   end
 
   it "Blocks when using --wait", :slow do
