@@ -59,6 +59,8 @@ __VAL__,
 ];
 {{end}}
 
+{{$es_index_name:=(getenv "DESKPRO_ES_INDEX_NAME" "deskpro")}}
+{{$es_tenant_id:=(getenv "DESKPRO_ES_TENANT_ID" (getenv "DESKPRO_DB_NAME" "deskpro"))}}
 $CONFIG['elastic'] = [
     {{if getenv "DESKPRO_ES_URL"}}
     'hosts' => [{{ (getenv "DESKPRO_ES_URL") | squote }}],
@@ -68,8 +70,8 @@ $CONFIG['elastic'] = [
 
     'verify_ssl' => false,
     'retries' => 3,
-    'index_name' => {{ (getenv "DESKPRO_ES_INDEX_NAME" "deskpro") | squote }},
-    'tenant_id' => {{ (getenv "DESKPRO_ES_TENANT_ID" (printf (getenv "DESKPRO_ES_INDEX_NAME" "deskpro") "_tenant")) | squote }},
+    'index_name' => {{ $es_index_name | squote }},
+    'tenant_id' => {{ (printf "%s%s" $es_tenant_id (test.Ternary "_tenant" "" (eq $es_tenant_id $es_index_name))) | squote }},
 ];
 
 #######################################################################

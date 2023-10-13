@@ -15,6 +15,7 @@ save-base-image:
 # test runs all tests
 test:
     BUILD +test-serverspec-web
+    BUILD +test-serverspec-simple-cases
     BUILD +test-autoinstall
     BUILD +test-automigrations
 
@@ -30,6 +31,15 @@ test-serverspec-web:
             && docker start test \
             && echo "Run again to verify state after rebooting" \
             && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/always spec/default_web'
+    END
+
+# test-serverspec-simplecases runs serverspec tests against the base image in web mode
+# to test 'simple' test cases. These are cases that don't require any special setup.
+test-serverspec-simple-cases:
+    FROM earthly/dind:alpine
+    WITH DOCKER --load deskpro/docker-product-base:test=+base-image
+        RUN docker run -d --name test deskpro/docker-product-base:test web \
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/cases/simple'
     END
 
 # test-autoinstall checks the behaviour of AUTO_RUN_INSTALLER=true to ensure
