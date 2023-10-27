@@ -26,6 +26,11 @@ describe "Check default PHP and PHP-FPM configurations" do
     it { should exist }
   end
 
+  describe file('/etc/php/conf.d/02-otel.ini') do
+    it { should exist }
+    its(:content) { should match /To enable opentelemetry/ }
+  end
+
   describe php_config('date.timezone') do
     its(:value) { should eq 'UTC' }
   end

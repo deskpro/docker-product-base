@@ -94,6 +94,10 @@
     "name": "DESKPRO_DISABLE_TELEMETRY"
   },
   {
+    "description": "Enable OpenTelemetry tracing",
+    "name": "DESKPRO_ENABLE_OTEL"
+  },
+  {
     "description": "",
     "name": "DESKPRO_ENABLE_TEST_SUPPORT"
   },
