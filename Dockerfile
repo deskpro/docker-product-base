@@ -9,6 +9,8 @@ ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so
 ENV TZ=UTC
 
 RUN <<EOT
+    echo "@testing https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+
     apk --update --no-cache add \
         bash \
         ca-certificates \
@@ -44,6 +46,8 @@ RUN <<EOT
         php81-pcntl \
         php81-pdo \
         php81-pdo_mysql \
+        php81-pecl-opentelemetry@testing \
+        php81-pecl-protobuf \
         php81-phar \
         php81-posix \
         php81-session \
@@ -68,6 +72,7 @@ RUN <<EOT
 
     # Remove default configs because we will install our own
     rm -f /etc/php81/php.ini \
+        /etc/php81/conf.d/opentelemetry.ini \
         /etc/php81/php-fpm.d/www.conf \
         /etc/nginx/nginx.conf \
         /etc/nginx/fastcgi_params \

@@ -1,0 +1,16 @@
+{{if conv.ToBool (getenv "DESKPRO_ENABLE_OTEL" "false") }}
+# opentelemetry extension is enabled via DESKPRO_ENABLE_OTEL=true
+extension=opentelemetry
+{{else}}
+# To enable opentelemetry extension, set DESKPRO_ENABLE_OTEL=true
+# extension=opentelemetry
+{{end}}
+
+# Set env vars to configure the opentelemetry extension.
+# See https://opentelemetry.io/docs/concepts/sdk-configuration/
+#
+# Most common to set will be these three:
+#
+# OTEL_TRACES_EXPORTER=otlp
+# OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
+# OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf

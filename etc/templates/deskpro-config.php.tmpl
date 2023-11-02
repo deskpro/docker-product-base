@@ -331,6 +331,14 @@ $CONFIG['app_settings']['fixture_opts']['CustomSqlSeedDirs'][] = "/deskpro/insta
 $CONFIG['app_settings']['fixture_opts']['CustomSeederDirs'][] = "/deskpro/install/seeders.d";
 {{end}}
 
+//######################################################################
+// Open Telemetry
+//######################################################################
+
+$CONFIG['otel'] = [
+  'enabled' => {{ (getenv "DESKPRO_ENABLE_OTEL" "false") | conv.ToBool | ternary "true" "false" }},
+];
+
 #######################################################################
 # extensions
 #######################################################################
