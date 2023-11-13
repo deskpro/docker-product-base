@@ -9,8 +9,6 @@ ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so
 ENV TZ=UTC
 
 RUN <<EOT
-    echo "@testing https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
-
     apk --update --no-cache add \
         bash \
         ca-certificates \
@@ -46,7 +44,6 @@ RUN <<EOT
         php81-pcntl \
         php81-pdo \
         php81-pdo_mysql \
-        php81-pecl-opentelemetry@testing \
         php81-pecl-protobuf \
         php81-phar \
         php81-posix \
@@ -64,6 +61,8 @@ RUN <<EOT
         sudo \
         supervisor \
         tzdata
+
+    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community php81-pecl-opentelemetry
 
     cp /usr/share/zoneinfo/UTC /etc/localtime
 
