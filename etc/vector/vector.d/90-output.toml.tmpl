@@ -110,6 +110,12 @@ source = '''
     encoding.codec = "raw_message"
     encoding.timestamp_format = "rfc3339"
   {{end}}
+{{else if getenv "LOGS_EXPORT_CLOUDWATCH"}}
+[sinks.out_cloudwatch_logs]
+type = "aws_cloudwatch_logs"
+inputs = ["all_formatted"]
+group_name = "{{ getenv "LOGS_EXPORT_CLOUDWATCH_GROUP_NAME" }}"
+stream_name = "{{ getenv "LOGS_EXPORT_CLOUDWATCH_STREAM_NAME" "{{.app}}/{{.chan}}/{{.container_name}}" }}"
 {{else}}
 [sinks.out_docker]
 type = "console"
