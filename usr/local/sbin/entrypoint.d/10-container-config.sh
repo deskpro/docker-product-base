@@ -31,11 +31,6 @@ container_config_main() {
     # then that is not unset until 90-clean.sh (as a small micro-opt for gomplate)
     unset "${base_varname}_B64" "${base_varname}_B64_FILE" "${base_varname}_ESC" "${base_varname}_ESC_FILE"
   done < /usr/local/share/deskpro/container-public-var-list
-
-  # disable phar php ext
-  if [ -f /etc/php81/conf.d/01_phar.ini ]; then
-    mv /etc/php81/conf.d/01_phar.ini /etc/php81/conf.d/01_phar.ini.off
-  fi
 }
 
 

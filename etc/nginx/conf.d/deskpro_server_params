@@ -27,27 +27,27 @@ location / {
 
 location ^~ /sys/services/broadcaster/ {
     fastcgi_pass unix:/run/php_fpm_dp_broadcaster.sock;
-    include /etc/nginx/http.d/deskpro_fastcgi_params;
+    include /etc/nginx/conf.d/deskpro_fastcgi_params;
 }
 
 location ~ ^/(admin\-api|agent\-api|sys/services)/ {
     fastcgi_pass unix:/run/php_fpm_dp_gql.sock;
-    include /etc/nginx/http.d/deskpro_fastcgi_params;
+    include /etc/nginx/conf.d/deskpro_fastcgi_params;
 }
 
 location ^~ /sys/services/search-indexing/ {
     fastcgi_pass unix:/run/php_fpm_dp_internal.sock;
-    include /etc/nginx/http.d/deskpro_fastcgi_params;
+    include /etc/nginx/conf.d/deskpro_fastcgi_params;
 }
 
 location ^~ /api/ {
     fastcgi_pass $dpv5_api_backend;
-    include /etc/nginx/http.d/deskpro_fastcgi_params;
+    include /etc/nginx/conf.d/deskpro_fastcgi_params;
 }
 
 location ~ \.php$ {
     fastcgi_pass unix:/run/php_fpm_dp_default.sock;
-    include /etc/nginx/http.d/deskpro_fastcgi_params;
+    include /etc/nginx/conf.d/deskpro_fastcgi_params;
 }
 
 location ~ /assets/[a-zA-Z0-9_\-\.]+/(pub|web)/.*?$ {

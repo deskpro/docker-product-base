@@ -4,7 +4,11 @@ describe package('nginx') do
   it { should be_installed }
 end
 
-describe package('php81') do
+describe package('php8.1-cli') do
+  it { should be_installed }
+end
+
+describe package('php8.1-fpm') do
   it { should be_installed }
 end
 

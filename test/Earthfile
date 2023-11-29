@@ -88,7 +88,7 @@ test-automigrations:
 # and simulation sources used when testing various container features.
 base-image:
     FROM ../+docker-product-base
-    RUN apk --no-cache add ruby && gem install bundler serverspec rake
+    RUN DEBIAN_FRONTEND=noninteractive apt-get install -y ruby && gem install bundler serverspec rake
     ENV BOOT_LOG_LEVEL=TRACE
     ENV BOOT_LOG_LEVEL_EXEC=TRACE
     ENV HTTP_USE_TESTING_CERTIFICATE=true

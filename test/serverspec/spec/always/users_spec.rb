@@ -16,6 +16,6 @@ end
 
 describe user('nginx') do
   it { should exist }
-  it { should have_uid 100 }
+  it { should have_uid 1085 }
   it { should belong_to_primary_group 'nginx' }
 end

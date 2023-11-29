@@ -15,10 +15,11 @@ custom_configs_main() {
 # Install custom config files from .d dirs
 install_custom_config_dirs() {
   copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/deskpro-config.d" "/srv/deskpro/INSTANCE_DATA/deskpro-config.d"
-  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/nginx.d" "/etc/nginx/http.d"
+  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/nginx.d" "/etc/nginx/conf.d"
   copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/vector.d" "/etc/vector/vector.d"
-  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/php-fpm.d" "/etc/php/php-fpm.d"
-  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/php.d" "/etc/php/conf.d"
+  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/php-fpm.d" "/etc/php/8.1/fpm/pool.d"
+  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/php.d" "/etc/php/8.1/fpm/conf.d"
+  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/php.d" "/etc/php/8.1/cli/conf.d"
 }
 
 # Install the "base" deskpro config file.
