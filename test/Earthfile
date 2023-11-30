@@ -16,6 +16,7 @@ save-base-image:
 test:
     BUILD +test-serverspec-web
     BUILD +test-serverspec-simple-cases
+    BUILD +test-custom-configs
     BUILD +test-autoinstall
     BUILD +test-automigrations
 
@@ -82,6 +83,23 @@ test-automigrations:
             # second run - verify that migrations doesn't run again
             && docker start test \
             && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/automigrations/02_post_migrations_spec.rb'
+    END
+
+# test-custom-configs checks the behaviour of mounting custom config files via /deskpro/config/ dirs.
+test-custom-configs:
+    FROM earthly/dind:alpine
+    COPY --dir serverspec/spec/scenarios/custom_configs/deskpro_dir /tmp/deskpro-dir
+    WITH DOCKER --load deskpro/docker-product-base:test=+base-image
+        RUN \
+            # first run - simulate that the migrations need to run
+            docker run -d --name test \
+                -v /tmp/deskpro-dir:/deskpro \
+                deskpro/docker-product-base:test web \
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/custom_configs/01_custom_configs_spec.rb' \
+            && docker stop test \
+            && rm /tmp/deskpro-dir/config/php.d/* \
+            && docker start test \
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/custom_configs/02_custom_configs_removed_spec.rb'
     END
 
 # Built on top of the product base image, this just adds test sources
