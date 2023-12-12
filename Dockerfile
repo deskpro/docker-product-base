@@ -71,7 +71,7 @@ COPY --link --from=builder-php-exts /usr/lib/php/20210902/opentelemetry.so /usr/
 COPY --link --from=hairyhenderson/gomplate:v3.11.5 /gomplate /usr/local/bin/gomplate
 COPY --link --from=composer:2.5.8 /usr/bin/composer /usr/local/bin/composer
 COPY --link --from=timberio/vector:0.31.0-debian /usr/bin/vector /usr/local/bin/vector
-COPY --link --from=oven/bun:1.0.14-debian /usr/local/bin/bun /usr/local/bin/bun
+COPY --link --from=oven/bun:1.0.16-debian /usr/local/bin/bun /usr/local/bin/bun
 
 COPY --from=node:18.19-bookworm /usr/local/bin /usr/local/bin
 COPY --from=node:18.19-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
