@@ -7,6 +7,24 @@
 #######################################################################
 
 custom_configs_main() {
+  if [ -f /run/container-booted ] && [ -f /run/custom-configs-installed ]; then
+    # if this is a reboot then we want to clear any custom config files we
+    # copied the previous time in case they were deleted from the host system
+    while read f; do
+      if [ -f "$f" ]; then
+        boot_log_message TRACE "Removing custom config from previous boot: $f"
+        rm -f "$f"
+        if [[ $f == *.tmpl ]]; then
+          # if this is a template file then we need to remove the compiled version too
+          rm -f "${f%.tmpl}"
+        fi
+      fi
+    done </run/custom-configs-installed
+  fi
+
+  echo "" > /run/custom-configs-installed
+  chmod 0700 /run/custom-configs-installed
+
   install_custom_config_dirs
   install_deskpro_config_raw_php
   install_deskpro_config_file
@@ -15,10 +33,11 @@ custom_configs_main() {
 # Install custom config files from .d dirs
 install_custom_config_dirs() {
   copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/deskpro-config.d" "/srv/deskpro/INSTANCE_DATA/deskpro-config.d"
-  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/nginx.d" "/etc/nginx/http.d"
+  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/nginx.d" "/etc/nginx/conf.d"
   copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/vector.d" "/etc/vector/vector.d"
-  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/php-fpm.d" "/etc/php/php-fpm.d"
-  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/php.d" "/etc/php/conf.d"
+  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/php-fpm.d" "/etc/php/8.1/fpm/pool.d"
+  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/php.d" "/etc/php/8.1/fpm/conf.d"
+  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/php.d" "/etc/php/8.1/cli/conf.d"
 }
 
 # Install the "base" deskpro config file.
@@ -55,6 +74,7 @@ install_deskpro_config_raw_php() {
   printf '<?php\n%s\n' "$DESKPRO_CONFIG_RAW_PHP" > "/srv/deskpro/INSTANCE_DATA/deskpro-config.d/DESKPRO_CONFIG_RAW_PHP.php"
   chown root:root "/srv/deskpro/INSTANCE_DATA/$fname"
   chmod 0644 "/srv/deskpro/INSTANCE_DATA/$fname"
+  echo "/srv/deskpro/INSTANCE_DATA/deskpro-config.d/DESKPRO_CONFIG_RAW_PHP.php" >> /run/custom-configs-installed
 }
 
 #######################################################################
@@ -79,6 +99,8 @@ copy_custom_config_dir() {
     cp "$f" "$tofile"
     chown root:root "$tofile"
     chmod 0644 "$tofile"
+    echo "$tofile" >> /run/custom-configs-installed
+    boot_log_message TRACE "Installing custom config: $f -> $tofile"
   done
 }
 

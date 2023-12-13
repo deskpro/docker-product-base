@@ -15,7 +15,7 @@ server {
       real_ip_header {{ getenv "HTTP_USER_REAL_IP_HEADER" }};
     {{end}}
 
-    include /etc/nginx/http.d/deskpro_server_params;
+    include /etc/nginx/conf.d/deskpro_server_params;
 }
 
 server {
@@ -33,5 +33,5 @@ server {
       real_ip_header proxy_protocol;
     {{end}}
 
-    include /etc/nginx/http.d/deskpro_server_params;
+    include /etc/nginx/conf.d/deskpro_server_params;
 }
