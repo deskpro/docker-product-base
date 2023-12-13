@@ -116,6 +116,8 @@ type = "aws_cloudwatch_logs"
 inputs = ["all_formatted"]
 group_name = "{{ getenv "LOGS_EXPORT_CLOUDWATCH_GROUP_NAME" }}"
 stream_name = "{{ getenv "LOGS_EXPORT_CLOUDWATCH_STREAM_NAME" "{{.app}}/{{.chan}}/{{.container_name}}" }}"
+encoding.codec = "raw_message"
+encoding.timestamp_format = "rfc3339"
 {{else}}
 [sinks.out_docker]
 type = "console"
