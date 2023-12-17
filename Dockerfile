@@ -73,6 +73,9 @@ COPY --link --from=composer:2.5.8 /usr/bin/composer /usr/local/bin/composer
 COPY --link --from=timberio/vector:0.31.0-debian /usr/bin/vector /usr/local/bin/vector
 COPY --link --from=oven/bun:1.0.14-debian /usr/local/bin/bun /usr/local/bin/bun
 
+COPY --from=node:18.19 /usr/local/bin /usr/local/bin
+COPY --from=node:18.19 /usr/local/lib/node_modules /usr/local/lib/node_modules
+
 RUN <<EOT
     set -e
 
