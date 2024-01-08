@@ -1,5 +1,5 @@
 [program:svc_messenger_api]
-command=/srv/deskpro/services/messenger-api/bin/start.sh
+command=/srv/deskpro/services/messenger-api/bin/start
 autostart={{ and (getenv "SVC_PHP_FPM_ENABLED" "false") (getenv "SVC_MESSENGER_ENABLED" "false") }}
 autorestart=true
 exitcodes=0
