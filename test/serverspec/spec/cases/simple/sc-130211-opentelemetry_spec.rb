@@ -6,17 +6,17 @@ describe "Case SC-130211: Enable OTEL" do
   end
 
   after(:all) do
-    FileUtils.remove_file('/etc/php81/conf.d/zzz-test.ini', true)
+    FileUtils.remove_file('/etc/php/8.1/cli/conf.d/zzz-test.ini', true)
     ENV.delete('DESKPRO_ENABLE_OTEL')
   end
 
   it "DESKPRO_ENABLE_OTEL should activate opentelemetry extension" do
     ENV['DESKPRO_ENABLE_OTEL'] = 'true'
 
-    output = `eval-tpl -f /etc/php81/conf.d/02-otel.ini.tmpl`
+    output = `eval-tpl -f /etc/php/8.1/mods-available/deskpro-otel.ini.tmpl`
     expect(output).to contain "opentelemetry extension is enabled"
 
-    `eval-tpl -f /etc/php81/conf.d/02-otel.ini.tmpl > /etc/php81/conf.d/zzz-test.ini`
+    `eval-tpl -f /etc/php/8.1/mods-available/deskpro-otel.ini.tmpl > /etc/php/8.1/cli/conf.d/zzz-test.ini`
     output = `php --ri opentelemetry`
     expect(output).to contain "opentelemetry hooks => enabled"
   end

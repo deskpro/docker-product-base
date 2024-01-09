@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe file('/etc/php') do
+describe file('/etc/php/8.1') do
   it { should exist }
   it { should be_directory }
 end
