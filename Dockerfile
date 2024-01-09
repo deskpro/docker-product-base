@@ -75,6 +75,7 @@ COPY --link --from=oven/bun:1.0.14-debian /usr/local/bin/bun /usr/local/bin/bun
 
 COPY --from=node:18.19 /usr/local/bin /usr/local/bin
 COPY --from=node:18.19 /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN npm install --global tsx
 
 RUN <<EOT
     set -e
