@@ -284,6 +284,19 @@ $CONFIG['twitter'] = [
 $CONFIG['api_urls']['base_url_private'] = {{ (getenv "DESKPRO_API_BASE_URL_PRIVATE" "http://127.0.0.1:80") | squote }};
 
 #######################################################################
+# services
+#######################################################################
+$CONFIG['services'] = [];
+
+{{if getenv "SVC_MESSENGER_ENABLED"}}
+$CONFIG['services'] = [
+    'deskpro-messenger' => [
+        'base_url' => {{ (getenv "SVC_MESSENGER_BASE_URL" "http://127.0.0.1:25000") | squote }},
+    ]
+];
+{{end}}
+
+#######################################################################
 # testing components
 #######################################################################
 
