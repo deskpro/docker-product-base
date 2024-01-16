@@ -1,91 +1,99 @@
-# syntax=docker/dockerfile:1
-FROM alpine:3.18
+FROM debian:12.2-slim as builder-php-exts
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install ca-certificates apt-transport-https software-properties-common curl lsb-release -y \
+    && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
+    && sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --no-install-suggests -y \
+        make \
+        php8.1-cli \
+        php8.1-dev \
+        php8.1-common \
+        php8.1-xml \
+        php-pear \
+    && pecl install opentelemetry protobuf
+    # outputs: /usr/lib/php/20210902/protobuf.so
+    # outputs: /usr/lib/php/20210902/opentelemetry.so
+
+FROM debian:12.2-slim
+ENV TZ=UTC
 WORKDIR /srv/deskpro
 USER root
 
-ENV LANG en_US.UTF-8
-ENV LC_ALL en_US.UTF-8
-ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so
-ENV TZ=UTC
-
-RUN <<EOT
-    apk --update --no-cache add \
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install ca-certificates apt-transport-https software-properties-common curl lsb-release -y \
+    && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
+    && sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --no-install-suggests -y \
         bash \
-        ca-certificates \
-        coreutils \
+        bc \
         curl \
-        fcgi \
-        findutils \
-        gnu-libiconv \
-        iproute2 \
-        iproute2-ss \
+        default-mysql-client \
+        git \
         jq \
-        mariadb-client \
-        mariadb-connector-c \
+        libfcgi-bin \
         nano \
+        neovim \
         nginx \
         openssl \
-        php81 \
-        php81-common \
-        php81-ctype \
-        php81-curl \
-        php81-dom \
-        php81-fileinfo \
-        php81-fpm \
-        php81-gd \
-        php81-iconv \
-        php81-imap \
-        php81-intl \
-        php81-ldap \
-        php81-mbstring \
-        php81-mysqlnd \
-        php81-opcache \
-        php81-openssl \
-        php81-pcntl \
-        php81-pdo \
-        php81-pdo_mysql \
-        php81-pecl-protobuf \
-        php81-phar \
-        php81-posix \
-        php81-session \
-        php81-simplexml \
-        php81-soap \
-        php81-sockets \
-        php81-sodium \
-        php81-tokenizer \
-        php81-xml \
-        php81-xmlwriter \
-        php81-zip \
+        php8.1-cli \
+        php8.1-common \
+        php8.1-ctype \
+        php8.1-curl \
+        php8.1-dev \
+        php8.1-dom \
+        php8.1-fileinfo \
+        php8.1-fpm \
+        php8.1-gd \
+        php8.1-iconv \
+        php8.1-imap \
+        php8.1-intl \
+        php8.1-ldap \
+        php8.1-mbstring \
+        php8.1-mysqlnd \
+        php8.1-opcache \
+        php8.1-soap \
+        php8.1-xml \
+        php8.1-zip \
+        pigz \
         ripgrep \
         rsync \
         sudo \
         supervisor \
-        tzdata
+        tmux \
+        tzdata \
+    && find /usr/lib/python3.11 -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
-    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community php81-pecl-opentelemetry
-
-    cp /usr/share/zoneinfo/UTC /etc/localtime
-
-    # removes python bytecode files (saves some disk space)
-    find /usr/lib/python3.11 -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
-
-    # Remove default configs because we will install our own
-    rm -f /etc/php81/php.ini \
-        /etc/php81/conf.d/opentelemetry.ini \
-        /etc/php81/php-fpm.d/www.conf \
-        /etc/nginx/nginx.conf \
-        /etc/nginx/fastcgi_params \
-        /etc/nginx/http.d/default.conf \
-        /etc/nginx/scgi_params \
-        /etc/nginx/uwsgi_params \
-        /etc/nginx/fastcgi.conf \
-        /etc/supervisord.conf
-    rmdir /etc/nginx/modules
-EOT
+COPY --link --from=builder-php-exts /usr/lib/php/20210902/protobuf.so /usr/lib/php/20210902/protobuf.so
+COPY --link --from=builder-php-exts /usr/lib/php/20210902/opentelemetry.so /usr/lib/php/20210902/opentelemetry.so
 
 COPY --link --from=hairyhenderson/gomplate:v3.11.5 /gomplate /usr/local/bin/gomplate
 COPY --link --from=composer:2.5.8 /usr/bin/composer /usr/local/bin/composer
-COPY --link --from=timberio/vector:0.31.0-alpine /usr/local/bin/vector /usr/local/bin/vector
+COPY --link --from=timberio/vector:0.31.0-debian /usr/bin/vector /usr/local/bin/vector
+COPY --link --from=oven/bun:1.0.14-debian /usr/local/bin/bun /usr/local/bin/bun
+
+COPY --from=node:18.19-bookworm /usr/local/bin /usr/local/bin
+COPY --from=node:18.19-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN npm install --global tsx
+
+RUN <<EOT
+    set -e
+
+    printf '; priority=20\nextension=protobuf.so' > /etc/php/8.1/mods-available/protobuf.ini
+    printf '; priority=90\n; placeholder' > /etc/php/8.1/mods-available/deskpro.ini
+    printf '; priority=90\n; placeholder' > /etc/php/8.1/mods-available/deskpro-otel.ini
+    phpenmod protobuf deskpro
+    phpdismod phar
+    rm /etc/php/8.1/fpm/pool.d/www.conf
+
+    # we have our own config - we totally replace the defaults
+    mv /etc/nginx/mime.types /tmp/mime.types
+    rm -rf /etc/nginx
+    mkdir -p /etc/nginx/conf.d
+    chmod 0755 /etc/nginx /etc/nginx/conf.d
+    mv /tmp/mime.types /etc/nginx
+EOT
 
 COPY --link etc /etc/
 COPY --link usr/local/bin /usr/local/bin/
@@ -94,20 +102,22 @@ COPY --link usr/local/sbin /usr/local/sbin/
 COPY --link usr/local/share/deskpro /usr/local/share/deskpro/
 
 RUN <<EOT
-    ln -s /etc/php81 /etc/php
-    ln -s /usr/sbin/php-fpm81 /usr/sbin/php-fpm
+    set -e
 
     # dp_app user is used when we run any app code (e.g. php-fpm, CLI tasks, etc)
-    addgroup -S -g 1083 dp_app
-    adduser -S -D -H -s /bin/false -u 1083 -G dp_app dp_app
+    addgroup --gid 1083 dp_app
+    adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1083 --gid 1083 dp_app
 
     # vector user for logs is added to adm group so it can read logs
-    adduser -S -D -H -s /bin/false -u 1084 -G adm vector
+    adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1084 --ingroup adm vector
+
+    # we run nginx as its own user
+    addgroup --gid 1085 nginx
+    adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1085 --gid 1085 nginx
 
     # initialize dirs and owners
     mkdir -p /var/log/nginx /var/log/php /var/log/deskpro /var/log/supervisor /var/lib/vector
     mkdir -p /srv/deskpro/INSTANCE_DATA/deskpro-config.d
-    rm -rf /var/log/php81
     chown root:root /usr/local/bin/vector
     chown vector:adm /var/lib/vector
     chown nginx:adm /var/log/nginx
