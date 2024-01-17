@@ -39,13 +39,19 @@ test-serverspec-web:
 # TODO - currently just runs same as +test-serverspec-web but in opc mode
 test-serverspec-opc:
     FROM earthly/dind:alpine
+    COPY --dir serverspec/spec/scenarios/bc_opc_2_8/deskpro_dir /tmp/deskpro_dir
+    COPY --dir serverspec/spec/scenarios/bc_opc_2_8/test_helper_tools /tmp/test_helper_tools
     WITH DOCKER --load deskpro/docker-product-base:test=+base-image
-        RUN docker run -d --name test -e DESKPRO_OPC_WEBGUI_BASEURL=http://localhost:29443 deskpro/docker-product-base:test web \
-            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/always spec/default_web' \
+        RUN docker run -d --name test \
+            -e DESKPRO_OPC_WEBGUI_BASEURL=http://localhost:29443 \
+            -v /tmp/deskpro_dir:/deskpro \
+            -v /tmp/test_helper_tools:/test_helper_tools \
+            deskpro/docker-product-base:test web \
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/bc_opc_2_8/01_opc_bc.rb' \
             && docker stop test \
             && docker start test \
             && echo "Run again to verify state after rebooting" \
-            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/always spec/default_web'
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/always spec/default_web spec/scenarios/bc_opc_2_8/01_opc_bc.rb'
     END
 
 # test-serverspec-simplecases runs serverspec tests against the base image in web mode

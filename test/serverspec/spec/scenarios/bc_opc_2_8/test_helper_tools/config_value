@@ -1,0 +1,29 @@
+#!/usr/bin/php
+<?php
+
+function getFromKeyPath(array $array, array|string $keys): mixed {
+    if (is_string($keys)) {
+        $keys = explode('/', $keys);
+    }
+
+    foreach ($keys as $index => $key) {
+        if (!key_exists($key, $array)) {
+            echo "key $key not found at level index $index";
+            exit(1);
+        }
+        $array = $array[$key];
+    }
+
+    return $array;
+}
+
+require('/srv/deskpro/INSTANCE_DATA/config.php');
+$value = getFromKeyPath($CONFIG, $argv[1] ?? '_no_key_provided_');
+
+if (is_scalar($value)) {
+  echo $value;
+} else {
+  echo json_encode($value, JSON_PRETTY_PRINT);
+}
+
+echo "\n";
