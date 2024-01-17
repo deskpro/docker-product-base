@@ -15,6 +15,7 @@ save-base-image:
 # test runs all tests
 test:
     BUILD +test-serverspec-web
+    BUILD +test-serverspec-opc
     BUILD +test-serverspec-simple-cases
     BUILD +test-custom-configs
     BUILD +test-autoinstall
@@ -27,6 +28,19 @@ test-serverspec-web:
     FROM earthly/dind:alpine
     WITH DOCKER --load deskpro/docker-product-base:test=+base-image
         RUN docker run -d --name test deskpro/docker-product-base:test web \
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/always spec/default_web' \
+            && docker stop test \
+            && docker start test \
+            && echo "Run again to verify state after rebooting" \
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/always spec/default_web'
+    END
+
+# test-serverspec-opc runs opc specific tests
+# TODO - currently just runs same as +test-serverspec-web but in opc mode
+test-serverspec-opc:
+    FROM earthly/dind:alpine
+    WITH DOCKER --load deskpro/docker-product-base:test=+base-image
+        RUN docker run -d --name test -e DESKPRO_OPC_WEBGUI_BASEURL=http://localhost:29443 deskpro/docker-product-base:test web \
             && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/always spec/default_web' \
             && docker stop test \
             && docker start test \
