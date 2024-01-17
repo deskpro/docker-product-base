@@ -12,7 +12,7 @@ if (!function_exists('_opc_load_old_config_file')) {
       static $opcConfig = null;
 
       if ($opcConfig === null) {
-        $opcConfigFile = getenv('CUSTOM_MOUNT_BASEDIR').'/config/deskpro-config.php';
+        $opcConfigFile = '{{ getenv "CUSTOM_MOUNT_BASEDIR" }}/config/deskpro-config.php';
         if (file_exists($opcConfigFile)) {
           // include the other config file
           // (the values will be scoped to this function so we don't mix it with real config)
@@ -52,6 +52,10 @@ if ($opcConfig['settings'] ?? false) {
 
 if ($opcConfig['app_settings'] ?? false) {
   $CONFIG['app_settings'] = array_merge($CONFIG['app_settings'] ?? [], $opcConfig['app_settings']);
+}
+
+if ($opcConfig['app_key'] ?? false) {
+  $CONFIG['app_key'] = $opcConfig['app_key'];
 }
 
 if ($opcConfig['license_code'] ?? false) {
