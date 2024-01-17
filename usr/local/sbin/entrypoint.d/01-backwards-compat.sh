@@ -71,7 +71,7 @@ bc_deskpro_custom_config() {
 # Old container would check for a file named deskpro-config.php and use it
 # as the base config file. New container does this by the DESKPRO_CONFIG_FILE variable instead.
 bc_deskpro_full_config_override() {
-  if [ "$DESKPRO_CONFIG_FILE" != "/etc/templates/deskpro-config.php.tmpl" ]; then
+  if [ "$DESKPRO_CONFIG_FILE" != "/usr/local/share/deskpro/templates/deskpro-config.php.tmpl" ]; then
     # dont do bc check if DESKPRO_CONFIG_FILE is already non-default
     # because it means its aleady been overriden explicitly
     return
