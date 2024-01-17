@@ -73,7 +73,7 @@ bc_opc_2_8() {
   fi
 
   boot_log_message DEBUG "[bc_opc_2_8] Linking /run/php-fpm/dp_default.sock -> /run/php_fpm_dp_default.sock"
-  mkdir /run/php-fpm
+  mkdir -p /run/php-fpm
   ln -sf /run/php_fpm_dp_default.sock /run/php-fpm/dp_default.sock
 
   for pool in "dp_broadcaster" "dp_default" "dp_gql" "dp_internal"; do
