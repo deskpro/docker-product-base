@@ -229,6 +229,14 @@ clean_env() {
       unset "${varname}"
     fi
   done < /usr/local/share/deskpro/container-private-var-list
+
+  # setenv vars - these are vars that must stay in the env as actual env vars
+  while read -r varname; do
+    local value=$(container-var "$varname")
+    if [ -z "$value" ]; then
+      declare -gx "${varname}"="$value"
+    fi
+  done < /usr/local/share/deskpro/container-setenv-var-list
 }
 
 #######################################################################

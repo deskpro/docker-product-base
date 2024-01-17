@@ -27,6 +27,8 @@ opc_main() {
   export HTTP_USER_REAL_HOST_HEADER="X-Forwarded-Host"
   export HTTP_USER_REAL_PORT_HEADER="X-Forwarded-Port"
 
+  export DESKPRO_TENANT_ID="$DESKPRO_INST_UUID"
+
   boot_log_message INFO "[opc] Installing /srv/deskpro/INSTANCE_DATA/deskpro-config.d/01-deskpro-opc.php"
   cp /usr/local/sbin/entrypoint.d/helpers/01-deskpro-opc.php.tmpl /srv/deskpro/INSTANCE_DATA/deskpro-config.d/01-deskpro-opc.php.tmpl
 

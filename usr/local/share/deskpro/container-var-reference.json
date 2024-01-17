@@ -24,12 +24,18 @@
     "name": "DESKPRO_API_BASE_URL_PRIVATE"
   },
   {
-    "description": "",
+    "description": "App key used internally for signing (single-tenant value)",
     "name": "DESKPRO_APP_KEY"
   },
   {
     "description": "",
     "name": "DESKPRO_BLOBS_PATH"
+  },
+  {
+    "description": "True to make the app behave in 'cloud mode' - i.e. multi-tenant use.",
+    "name": "DESKPRO_CLOUD_MODE",
+    "type": "boolean",
+    "setEnv": true
   },
   {
     "description": "",
@@ -146,12 +152,51 @@
     "name": "DESKPRO_SENTRY_FRONTEND_DSN"
   },
   {
+    "description": "When using DESKPRO_SITE_INFO_SOURCE, set this to true if the site info is base64 encoded.",
+    "name": "DESKPRO_SITE_INFO_BASE64",
+    "type": "string",
+    "setEnv": true
+  },
+  {
+    "description": "When DESKPRO_SITE_INFO_SOURCE=env, this is env variable that contains the site info.",
+    "name": "DESKPRO_SITE_INFO_ENV_KEY",
+    "type": "string",
+    "setEnv": true
+  },
+  {
+    "description": "When DESKPRO_SITE_INFO_FILE=file, this is file that contains the site info.",
+    "name": "DESKPRO_SITE_INFO_FILE",
+    "type": "string",
+    "setEnv": true
+  },
+  {
+    "description": "When DESKPRO_SITE_INFO_SOURCE=httpheader, this is the header that contains the site info.",
+    "name": "DESKPRO_SITE_INFO_HEADER_NAME",
+    "type": "string",
+    "setEnv": true
+  },
+  {
+    "description": "One of: httpheader, file, env",
+    "name": "DESKPRO_SITE_INFO_SOURCE",
+    "type": "string",
+    "setEnv": true
+  },
+  {
     "description": "",
     "name": "DESKPRO_STORAGE_SETTINGS"
   },
   {
     "description": "",
     "name": "DESKPRO_STORAGE_TYPE"
+  },
+  {
+    "description": "Similar to DESKPRO_APP_KEY but can be used for multi-tenant services that need secrets before a tenant context is available.",
+    "name": "DESKPRO_SVC_KEY"
+  },
+  {
+    "name": "DESKPRO_TENANT_ID",
+    "type": "string",
+    "description": "An ID given to this instance of Deskpro. (Single-tenant value)"
   },
   {
     "description": "",
