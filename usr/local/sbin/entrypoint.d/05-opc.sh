@@ -5,11 +5,16 @@
 #######################################################################
 
 opc_main() {
-  # if this is OPC and we dont have a config version
-  # then guess that it's 2.8.0, though it could be lower
-  if [ -n "$DESKPRO_OPC_WEBGUI_BASEURL" ] && [ -z "$OPC_VERSION" ]; then
+  # 'web' task in the docker-compose file defines DESKPRO_OPC_WEBGUI_BASEURL
+  if [ -z "$OPC_VERSION" ] && [ -n "$DESKPRO_OPC_WEBGUI_BASEURL" ]; then
     export OPC_VERSION=2.8.0
-    boot_log_message DEBUG "[opc] Detected old OPC version, assuming 2.8.0"
+    boot_log_message TRACE "[opc] OPC_VERSION unset but DESKPRO_OPC_WEBGUI_BASEURL is set - assuming OPC 2.8.0"
+  fi
+
+  # 'tasks' task in the docker-compose file defines DESKPRO_VAR_PATH and CRON_LOG_FILE
+  if [ -z "$OPC_VERSION" ] && [ -n "$DESKPRO_VAR_PATH" ] && [ -n "$CRON_LOG_FILE" ]; then
+    export OPC_VERSION=2.8.0
+    boot_log_message TRACE "[opc] OPC_VERSION unset but DESKPRO_VAR_PATH and CRON_LOG_FILE is set - assuming OPC 2.8.0"
   fi
 
   # These routines dont apply if not opc
