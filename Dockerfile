@@ -132,6 +132,7 @@ RUN <<EOT
     # (these lists are used from various helper scripts or entrypoint scripts)
     jq -r '.[] | select(.isPrivate|not) | .name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-public-var-list
     jq -r '.[] | select(.isPrivate) | .name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-private-var-list
+    jq -r '.[] | select(.setEnv) | .name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-setenv-var-list
     jq -r '.[].name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-var-list
     chmod 644 /usr/local/share/deskpro/*
 EOT
@@ -154,7 +155,7 @@ EXPOSE 10001/tcp
 ENV CUSTOM_MOUNT_BASEDIR "/deskpro"
 
 # The base config file to use
-ENV DESKPRO_CONFIG_FILE "/etc/templates/deskpro-config.php.tmpl"
+ENV DESKPRO_CONFIG_FILE "/usr/local/share/deskpro/templates/deskpro-config.php.tmpl"
 
 # Log level for entrypoint scripts that controls which logs are printed to stderr
 ENV BOOT_LOG_LEVEL "INFO"

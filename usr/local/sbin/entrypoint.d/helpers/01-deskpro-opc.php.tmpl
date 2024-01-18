@@ -3,8 +3,61 @@
 // OPC is behind a reverse proxy on the host machine
 // so we always trust the headers
 $CONFIG['env']['trust_proxy_data'] = [
-    '0.0.0.0/0'
+  '0.0.0.0/0'
 ];
 
-// Internal API requests should use the web task
-$CONFIG['api_urls']['base_url_private'] = {{ (getenv "DESKPRO_API_BASE_URL_PRIVATE" "http://127.0.0.1:80") | squote }};
+if (!function_exists('_opc_load_old_config_file')) {
+    function _opc_load_old_config_file(): array
+    {
+      static $opcConfig = null;
+
+      if ($opcConfig === null) {
+        $opcConfigFile = '{{ getenv "CUSTOM_MOUNT_BASEDIR" }}/config/deskpro-config.php';
+        if (file_exists($opcConfigFile)) {
+          // include the other config file
+          // (the values will be scoped to this function so we don't mix it with real config)
+          include $opcConfigFile;
+          $opcConfig = $CONFIG;
+        } else {
+          $opcConfig = [];
+        }
+      }
+
+      return $opcConfig;
+    }
+}
+
+// copy/merge config set from OPC into keys on the new default config
+
+$opcConfig = _opc_load_old_config_file();
+if ($opcConfig['database'] ?? false) {
+  $CONFIG['database'] = $opcConfig['database'];
+}
+
+if ($opcConfig['database_advanced'] ?? false) {
+  $CONFIG['database_advanced'] = $opcConfig['database_advanced'];
+}
+
+if ($opcConfig['elastic'] ?? false) {
+  $CONFIG['elastic'] = $opcConfig['elastic'];
+}
+
+if ($opcConfig['paths']['blobs_path'] ?? false) {
+  $CONFIG['paths']['blobs_path'] = $opcConfig['paths']['blobs_path'];
+}
+
+if ($opcConfig['settings'] ?? false) {
+  $CONFIG['settings'] = array_merge($CONFIG['settings'] ?? [], $opcConfig['settings']);
+}
+
+if ($opcConfig['app_settings'] ?? false) {
+  $CONFIG['app_settings'] = array_merge($CONFIG['app_settings'] ?? [], $opcConfig['app_settings']);
+}
+
+if ($opcConfig['app_key'] ?? false) {
+  $CONFIG['app_key'] = $opcConfig['app_key'];
+}
+
+if ($opcConfig['license_code'] ?? false) {
+  $CONFIG['license_code'] = $opcConfig['license_code'];
+}

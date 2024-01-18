@@ -24,6 +24,12 @@ describe file('/usr/local/share/deskpro/container-private-var-list') do
   it { should be_grouped_into 'root' }
 end
 
+describe file('/usr/local/share/deskpro/container-setenv-var-list') do
+  it { should exist }
+  it { should be_owned_by 'root' }
+  it { should be_grouped_into 'root' }
+end
+
 describe file('/usr/local/share/deskpro/container-var-list') do
   it { should exist }
   it { should be_owned_by 'root' }
@@ -92,4 +98,16 @@ describe file('/srv/deskpro/INSTANCE_DATA/deskpro-config.d') do
   it { should be_owned_by 'root' }
   it { should be_grouped_into 'root' }
   it { should_not be_writable.by('others') }
+end
+
+describe file('/srv/deskpro/services/messenger-api/.env') do
+  it { should exist }
+  it { should be_owned_by 'root' }
+  it { should be_grouped_into 'root' }
+end
+
+describe file('/srv/deskpro/packages/deskpro-messenger/.env') do
+  it { should exist }
+  it { should be_owned_by 'root' }
+  it { should be_grouped_into 'root' }
 end

@@ -13,7 +13,7 @@ describe "Case SC-130148: Default ES values" do
   it "DESKPRO_ES_TENANT_ID will suffix _tenant if it conflicts with DESKPRO_ES_INDEX_NAME" do
     ENV['DESKPRO_ES_INDEX_NAME'] = 'deskpro'
     ENV['DESKPRO_ES_TENANT_ID'] = 'deskpro'
-    output = `eval-tpl -f /etc/templates/deskpro-config.php.tmpl`
+    output = `eval-tpl -f /usr/local/share/deskpro/templates/deskpro-config.php.tmpl`
     expect(output).to contain "'index_name' => 'deskpro'"
     expect(output).to contain "'tenant_id' => 'deskpro_tenant'"
   end
@@ -21,7 +21,7 @@ describe "Case SC-130148: Default ES values" do
   it "DESKPRO_ES_TENANT_ID will be used as-is if there is no conflict" do
     ENV['DESKPRO_ES_INDEX_NAME'] = 'deskpro'
     ENV['DESKPRO_ES_TENANT_ID'] = 'foo'
-    output = `eval-tpl -f /etc/templates/deskpro-config.php.tmpl`
+    output = `eval-tpl -f /usr/local/share/deskpro/templates/deskpro-config.php.tmpl`
     expect(output).to contain "'index_name' => 'deskpro'"
     expect(output).to contain "'tenant_id' => 'foo'"
   end

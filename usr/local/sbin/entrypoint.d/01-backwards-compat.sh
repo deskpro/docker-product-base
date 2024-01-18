@@ -13,7 +13,6 @@ backwards_compat_main() {
   bc_var_renames
   bc_custom_php_config
   bc_deskpro_custom_config
-  bc_deskpro_full_config_override
 }
 
 # The old container was run without a command or with the command set to the 'cron' script.
@@ -68,23 +67,6 @@ bc_deskpro_custom_config() {
   fi
 }
 
-# Old container would check for a file named deskpro-config.php and use it
-# as the base config file. New container does this by the DESKPRO_CONFIG_FILE variable instead.
-bc_deskpro_full_config_override() {
-  if [ "$DESKPRO_CONFIG_FILE" != "/etc/templates/deskpro-config.php.tmpl" ]; then
-    # dont do bc check if DESKPRO_CONFIG_FILE is already non-default
-    # because it means its aleady been overriden explicitly
-    return
-  fi
-
-  local custom_file="$CUSTOM_MOUNT_BASEDIR/config/deskpro-config.php"
-
-  if [ -e "$custom_file" ]; then
-    boot_log_message DEBUG "[backwards-compat] Using full Deskpro config file override DESKPRO_CONFIG_FILE=$custom_file"
-    export DESKPRO_CONFIG_FILE="$custom_file"
-  fi
-}
-
 #######################################################################
 # Renames an env var from the old name to the new name, then unsets
 # the old name.
@@ -127,4 +109,4 @@ bc_rename_container_var() {
 }
 
 backwards_compat_main
-unset backwards_compat_main bc_run_mode bc_var_renames bc_custom_php_config bc_deskpro_custom_config bc_deskpro_full_config_override bc_rename_container_var
+unset backwards_compat_main bc_run_mode bc_var_renames bc_custom_php_config bc_deskpro_custom_config bc_rename_container_var

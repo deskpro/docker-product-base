@@ -11,7 +11,6 @@ redirect_stderr=true
 stdout_logfile=/var/log/supervisor/svc_messenger_api.log
 stdout_logfile_maxbytes=10000000
 stdout_logfile_backups=1
-environment=HOSTNAME=127.0.0.1,PORT=24000
 
 [program:svc_messenger]
 command=/srv/deskpro/packages/deskpro-messenger/bin/start.sh
@@ -26,4 +25,3 @@ redirect_stderr=true
 stdout_logfile=/var/log/supervisor/svc_messenger.log
 stdout_logfile_maxbytes=10000000
 stdout_logfile_backups=1
-environment=HOSTNAME=127.0.0.1,PORT=25000

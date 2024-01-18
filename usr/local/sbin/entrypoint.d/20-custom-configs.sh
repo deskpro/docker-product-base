@@ -41,7 +41,7 @@ install_custom_config_dirs() {
 }
 
 # Install the "base" deskpro config file.
-# This is /etc/templates/deskpro-config.php.tmpl by default
+# This is /usr/local/share/deskpro/templates/deskpro-config.php.tmpl by default
 # but it can be changed via DESKPRO_CONFIG_FILE
 install_deskpro_config_file() {
   if [ ! -f "$DESKPRO_CONFIG_FILE" ]; then

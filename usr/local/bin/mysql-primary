@@ -1,7 +1,4 @@
 #!/bin/bash
 
-if [ ! -f "/$HOME/.my-auto.cnf" ]; then
-  eval-tpl --file "/etc/templates/user.my.cnf.tmpl" --out "/$HOME/.my-auto.cnf"
-fi
-
+eval-tpl --file "/usr/local/share/deskpro/templates/user.my.cnf.tmpl" --out "/$HOME/.my-auto.cnf"
 exec mysql --defaults-extra-file="/$HOME/.my-auto.cnf" --defaults-group-suffix="_primary" "$@"
