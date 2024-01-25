@@ -15,9 +15,7 @@ server {
       real_ip_header {{ getenv "HTTP_USER_REAL_IP_HEADER" }};
     {{end}}
 
-    {{if getenv "SVC_MESSENGER_ENABLED"}}
-      include /etc/nginx/conf.d/deskpro_messenger_server_params;
-    {{end}}
+    include /etc/nginx/conf.d/deskpro_messenger_server_params;
 
     include /etc/nginx/conf.d/deskpro_server_params;
 }
@@ -37,9 +35,7 @@ server {
       real_ip_header proxy_protocol;
     {{end}}
 
-    {{if getenv "SVC_MESSENGER_ENABLED"}}
-      include /etc/nginx/conf.d/deskpro_messenger_server_params;
-    {{end}}
+    include /etc/nginx/conf.d/deskpro_messenger_server_params;
 
     include /etc/nginx/conf.d/deskpro_server_params;
 }
