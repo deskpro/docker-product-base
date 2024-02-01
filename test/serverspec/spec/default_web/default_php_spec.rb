@@ -77,7 +77,7 @@ describe "Check default PHP and PHP-FPM configurations" do
     its(:stdout) { should contain "pm.max_children = 20" }
     its(:stdout) { should contain "request_terminate_timeout = 60s" }
     its(:stdout) { should contain "request_terminate_timeout_track_finished = yes" }
-    its(:stdout) { should contain "clear_env = yes" }
+    its(:stdout) { should contain "clear_env = no" }
   end
 
   describe command('phpfpminfo --pool dp_internal') do
@@ -87,7 +87,7 @@ describe "Check default PHP and PHP-FPM configurations" do
     its(:stdout) { should contain "pm.max_children = 1000" }
     its(:stdout) { should contain "request_terminate_timeout = 60s" }
     its(:stdout) { should contain "request_terminate_timeout_track_finished = yes" }
-    its(:stdout) { should contain "clear_env = yes" }
+    its(:stdout) { should contain "clear_env = no" }
   end
 
   describe command('phpfpminfo --pool dp_gql') do
@@ -97,7 +97,7 @@ describe "Check default PHP and PHP-FPM configurations" do
     its(:stdout) { should contain "pm.max_children = 20" }
     its(:stdout) { should contain "request_terminate_timeout = 60s" }
     its(:stdout) { should contain "request_terminate_timeout_track_finished = yes" }
-    its(:stdout) { should contain "clear_env = yes" }
+    its(:stdout) { should contain "clear_env = no" }
   end
 
   describe command('phpfpminfo --pool dp_broadcaster') do
@@ -107,6 +107,6 @@ describe "Check default PHP and PHP-FPM configurations" do
     its(:stdout) { should contain "pm.max_children = 1000" }
     its(:stdout) { should contain "request_terminate_timeout = 65s" }
     its(:stdout) { should contain "request_terminate_timeout_track_finished = yes" }
-    its(:stdout) { should contain "clear_env = yes" }
+    its(:stdout) { should contain "clear_env = no" }
   end
 end

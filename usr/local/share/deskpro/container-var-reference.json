@@ -10,19 +10,10 @@
     "description": "When the container starts, if there are any migrations that need to be run, they will be run automatically. Note: There are no locking controls so only enable this on a single container at a time (e.g. the tasks container)."
   },
   {
-    "name": "BOOT_LOG_LEVEL",
-    "type": "string",
-    "description": "Logging level for boot log messages. Default is INFO. Set to DEBUG or TRACE to see more details."
-  },
-  {
-    "name": "BOOT_LOG_LEVEL_EXEC",
-    "type": "string",
-    "description": "Logging level for boot log messages when running a one-shot command or when dropping into a shell. Default is WARNING."
-  },
-  {
     "name": "CUSTOM_MOUNT_BASEDIR",
     "type": "boolean",
-    "description": "Base path for all the various custom mounts. Default is /deskpro."
+    "description": "Base path for all the various custom mounts. Default is /deskpro.",
+    "isPrivate": true
   },
   {
     "description": "",
@@ -53,7 +44,8 @@
   {
     "name": "DESKPRO_CONFIG_FILE",
     "type": "boolean",
-    "description": "Path to the default/main config file. Not usually changed because users can use the .d dir to override."
+    "description": "Path to the default/main config file. Not usually changed because users can use the .d dir to override.",
+    "isPrivate": true
   },
   {
     "description": "Raw PHP code to add to a Deskpro config file. Helpful when you want custom config but do not want to mount a file.",
@@ -235,7 +227,8 @@
   {
     "name": "HTTP_INTERNAL_MODE",
     "type": "boolean",
-    "description": "Set in 11-run-mode.sh and used in nginx config file. Determines if nginx should only listen on localhost for internal api calls."
+    "description": "Set in 11-run-mode.sh and used in nginx config file. Determines if nginx should only listen on localhost for internal api calls.",
+    "isPrivate": true
   },
   {
     "name": "HTTP_SERVE_HOST",
@@ -309,26 +302,6 @@
     "name": "INSTALL_URL",
     "type": "string",
     "description": "Used with AUTO_RUN_INSTALLER. The URL of the Deskpro instance. If not provided, will default to http://127.0.0.1/"
-  },
-  {
-    "name": "LOGS_EXPORT_DIR",
-    "type": "string",
-    "description": "Directory to write processed logs to when using 'dir' export target."
-  },
-  {
-    "name": "LOGS_EXPORT_FILENAME",
-    "type": "string",
-    "description": "The filename template for log files when using 'dir' export target. Default is: {{.container_name}}/{{.app}}/{{.chan}}.log"
-  },
-  {
-    "name": "LOGS_EXPORT_TARGET",
-    "type": "string",
-    "description": "Where to export logs to. One of: stdout, dir, cloudwatch. If LOGS_EXPORT_DIR is set then this will default to dir, otherwise it will default to stdout."
-  },
-  {
-    "name": "LOGS_OUTPUT_FORMAT",
-    "type": "string",
-    "description": "Log output format. One of: json, logfmt. Defaults to logfmt."
   },
   {
     "description": "",

@@ -27,7 +27,9 @@ for f in \
   "/var/log/supervisor/email_process.log" \
   "/var/log/supervisor/nginx.log" \
   "/var/log/supervisor/php_fpm.log" \
-  "/var/log/supervisor/tasks.log"
+  "/var/log/supervisor/tasks.log" \
+  "/var/log/supervisor/svc_messenger.log" \
+  "/var/log/supervisor/svc_messenger_api.log"
 do
   echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] Log file started: $f -- ${VECTOR_MARKER}" > "$f"
   echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] Log file started: $f.1 -- ${VECTOR_MARKER}" > "$f.1"

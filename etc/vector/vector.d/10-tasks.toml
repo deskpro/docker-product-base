@@ -7,6 +7,10 @@ include = [
   "/var/log/supervisor/email_collect.log.1",
   "/var/log/supervisor/email_process.log",
   "/var/log/supervisor/email_process.log.1",
+  "/var/log/supervisor/svc_messenger.log",
+  "/var/log/supervisor/svc_messenger.log.1",
+  "/var/log/supervisor/svc_messenger_api.log",
+  "/var/log/supervisor/svc_messenger_api.log.1"
 ]
 ignore_not_found = true
 max_line_bytes = 2000000

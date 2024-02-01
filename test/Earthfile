@@ -43,7 +43,7 @@ test-serverspec-opc:
     COPY --dir serverspec/spec/scenarios/bc_opc_2_8/test_helper_tools /tmp/test_helper_tools
     WITH DOCKER --load deskpro/docker-product-base:test=+base-image
         RUN docker run -d --name test \
-            -e DESKPRO_OPC_WEBGUI_BASEURL=http://localhost:29443 \
+            -e OPC_VERSION=2.8.0 \
             -v /tmp/deskpro_dir:/deskpro \
             -v /tmp/test_helper_tools:/test_helper_tools \
             deskpro/docker-product-base:test web \

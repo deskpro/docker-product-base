@@ -31,9 +31,6 @@ opc_main() {
     export DESKPRO_API_BASE_URL_PRIVATE="http://127.0.0.1:80"
   fi
 
-  boot_log_message DEBUG "[opc] Linking /run/deskpro-cron-status.json -> /deskpro/logs/cron-status.json"
-  ln -sf /deskpro/logs/cron-status.json /run/deskpro-cron-status.json
-
   boot_log_message DEBUG "[opc] Extract DB vars from config"
   if [ -f "$CUSTOM_MOUNT_BASEDIR/config/deskpro-config.php" ]; then
     eval "$(/usr/local/sbin/entrypoint.d/helpers/bc-extract-db-from-config.php)"
