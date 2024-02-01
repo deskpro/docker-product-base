@@ -77,6 +77,16 @@ main() {
     fi
   fi
 
+  # if LOGS_EXPORT_TARGET is empty then set it to "dir" if there's a LOGS_EXPORT_DIR
+  # otherwise set it to "stdout"
+  if [ -z "$LOGS_EXPORT_TARGET" ]; then
+    if [ -n "$LOGS_EXPORT_DIR" ]; then
+      export LOGS_EXPORT_TARGET="dir"
+    else
+      export LOGS_EXPORT_TARGET="stdout"
+    fi
+  fi
+
   if [ -n "$LOGS_EXPORT_DIR" ]; then
     if [ ! -d "$LOGS_EXPORT_DIR" ]; then
       mkdir -p "$LOGS_EXPORT_DIR"

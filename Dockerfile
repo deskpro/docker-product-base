@@ -161,6 +161,10 @@ ENV DESKPRO_CONFIG_FILE "/usr/local/share/deskpro/templates/deskpro-config.php.t
 ENV BOOT_LOG_LEVEL "INFO"
 ENV BOOT_LOG_LEVEL_EXEC "WARNING"
 
+# Possible values: stdout, dir, cloudwatch
+# When empty (default) it will be set to "dir" if LOGS_EXPORT_DIR is set or "stdout" if not
+ENV LOGS_EXPORT_TARGET ""
+
 # If this is set, then logs will be written out to this directory
 # (if CUSTOM_MOUNT_BASEDIR/logs exists, then this will be set to that dir if not already set)
 ENV LOGS_EXPORT_DIR ""
