@@ -18,6 +18,7 @@ test:
     BUILD +test-serverspec-opc
     BUILD +test-serverspec-simple-cases
     BUILD +test-custom-configs
+    BUILD +test-custom-logs-group
     BUILD +test-autoinstall
     BUILD +test-automigrations
 
@@ -121,6 +122,27 @@ test-custom-configs:
             && docker start test \
             && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/custom_configs/02_custom_configs_removed_spec.rb'
     END
+
+test-custom-logs-group:
+    FROM earthly/dind:alpine
+    RUN addgroup --gid 1988 logs_group \
+        && mkdir /tmp/deskpro-logs \
+        && chown root:logs_group /tmp/deskpro-logs \
+        && chmod 0775 /tmp/deskpro-logs
+    WITH DOCKER --load deskpro/docker-product-base:test=+base-image
+        RUN \
+            # first run - simulate that the migrations need to run
+            docker run -d --name test \
+                -e CONTAINER_NAME=logtest \
+                -e LOGS_GID=1988 \
+                -v /tmp/deskpro-logs:/deskpro/logs \
+                deskpro/docker-product-base:test web \
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/custom_log_group/01_custom_log_group_spec.rb' \
+            && docker exec test /usr/bin/php -r 'echo $doesNotExist;' \
+            && docker stop test
+    END
+    RUN echo "/tmp/deskpro-logs/logtest should be owned by logs_group" && stat /tmp/deskpro-logs/logtest | grep 1988
+    RUN echo "/tmp/deskpro-logs/logtest/php/error.log should be owned by logs_group" && stat /tmp/deskpro-logs/logtest/php/error.log  | grep 1988
 
 # Built on top of the product base image, this just adds test sources
 # and simulation sources used when testing various container features.
