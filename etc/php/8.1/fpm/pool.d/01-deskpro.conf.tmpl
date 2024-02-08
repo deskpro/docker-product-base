@@ -9,7 +9,7 @@ listen.mode = 0666
 pm.status_listen = /run/php_fpm_{{.}}.status.sock
 pm.status_path = /fpm/status
 
-clear_env = yes
+clear_env = no
 request_terminate_timeout = 60
 request_terminate_timeout_track_finished = yes
 security.limit_extensions = ".php"

@@ -36,6 +36,21 @@ export BOOT_LOG_LEVEL_EXEC="${BOOT_LOG_LEVEL_EXEC:-WARNING}"
 # A name used in logs
 export CONTAINER_NAME="${CONTAINER_NAME:-$(hostname)}"
 
+# if LOGS_GID is set then we will add the vector to that group
+if [ -n "$LOGS_GID" ]; then
+  # if a group with id LOGS_GID does not exist, create it
+  if ! getent group "$LOGS_GID" > /dev/null; then
+    groupadd -g "$LOGS_GID" logs_group
+  fi
+
+  # set the primary group
+  usermod -g "$LOGS_GID" vector
+  # add the vector group as a secondary group
+  usermod -a -G vector vector
+else
+  export LOGS_GID=1084
+fi
+
 main() {
   # remove sentinel files that may be set from previous boots
   # (normally set in container-ready.sh - we want to remove them here, early, because they are used in healthcheck)
@@ -45,6 +60,7 @@ main() {
   if [ -f /var/log/docker-boot.log ]; then
     cat /var/log/docker-boot.log >> "/var/log/docker-boot.full.log"
     rm /var/log/docker-boot.log
+    chown root:$LOGS_GID "/var/log/docker-boot.full.log"
   fi
 
   boot_log_message TRACE "--- STARTING DESKPRO CONTAINER ---"
@@ -77,6 +93,16 @@ main() {
     fi
   fi
 
+  # if LOGS_EXPORT_TARGET is empty then set it to "dir" if there's a LOGS_EXPORT_DIR
+  # otherwise set it to "stdout"
+  if [ -z "$LOGS_EXPORT_TARGET" ]; then
+    if [ -n "$LOGS_EXPORT_DIR" ]; then
+      export LOGS_EXPORT_TARGET="dir"
+    else
+      export LOGS_EXPORT_TARGET="stdout"
+    fi
+  fi
+
   if [ -n "$LOGS_EXPORT_DIR" ]; then
     if [ ! -d "$LOGS_EXPORT_DIR" ]; then
       mkdir -p "$LOGS_EXPORT_DIR"
@@ -87,7 +113,7 @@ main() {
 
     # some messages may already be logged, so copy to the exported file
     cat /var/log/docker-boot.log >> "$LOGS_EXPORT_DIR/docker-boot.log"
-    chown root:adm "$LOGS_EXPORT_DIR/docker-boot.log"
+    chown root:$LOGS_GID "$LOGS_EXPORT_DIR/docker-boot.log"
   fi
 
   boot_log_message TRACE "Docker command: $DOCKER_CMD ${DOCKER_CMD_ARGS[*]}"
@@ -264,7 +290,7 @@ boot_log_message() {
     if [ ! -f "$LOGS_EXPORT_DIR/docker-boot.log" ]; then
       touch "$LOGS_EXPORT_DIR/docker-boot.log"
       # make sure its not readable by anyone else but root
-      chmod 0600 "$LOGS_EXPORT_DIR/docker-boot.log" || true
+      chmod 0660 "$LOGS_EXPORT_DIR/docker-boot.log" || true
     fi
     echo "$logline" >> "$LOGS_EXPORT_DIR/docker-boot.log"
   fi

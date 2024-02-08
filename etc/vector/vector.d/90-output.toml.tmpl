@@ -98,7 +98,7 @@ source = '''
 '''
 {{end}}
 
-{{if getenv "LOGS_EXPORT_DIR"}}
+{{if eq "dir" (getenv "LOGS_EXPORT_TARGET") }}
   {{if eq (getenv "LOGS_EXPORT_DIR") "/dev/null" }}
     # LOGS_EXPORT_DIR=/dev/null
     # So we wont enable any sinks.out_file
@@ -110,7 +110,15 @@ source = '''
     encoding.codec = "raw_message"
     encoding.timestamp_format = "rfc3339"
   {{end}}
-{{else}}
+{{else if eq "cloudwatch" (getenv "LOGS_EXPORT_TARGET") }}
+[sinks.out_cloudwatch_logs]
+type = "aws_cloudwatch_logs"
+inputs = ["all_formatted"]
+group_name = "{{ getenv "LOGS_EXPORT_CLOUDWATCH_GROUP_NAME" "deskpro" }}"
+stream_name = "{{ getenv "LOGS_EXPORT_CLOUDWATCH_STREAM_NAME" "{{.app}}/{{.chan}}/{{.container_name}}" }}"
+encoding.codec = "raw_message"
+encoding.timestamp_format = "rfc3339"
+{{else if eq "stdout" (getenv "LOGS_EXPORT_TARGET") }}
 [sinks.out_docker]
 type = "console"
 inputs = ["all_formatted"]

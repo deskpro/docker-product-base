@@ -1,6 +1,7 @@
 [program:vector]
 command=/usr/local/bin/vector --quiet --config /etc/vector/vector.toml --config /etc/vector/vector.d/*.toml --color never --log-format json
 user=vector
+umask=002
 numprocs=1
 startsecs=0
 autostart=true

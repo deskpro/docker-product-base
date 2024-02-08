@@ -10,7 +10,8 @@ end
 describe user('vector') do
   it { should exist }
   it { should have_uid 1084 }
-  it { should belong_to_primary_group 'adm' }
+  it { should belong_to_primary_group 'vector' }
+  it { should belong_to_group 'adm' }
   it { should have_login_shell '/bin/false' }
 end
 

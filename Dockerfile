@@ -108,8 +108,11 @@ RUN <<EOT
     addgroup --gid 1083 dp_app
     adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1083 --gid 1083 dp_app
 
-    # vector user for logs is added to adm group so it can read logs
-    adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1084 --ingroup adm vector
+    # vector user for logs
+    addgroup --gid 1084 vector
+    adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1084 --gid 1084 vector
+    # add vector to adm group so it can read logs
+    usermod -a -G adm vector
 
     # we run nginx as its own user
     addgroup --gid 1085 nginx
@@ -161,6 +164,10 @@ ENV DESKPRO_CONFIG_FILE "/usr/local/share/deskpro/templates/deskpro-config.php.t
 ENV BOOT_LOG_LEVEL "INFO"
 ENV BOOT_LOG_LEVEL_EXEC "WARNING"
 
+# Possible values: stdout, dir, cloudwatch
+# When empty (default) it will be set to "dir" if LOGS_EXPORT_DIR is set or "stdout" if not
+ENV LOGS_EXPORT_TARGET ""
+
 # If this is set, then logs will be written out to this directory
 # (if CUSTOM_MOUNT_BASEDIR/logs exists, then this will be set to that dir if not already set)
 ENV LOGS_EXPORT_DIR ""
@@ -170,6 +177,9 @@ ENV LOGS_EXPORT_FILENAME "{{.container_name}}/{{.app}}/{{.chan}}.log"
 
 # Log output format: logfmt or json
 ENV LOGS_OUTPUT_FORMAT "logfmt"
+
+# GID to use for exported log files. By default, logs will be owned by the vector group (GID 1084).
+ENV LOGS_GID ""
 
 ENTRYPOINT ["/usr/local/sbin/entrypoint.sh"]
 CMD ["web"]
