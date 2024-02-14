@@ -63,7 +63,7 @@ location ~ /assets/[a-zA-Z0-9_\-\.]+/(pub|web)/.*?$ {
     }
 }
 
-location ^~ /deskpro-messenger-init/ {
+location ^~ /static/ {
     add_header 'Access-Control-Allow-Origin' '*';
     add_header 'Access-Control-Allow-Headers' '*';
     add_header 'Access-Control-Allow-Methods' 'GET,OPTIONS';
