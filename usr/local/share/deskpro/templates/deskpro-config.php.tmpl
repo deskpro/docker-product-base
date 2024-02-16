@@ -314,7 +314,7 @@ $CONFIG['settings']['enable_test_user_context_header'] = true;
 # settings
 #######################################################################
 
-$CONFIG['deskpro_tenant_id'] = {{ (getenv "DESKPRO_TENANT_ID" "deskpro") | squote }};
+$CONFIG['deskpro_tenant_id'] = {{ (getenv "DESKPRO_TENANT_ID" "00000000-0000-0000-0000-000000000000") | squote }};
 
 {{if getenv "DESKPRO_LICENSE_KEY"}}
 $CONFIG['license_code'] = <<<'__VAL__'
