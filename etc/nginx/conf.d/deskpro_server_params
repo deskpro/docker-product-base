@@ -77,16 +77,8 @@ location ^~ /static/ {
 }
 
 location ^~ /firebase-messaging-sw.js {
-    add_header 'Access-Control-Allow-Origin' '*';
-    add_header 'Access-Control-Allow-Headers' '*';
-    add_header 'Access-Control-Allow-Methods' 'GET,OPTIONS';
-    add_header 'Access-Control-Max-Age' '1728000';
-
-    if ($request_method = 'OPTIONS') {
-        add_header 'Content-Type' 'text/plain charset=UTF-8';
-        add_header 'Content-Length' 0;
-        return 204;
-    }
+    fastcgi_pass unix:/run/php_fpm_dp_default.sock;
+    include /etc/nginx/conf.d/deskpro_fastcgi_params;
 }
 
 location ~ ^/horizon\-ui/app/assets/ {
