@@ -12,8 +12,8 @@ RUN apt-get update \
     php8.3-xml \
     php-pear \
     && pecl install opentelemetry protobuf
-# outputs: /usr/lib/php/20210902/protobuf.so
-# outputs: /usr/lib/php/20210902/opentelemetry.so
+# outputs: /usr/lib/php/20230831/protobuf.so
+# outputs: /usr/lib/php/20230831/opentelemetry.so
 
 FROM debian:12.2-slim
 ENV TZ=UTC
@@ -65,8 +65,8 @@ RUN apt-get update \
     tzdata \
     && find /usr/lib/python3.11 -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
-COPY --link --from=builder-php-exts /usr/lib/php/20210902/protobuf.so /usr/lib/php/20210902/protobuf.so
-COPY --link --from=builder-php-exts /usr/lib/php/20210902/opentelemetry.so /usr/lib/php/20210902/opentelemetry.so
+COPY --link --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
+COPY --link --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
 
 COPY --link --from=hairyhenderson/gomplate:v3.11.5 /gomplate /usr/local/bin/gomplate
 COPY --link --from=composer:2.5.8 /usr/bin/composer /usr/local/bin/composer
