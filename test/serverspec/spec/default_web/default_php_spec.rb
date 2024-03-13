@@ -6,35 +6,35 @@ describe "Check default PHP and PHP-FPM configurations" do
   end
 
   # default www pool should never exist
-  describe file('/etc/php/8.1/fpm/pool.d/www.conf') do
+  describe file('/etc/php/8.3/fpm/pool.d/www.conf') do
     it { should_not exist }
   end
 
-  describe file('/etc/php/8.1/fpm/pool.d/01-deskpro.conf') do
+  describe file('/etc/php/8.3/fpm/pool.d/01-deskpro.conf') do
     it { should exist }
   end
 
-  describe file('/etc/php/8.1/fpm/php-fpm.conf') do
+  describe file('/etc/php/8.3/fpm/php-fpm.conf') do
     it { should exist }
   end
 
-  describe file('/etc/php/8.1/fpm/php.ini') do
+  describe file('/etc/php/8.3/fpm/php.ini') do
     it { should exist }
   end
 
-  describe file('/etc/php/8.1/mods-available/deskpro.ini') do
+  describe file('/etc/php/8.3/mods-available/deskpro.ini') do
     it { should exist }
   end
 
-  describe file('/etc/php/8.1/fpm/conf.d/90-deskpro.ini') do
+  describe file('/etc/php/8.3/fpm/conf.d/90-deskpro.ini') do
     it { should exist }
   end
 
-  describe file('/etc/php/8.1/cli/conf.d/90-deskpro.ini') do
+  describe file('/etc/php/8.3/cli/conf.d/90-deskpro.ini') do
     it { should exist }
   end
 
-  describe file('/etc/php/8.1/mods-available/deskpro-otel.ini') do
+  describe file('/etc/php/8.3/mods-available/deskpro-otel.ini') do
     it { should exist }
     its(:content) { should match /To enable opentelemetry/ }
   end

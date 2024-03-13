@@ -10,7 +10,7 @@ describe "Check behaviour of phpinfo utility" do
     output = `phpinfo`
     exit_code = $?.exitstatus
     expect(exit_code).to eq 0
-    expect(output).to include("PHP Version => 8.1.")
+    expect(output).to include("PHP Version => 8.3.")
     # our phpinfo script does not include some parts of the output such as INFO_LICENSE, so just check that
     expect(output).to_not include("questions about PHP licensing, please contact license@php.net.")
   end
@@ -19,6 +19,6 @@ describe "Check behaviour of phpinfo utility" do
     output = `phpinfo --fpm`
     exit_code = $?.exitstatus
     expect(exit_code).to eq 0
-    expect(output).to include('<tr><td class="e">PHP Version </td><td class="v">8.1.')
+    expect(output).to include('<tr><td class="e">PHP Version </td><td class="v">8.3.')
   end
 end

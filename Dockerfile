@@ -5,15 +5,15 @@ RUN apt-get update \
     && sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --no-install-suggests -y \
-        make \
-        php8.1-cli \
-        php8.1-dev \
-        php8.1-common \
-        php8.1-xml \
-        php-pear \
+    make \
+    php8.3-cli \
+    php8.3-dev \
+    php8.3-common \
+    php8.3-xml \
+    php-pear \
     && pecl install opentelemetry protobuf
-    # outputs: /usr/lib/php/20210902/protobuf.so
-    # outputs: /usr/lib/php/20210902/opentelemetry.so
+# outputs: /usr/lib/php/20210902/protobuf.so
+# outputs: /usr/lib/php/20210902/opentelemetry.so
 
 FROM debian:12.2-slim
 ENV TZ=UTC
@@ -26,43 +26,43 @@ RUN apt-get update \
     && sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --no-install-suggests -y \
-        bash \
-        bc \
-        curl \
-        default-mysql-client \
-        git \
-        jq \
-        libfcgi-bin \
-        nano \
-        neovim \
-        nginx \
-        openssl \
-        php8.1-cli \
-        php8.1-common \
-        php8.1-ctype \
-        php8.1-curl \
-        php8.1-dev \
-        php8.1-dom \
-        php8.1-fileinfo \
-        php8.1-fpm \
-        php8.1-gd \
-        php8.1-iconv \
-        php8.1-imap \
-        php8.1-intl \
-        php8.1-ldap \
-        php8.1-mbstring \
-        php8.1-mysqlnd \
-        php8.1-opcache \
-        php8.1-soap \
-        php8.1-xml \
-        php8.1-zip \
-        pigz \
-        ripgrep \
-        rsync \
-        sudo \
-        supervisor \
-        tmux \
-        tzdata \
+    bash \
+    bc \
+    curl \
+    default-mysql-client \
+    git \
+    jq \
+    libfcgi-bin \
+    nano \
+    neovim \
+    nginx \
+    openssl \
+    php8.3-cli \
+    php8.3-common \
+    php8.3-ctype \
+    php8.3-curl \
+    php8.3-dev \
+    php8.3-dom \
+    php8.3-fileinfo \
+    php8.3-fpm \
+    php8.3-gd \
+    php8.3-iconv \
+    php8.3-imap \
+    php8.3-intl \
+    php8.3-ldap \
+    php8.3-mbstring \
+    php8.3-mysqlnd \
+    php8.3-opcache \
+    php8.3-soap \
+    php8.3-xml \
+    php8.3-zip \
+    pigz \
+    ripgrep \
+    rsync \
+    sudo \
+    supervisor \
+    tmux \
+    tzdata \
     && find /usr/lib/python3.11 -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
 COPY --link --from=builder-php-exts /usr/lib/php/20210902/protobuf.so /usr/lib/php/20210902/protobuf.so
@@ -80,12 +80,12 @@ RUN npm install --global tsx
 RUN <<EOT
     set -e
 
-    printf '; priority=20\nextension=protobuf.so' > /etc/php/8.1/mods-available/protobuf.ini
-    printf '; priority=90\n; placeholder' > /etc/php/8.1/mods-available/deskpro.ini
-    printf '; priority=90\n; placeholder' > /etc/php/8.1/mods-available/deskpro-otel.ini
+    printf '; priority=20\nextension=protobuf.so' > /etc/php/8.3/mods-available/protobuf.ini
+    printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro.ini
+    printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro-otel.ini
     phpenmod protobuf deskpro
     phpdismod phar
-    rm /etc/php/8.1/fpm/pool.d/www.conf
+    rm /etc/php/8.3/fpm/pool.d/www.conf
 
     # we have our own config - we totally replace the defaults
     mv /etc/nginx/mime.types /tmp/mime.types

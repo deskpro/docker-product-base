@@ -42,8 +42,8 @@ opc_main() {
 
   for pool in "dp_broadcaster" "dp_default" "dp_gql" "dp_internal"; do
     if [ -e "/deskpro/config/${pool}.conf" ]; then
-      boot_log_message DEBUG "[bc_opc_2_8] Copying /deskpro/config/${pool}.conf to /etc/php/8.1/fpm/pool.d/zz_${pool}.conf"
-      cp -f "/deskpro/config/${pool}.conf" "/etc/php/8.1/fpm/pool.d/zz_${pool}.conf"
+      boot_log_message DEBUG "[bc_opc_2_8] Copying /deskpro/config/${pool}.conf to /etc/php/8.3/fpm/pool.d/zz_${pool}.conf"
+      cp -f "/deskpro/config/${pool}.conf" "/etc/php/8.3/fpm/pool.d/zz_${pool}.conf"
     fi
   done
 }
