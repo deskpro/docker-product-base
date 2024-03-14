@@ -4,11 +4,11 @@ describe package('nginx') do
   it { should be_installed }
 end
 
-describe package('php8.1-cli') do
+describe package('php8.3-cli') do
   it { should be_installed }
 end
 
-describe package('php8.1-fpm') do
+describe package('php8.3-fpm') do
   it { should be_installed }
 end
 
@@ -17,7 +17,7 @@ describe package('supervisor') do
 end
 
 describe command('php -v') do
-  its(:stdout) { should contain('PHP 8.1.') }
+  its(:stdout) { should contain('PHP 8.3.') }
 end
 
 describe command('gomplate -v') do

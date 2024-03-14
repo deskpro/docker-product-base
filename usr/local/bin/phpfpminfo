@@ -38,7 +38,7 @@ set -- "${POSITIONAL_ARGS[@]}"
 
 # log level has to be notice for this to produce any output
 # so we will create a temp file to pass to it directly
-tmpfile=$(mktemp -p /etc/php/8.1/fpm/pool.d zzzz-XXXXXX.conf)
+tmpfile=$(mktemp -p /etc/php/8.3/fpm/pool.d zzzz-XXXXXX.conf)
 trap 'rm -f -- "$tmpfile"' EXIT
 {
   echo '[global]'
@@ -49,10 +49,10 @@ if [ -n "$SHOW_POOL" ]; then
   # uses awk to prefix each line with the [section]
   # then use rg to filter to only the desired section
   # then use sed to remove the section prefix again
-  /usr/sbin/php-fpm8.1 -tt 2>&1 | sed "s/^.*\] NOTICE: //g" | sed "s/^\t//g" \
+  /usr/sbin/php-fpm8.3 -tt 2>&1 | sed "s/^.*\] NOTICE: //g" | sed "s/^\t//g" \
     | awk '/^\[/{prefix=$0; next} $1{print prefix $0}' \
     | rg -F "[$SHOW_POOL]" \
     | sed "s/^\[$SHOW_POOL\]//g"
 else
-  /usr/sbin/php-fpm8.1 -tt 2>&1 | sed "s/^.*\] NOTICE: //g" | sed "s/^\t//g"
+  /usr/sbin/php-fpm8.3 -tt 2>&1 | sed "s/^.*\] NOTICE: //g" | sed "s/^\t//g"
 fi

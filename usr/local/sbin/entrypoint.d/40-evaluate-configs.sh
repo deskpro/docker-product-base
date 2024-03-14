@@ -10,7 +10,7 @@ function evaluate_configs_main() {
   # gomplate --input-dir is recursive so we only want to specify base dirs here
   declare -a tplDirs=(
     "/srv/deskpro/INSTANCE_DATA"
-    "/etc/php/8.1"
+    "/etc/php/8.3"
     "/etc/vector/vector.d"
     "/etc/nginx"
     "/etc/supervisor"

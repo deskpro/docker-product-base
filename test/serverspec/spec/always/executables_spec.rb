@@ -5,7 +5,7 @@ executables = [
   "/usr/local/bin/gomplate",
   "/usr/local/bin/vector",
   "/usr/bin/php",
-  "/usr/sbin/php-fpm8.1",
+  "/usr/sbin/php-fpm8.3",
 
   "/usr/local/sbin/container-ready.sh",
   "/usr/local/sbin/tasksd",
