@@ -1,4 +1,4 @@
-VERSION 0.7
+VERSION 0.8
 FROM scratch
 
 # save-base-image saves the test image (that have all the test sources)
@@ -14,13 +14,19 @@ save-base-image:
 
 # test runs all tests
 test:
-    BUILD +test-serverspec-web
-    BUILD +test-serverspec-opc
-    BUILD +test-serverspec-simple-cases
-    BUILD +test-custom-configs
-    BUILD +test-custom-logs-group
-    BUILD +test-autoinstall
-    BUILD +test-automigrations
+    WAIT
+        BUILD +test-serverspec-web
+        BUILD +test-serverspec-opc
+        BUILD +test-serverspec-simple-cases
+        BUILD +test-custom-configs
+        BUILD +test-custom-logs-group
+    END
+    WAIT
+        BUILD +test-autoinstall
+    END
+    WAIT
+        BUILD +test-automigrations
+    END
 
 # test-serverspec-web runs serverspec tests against the base image in web mode
 # with no customization options enabled. That is, these specs apply against
@@ -148,7 +154,10 @@ test-custom-logs-group:
 # and simulation sources used when testing various container features.
 base-image:
     FROM ../+docker-product-base
-    RUN DEBIAN_FRONTEND=noninteractive apt-get install -y ruby && gem install bundler serverspec rake
+    RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+        && apt-get install --no-install-recommends --no-install-suggests -y ruby \
+        && rm -rf /var/lib/apt/lists/* \
+        && gem install bundler serverspec rake
     ENV BOOT_LOG_LEVEL=TRACE
     ENV BOOT_LOG_LEVEL_EXEC=TRACE
     ENV HTTP_USE_TESTING_CERTIFICATE=true

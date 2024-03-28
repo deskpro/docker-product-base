@@ -1,6 +1,6 @@
 FROM debian:12.2-slim as builder-php-exts
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install ca-certificates apt-transport-https software-properties-common curl lsb-release -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https software-properties-common curl lsb-release \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
     && sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' \
     && apt-get update \
@@ -11,7 +11,8 @@ RUN apt-get update \
     php8.3-common \
     php8.3-xml \
     php-pear \
-    && pecl install opentelemetry protobuf
+    && pecl install opentelemetry protobuf \
+    && rm -rf /var/lib/apt/lists/*
 # outputs: /usr/lib/php/20230831/protobuf.so
 # outputs: /usr/lib/php/20230831/opentelemetry.so
 
@@ -21,7 +22,7 @@ WORKDIR /srv/deskpro
 USER root
 
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install ca-certificates apt-transport-https software-properties-common curl lsb-release -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends --no-install-suggests ca-certificates apt-transport-https software-properties-common curl lsb-release \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
     && sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' \
     && apt-get update \
@@ -34,14 +35,13 @@ RUN apt-get update \
     jq \
     libfcgi-bin \
     nano \
-    neovim \
+    vim-tiny \
     nginx \
     openssl \
     php8.3-cli \
     php8.3-common \
     php8.3-ctype \
     php8.3-curl \
-    php8.3-dev \
     php8.3-dom \
     php8.3-fileinfo \
     php8.3-fpm \
@@ -56,14 +56,15 @@ RUN apt-get update \
     php8.3-soap \
     php8.3-xml \
     php8.3-zip \
-    pigz \
     ripgrep \
     rsync \
     sudo \
     supervisor \
-    tmux \
     tzdata \
-    && find /usr/lib/python3.11 -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
+    && find /usr/lib/python3.11 -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete \
+    && apt-get -y autoremove && apt-get -y clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /usr/bin/mariadb-access /usr/bin/mariadb-admin /usr/bin/mariadb-analyze /usr/bin/mariadb-check /usr/bin/mariadb-binlog /usr/bin/mariadb-conv /usr/bin/mariadb-convert-table-format /usr/bin/mariadb-find-rows /usr/bin/mariadb-fix-extensions /usr/bin/mariadb-hotcopy /usr/bin/mariadb-import /usr/bin/mariadb-optimize /usr/bin/mariadb-plugin /usr/bin/mariadb-repair /usr/bin/mariadb-report /usr/bin/mariadb-secure-installation /usr/bin/mariadb-setpermission /usr/bin/mariadb-show /usr/bin/mariadb-slap /usr/bin/mariadb-tzinfo-to-sql /usr/bin/mariadb-waitpid /usr/bin/mariadbcheck
 
 COPY --link --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
 COPY --link --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
