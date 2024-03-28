@@ -390,6 +390,10 @@
   },
   {
     "description": "",
+    "name": "PHP_OPCACHE_JIT_BUFFER_SIZE"
+  },
+  {
+    "description": "",
     "name": "PHP_OPCACHE_VALIDATE_TIMESTAMPS"
   },
   {
