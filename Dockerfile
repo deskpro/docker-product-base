@@ -66,6 +66,15 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /usr/bin/mariadb-access /usr/bin/mariadb-admin /usr/bin/mariadb-analyze /usr/bin/mariadb-check /usr/bin/mariadb-binlog /usr/bin/mariadb-conv /usr/bin/mariadb-convert-table-format /usr/bin/mariadb-find-rows /usr/bin/mariadb-fix-extensions /usr/bin/mariadb-hotcopy /usr/bin/mariadb-import /usr/bin/mariadb-optimize /usr/bin/mariadb-plugin /usr/bin/mariadb-repair /usr/bin/mariadb-report /usr/bin/mariadb-secure-installation /usr/bin/mariadb-setpermission /usr/bin/mariadb-show /usr/bin/mariadb-slap /usr/bin/mariadb-tzinfo-to-sql /usr/bin/mariadb-waitpid /usr/bin/mariadbcheck
 
+RUN sed -i 's/providers = provider_sect/providers = provider_sect\n\
+ssl_conf = ssl_sect\n\
+\n\
+[ssl_sect]\n\
+system_default = system_default_sect\n\
+\n\
+[system_default_sect]\n\
+Options = UnsafeLegacyRenegotiation/' /etc/ssl/openssl.cnf
+
 COPY --link --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
 COPY --link --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
 
