@@ -2,49 +2,72 @@
   {
     "name": "AUTO_RUN_INSTALLER",
     "type": "boolean",
-    "description": "Automatically run the installer when the container starts for the first time and the database is empty. You may also want to set: INSTALL_ADMIN_EMAIL, INSTALL_ADMIN_PASSWORD, INSTALL_URL."
+    "description": "Automatically run the installer when the container starts for the first time and the database is empty. You may also want to set: INSTALL_ADMIN_EMAIL, INSTALL_ADMIN_PASSWORD, INSTALL_URL.",
+    "default": "false"
   },
   {
     "name": "AUTO_RUN_MIGRATIONS",
     "type": "boolean",
-    "description": "When the container starts, if there are any migrations that need to be run, they will be run automatically. Note: There are no locking controls so only enable this on a single container at a time (e.g. the tasks container)."
+    "description": "When the container starts, if there are any migrations that need to be run, they will be run automatically. Note: There are no locking controls so only enable this on a single container at a time (e.g. the tasks container).",
+    "default": "false"
+  },
+  {
+    "name": "CONTAINER_NAME",
+    "description": "Human-readable name of the container (to make log parsing easier)",
+    "type": "string",
+    "default": "hostname of the container"
+  },
+  {
+    "name": "CRON_STATUS_FILEPATH",
+    "description": "Path to write the cron status file to.",
+    "type": "string"
   },
   {
     "name": "CUSTOM_MOUNT_BASEDIR",
-    "type": "boolean",
-    "description": "Base path for all the various custom mounts. Default is /deskpro.",
+    "description": "Base path for all the various custom mounts.",
+    "type": "string",
+    "default": "/deskpro",
     "isPrivate": true
   },
   {
+    "name": "DESKPRO_ALLOW_CUSTOM_APP_HOST",
     "description": "",
-    "name": "DESKPRO_ALLOW_CUSTOM_APP_HOST"
+    "type": "string"
   },
   {
-    "description": "Base URL to use when calling Deskpro APIs from itself (i.e. internal API calls between services). Defaults to http://127.0.0.1:80.",
-    "name": "DESKPRO_API_BASE_URL_PRIVATE"
+    "name": "DESKPRO_API_BASE_URL_PRIVATE",
+    "description": "Base URL to use when calling Deskpro APIs from itself (i.e. internal API calls between services).",
+    "type": "string",
+    "default": "http://127.0.0.1:80"
   },
   {
-    "description": "App key used internally for signing (single-tenant value)",
-    "name": "DESKPRO_APP_KEY"
+    "name": "DESKPRO_APP_KEY",
+    "description": "App key used internally for signing (single-tenant value).",
+    "type": "string"
   },
   {
-    "description": "",
-    "name": "DESKPRO_BLOBS_PATH"
+    "name": "DESKPRO_BLOBS_PATH",
+    "description": "The path to use for blob storage when the filesystem adapter is in use.",
+    "type": "string",
+    "default": "/srv/deskpro/INSTANCE_DATA/attachments"
   },
   {
     "description": "True to make the app behave in 'cloud mode' - i.e. multi-tenant use.",
     "name": "DESKPRO_CLOUD_MODE",
     "type": "boolean",
-    "setEnv": true
+    "setEnv": true,
+    "default": "false"
   },
   {
-    "description": "",
-    "name": "DESKPRO_CONFIG_EXTENSIONS"
+    "name": "DESKPRO_CONFIG_EXTENSIONS",
+    "description": "Colon-delimited list of files to load containing additional Deskpro PHP configuration.",
+    "type": "string"
   },
   {
     "name": "DESKPRO_CONFIG_FILE",
-    "type": "boolean",
     "description": "Path to the default/main config file. Not usually changed because users can use the .d dir to override.",
+    "type": "string",
+    "default": "/etc/templates/deskpro-config.php.tmpl",
     "isPrivate": true
   },
   {
@@ -52,104 +75,150 @@
     "name": "DESKPRO_CONFIG_RAW_PHP"
   },
   {
-    "description": "",
-    "name": "DESKPRO_DB_HOST"
+    "name": "DESKPRO_DB_HOST",
+    "description": "IP/Hostname of database server.",
+    "type": "string",
+    "default": "mysql"
   },
   {
-    "description": "",
-    "name": "DESKPRO_DB_NAME"
+    "name": "DESKPRO_DB_NAME",
+    "description": "Name of Deskpro database.",
+    "type": "string",
+    "default": "deskpro"
   },
   {
-    "description": "",
-    "name": "DESKPRO_DB_PASS"
+    "name": "DESKPRO_DB_PASS",
+    "description": "Password to connect to Deskpro database.",
+    "type": "string",
+    "default": "deskpro"
   },
   {
-    "description": "",
-    "name": "DESKPRO_DB_PORT"
+    "name": "DESKPRO_DB_PORT",
+    "description": "Port to connect to database server.",
+    "type": "string",
+    "default": "3306"
   },
   {
-    "description": "",
-    "name": "DESKPRO_DB_READ_HOST"
+    "name": "DESKPRO_DB_READ_HOST",
+    "description": "IP/Hostname of a read-only database server.",
+    "type": "string"
   },
   {
-    "description": "",
-    "name": "DESKPRO_DB_READ_NAME"
+    "name": "DESKPRO_DB_READ_NAME",
+    "description": "Name of read-only Deskpro database.",
+    "type": "string",
+    "default": "deskpro"
   },
   {
-    "description": "",
-    "name": "DESKPRO_DB_READ_PASS"
+    "name": "DESKPRO_DB_READ_PASS",
+    "description": "Password to connect to read-only Deskpro database. [default:  ]",
+    "type": "string",
+    "default": "deskpro"
   },
   {
-    "description": "",
-    "name": "DESKPRO_DB_READ_PORT"
+    "name": "DESKPRO_DB_READ_PORT",
+    "description": "Port to connect to read-only database server.",
+    "type": "string",
+    "default": "3306"
   },
   {
-    "description": "",
-    "name": "DESKPRO_DB_READ_USER"
+    "name": "DESKPRO_DB_READ_USER",
+    "description": "Name of user to connect to read-only Deskpro database.",
+    "type": "string",
+    "default": "root"
   },
   {
-    "description": "",
-    "name": "DESKPRO_DB_USER"
+    "name": "DESKPRO_DB_REPORTS_HOST",
+    "description": "IP/Hostname of database server.",
+    "type": "string"
   },
   {
-    "description": "",
-    "name": "DESKPRO_DEBUG_MODE"
+    "name": "DESKPRO_DB_REPORTS_NAME",
+    "description": "Name of reporting read-only Deskpro database.",
+    "type": "string",
+    "default": "deskpro"
   },
   {
-    "description": "",
-    "name": "DESKPRO_DISABLE_TELEMETRY"
+    "name": "DESKPRO_DB_REPORTS_PASS",
+    "description": "Password to connect to reporting read-only Deskpro database. [default:  ]",
+    "type": "string",
+    "default": "deskpro"
   },
   {
+    "name": "DESKPRO_ENABLE_OTEL",
     "description": "Enable OpenTelemetry tracing",
-    "name": "DESKPRO_ENABLE_OTEL"
+    "type": "boolean",
+    "default": "false"
   },
   {
-    "description": "",
-    "name": "DESKPRO_ENABLE_TEST_SUPPORT"
+    "name": "DESKPRO_DB_REPORTS_PORT",
+    "description": "Port to connect to reporting read-only database server.",
+    "type": "string",
+    "default": "3306"
   },
   {
-    "description": "",
-    "name": "DESKPRO_ES_INDEX_NAME"
+    "name": "DESKPRO_DB_REPORTS_USER",
+    "description": "Name of user to connect to reporting read-only Deskpro database.",
+    "type": "string",
+    "default": "root"
   },
   {
-    "description": "",
-    "name": "DESKPRO_ES_TENANT_ID"
+    "name": "DESKPRO_DB_USER",
+    "description": "Name of user to connect to Deskpro database.",
+    "type": "string",
+    "default": "root"
   },
   {
-    "description": "",
-    "name": "DESKPRO_ES_URL"
+    "name": "DESKPRO_DEBUG_MODE",
+    "description": "Enable debug mode in Deskpro.",
+    "type": "boolean",
+    "default": "false"
   },
   {
-    "description": "",
-    "name": "DESKPRO_LICENSE_KEY"
+    "name": "DESKPRO_DISABLE_TELEMETRY",
+    "description": "Disable telemetry in Deskpro.",
+    "type": "boolean",
+    "default": "false"
   },
   {
-    "description": "",
-    "name": "DESKPRO_LICENSE_KEY_INSTALL"
+    "name": "DESKPRO_ENABLE_TEST_HEADER",
+    "description": "Enable automated test tools and utilities.",
+    "type": "boolean",
+    "default": "false"
   },
   {
-    "description": "",
-    "name": "DESKPRO_LOG_LEVEL"
+    "name": "DESKPRO_ENABLE_TEST_SUPPORT",
+    "description": "Enable automated test tools and utilities.",
+    "type": "boolean",
+    "default": "false"
   },
   {
-    "description": "",
-    "name": "DESKPRO_LOG_LEVEL_EMAIL_COLLECTION"
+    "name": "DESKPRO_ES_INDEX_NAME",
+    "description": "Name of Elasticsearch index to use.",
+    "type": "string",
+    "default": "deskpro"
   },
   {
-    "description": "",
-    "name": "DESKPRO_LOG_LEVEL_EMAIL_PROCESSING"
+    "name": "DESKPRO_ES_TENANT_ID",
+    "description": "Name of Elasticsearch alias to use.",
+    "type": "string",
+    "default": "deskpro"
   },
   {
-    "description": "",
-    "name": "DESKPRO_SENTRY_BACKEND_DSN"
+    "name": "DESKPRO_ES_URL",
+    "description": "Full URL to Elasticsearch server (no trailing slash).",
+    "type": "string",
+    "example": "https://username:password!#$?*abc@foo.com:9200"
   },
   {
-    "description": "",
-    "name": "DESKPRO_SENTRY_DEPRECATED_BACKEND_DSN"
+    "name": "DESKPRO_LICENSE_KEY",
+    "description": "A license key. This would override any in-product license management because it is effectively hard-coded.",
+    "type": "string"
   },
   {
-    "description": "",
-    "name": "DESKPRO_SENTRY_FRONTEND_DSN"
+    "name": "DESKPRO_LICENSE_KEY_INSTALL",
+    "description": "A license key to install by default when installing the system for the first time. After install, licensing would be managed from the Billing area like usual",
+    "type": "string"
   },
   {
     "description": "When using DESKPRO_SITE_INFO_SOURCE, set this to true if the site info is base64 encoded.",
@@ -179,19 +248,25 @@
     "description": "One of: httpheader, file, env",
     "name": "DESKPRO_SITE_INFO_SOURCE",
     "type": "string",
-    "setEnv": true
+    "setEnv": true,
+    "example": "httpheader, file, env"
   },
   {
-    "description": "",
-    "name": "DESKPRO_STORAGE_SETTINGS"
+    "name": "DESKPRO_LOG_LEVEL",
+    "description": "The default log level for most logs.",
+    "type": "string",
+    "default": "warning"
   },
   {
-    "description": "",
-    "name": "DESKPRO_STORAGE_TYPE"
+    "name": "DESKPRO_LOG_LEVEL_EMAIL_COLLECTION",
+    "description": "Log level for email collection.",
+    "type": "string",
+    "default": "warning"
   },
   {
+    "name": "DESKPRO_SVC_KEY",
     "description": "Similar to DESKPRO_APP_KEY but can be used for multi-tenant services that need secrets before a tenant context is available.",
-    "name": "DESKPRO_SVC_KEY"
+    "type": "string"
   },
   {
     "name": "DESKPRO_TENANT_ID",
@@ -199,20 +274,57 @@
     "description": "An ID given to this instance of Deskpro. (Single-tenant value)"
   },
   {
-    "description": "",
-    "name": "DESKPRO_TEST_RESET_DB_SCRIPT"
+    "name": "DESKPRO_LOG_LEVEL_EMAIL_PROCESSING",
+    "description": "Log level for email processing.",
+    "type": "string",
+    "default": "warning"
   },
   {
+    "name": "DESKPRO_SENTRY_BACKEND_DSN",
     "description": "",
-    "name": "DESKPRO_TWITTER_APP_ID"
+    "type": "string"
   },
   {
+    "name": "DESKPRO_SENTRY_DEPRECATED_BACKEND_DSN",
     "description": "",
-    "name": "DESKPRO_TWITTER_APP_KEY"
+    "type": "string"
   },
   {
+    "name": "DESKPRO_SENTRY_FRONTEND_DSN",
     "description": "",
-    "name": "DESKPRO_TWITTER_APP_KEY_SECRET"
+    "type": "string"
+  },
+  {
+    "name": "DESKPRO_STORAGE_SETTINGS",
+    "description": "A JSON-encoded string of storage adapter settings according to the type.",
+    "type": "string"
+  },
+  {
+    "name": "DESKPRO_STORAGE_TYPE",
+    "description": "Storage type:",
+    "type": "string",
+    "example": "db, fs, or s3",
+    "default": "db"
+  },
+  {
+    "name": "DESKPRO_TEST_RESET_DB_SCRIPT",
+    "description": "Path to an executable to run on the DB reset endpoint.",
+    "type": "string"
+  },
+  {
+    "name": "DESKPRO_TWITTER_APP_ID",
+    "description": "",
+    "type": "string"
+  },
+  {
+    "name": "DESKPRO_TWITTER_APP_KEY",
+    "description": "",
+    "type": "string"
+  },
+  {
+    "name": "DESKPRO_TWITTER_APP_KEY_SECRET",
+    "description": "",
+    "type": "string"
   },
   {
     "name": "HEALTHCHECK_TEST_DB_CONNECTION",
@@ -226,72 +338,79 @@
   },
   {
     "name": "HTTP_INTERNAL_MODE",
+    "description": "Set in 15-run-mode.sh and used in nginx config file. Determines if nginx should only listen on localhost for internal api calls.",
     "type": "boolean",
-    "description": "Set in 11-run-mode.sh and used in nginx config file. Determines if nginx should only listen on localhost for internal api calls.",
+    "default": "false",
     "isPrivate": true
   },
   {
     "name": "HTTP_SERVE_HOST",
-    "type": "string",
-    "description": "Set the HTTP host used for web requests."
+    "description": "Set the HTTP host used for web requests.",
+    "type": "string"
   },
   {
     "name": "HTTP_USER_REAL_HOST_HEADER",
-    "type": "string",
     "description": "The header to use for the users real host name.",
+    "type": "string",
     "example": "X-Forwarded-Host"
   },
   {
     "name": "HTTP_USER_REAL_IP_HEADER",
-    "type": "string",
     "description": "The header to use for the users real IP address.",
+    "type": "string",
     "example": "X-Forwarded-For"
   },
   {
     "name": "HTTP_USER_REAL_PORT_HEADER",
-    "type": "string",
     "description": "The header to use for the users real port.",
+    "type": "string",
     "example": "X-Forwarded-Port"
   },
   {
     "name": "HTTP_USER_REAL_PROTO_HEADER",
-    "type": "string",
     "description": "The header to use for the users real protocol.",
+    "type": "string",
     "example": "X-Forwarded-Proto"
   },
   {
     "name": "HTTP_USER_SET_HTTPS_PORT",
-    "type": "string",
     "description": "For web requests coming through a secure https connection, set the end-user port being used.",
-    "example": "12345"
+    "type": "string",
+    "example": "12345",
+    "default": "443"
   },
   {
     "name": "HTTP_USER_SET_HTTPS_PROTO",
-    "type": "string",
     "description": "For web requests coming through a secure https connection, set the end-user protocol being used.",
-    "example": "https"
+    "type": "string",
+    "example": "https",
+    "default": "https"
   },
   {
     "name": "HTTP_USER_SET_HTTP_PORT",
-    "type": "string",
     "description": "For web requests coming through a http connection, set the end-user port being used.",
-    "example": "12345"
+    "type": "string",
+    "example": "12345",
+    "default": "80"
   },
   {
     "name": "HTTP_USER_SET_HTTP_PROTO",
-    "type": "string",
     "description": "For web requests coming through a http connection, set the end-user protocol being used.",
-    "example": "http"
+    "type": "string",
+    "example": "http",
+    "default": "http"
   },
   {
     "name": "HTTP_USE_TESTING_CERTIFICATE",
+    "description": "Set true to use the built-in (non-secure) testing certificate for HTTPS/443.",
     "type": "boolean",
-    "description": "Set true to use the built-in (non-secure) testing certificate for HTTPS/443."
+    "default": "false"
   },
   {
     "name": "INSTALL_ADMIN_EMAIL",
     "type": "string",
-    "description": "Used with AUTO_RUN_INSTALLER. The email address of the initial admin user. If not provided, will default to admin@deskprodemo.com."
+    "description": "Used with AUTO_RUN_INSTALLER. The email address of the initial admin user. If not provided, will default to admin@deskprodemo.com.",
+    "default": "admin@deskprodemo.com"
   },
   {
     "name": "INSTALL_ADMIN_PASSWORD",
@@ -301,119 +420,291 @@
   {
     "name": "INSTALL_URL",
     "type": "string",
-    "description": "Used with AUTO_RUN_INSTALLER. The URL of the Deskpro instance. If not provided, will default to http://127.0.0.1/"
+    "description": "Used with AUTO_RUN_INSTALLER. The URL of the Deskpro instance. If not provided, will default to http://127.0.0.1/",
+    "default": "http://127.0.0.1"
   },
   {
-    "description": "",
-    "name": "NGINX_ERROR_LOG_LEVEL"
+    "name": "IS_EXEC_MODE",
+    "description": "Set in 15-run-mode.sh and used in supervisor config - determines if the container is running in exec mode.",
+    "type": "boolean",
+    "default": "false",
+    "isPrivate": true
   },
   {
-    "description": "",
-    "name": "NGINX_REAL_IP_HEADER"
+    "name": "LOGS_EXPORT_DIR",
+    "description": "Directory to export logs to (will output to stdout otherwise).",
+    "type": "string"
   },
   {
-    "description": "",
-    "name": "NGINX_WORKER_CONNECTIONS"
+    "name": "LOGS_EXPORT_FILENAME",
+    "description": "Override of the logs export filename.",
+    "type": "string",
+    "default": "{{.app}}/{{.chan}}.log"
   },
   {
-    "description": "",
-    "name": "NGINX_WORKER_PROCESSES"
+    "name": "LOGS_OUTPUT_FORMAT",
+    "description": "Output format for logs.",
+    "type": "string",
+    "example": "logfmt or json",
+    "default": "logfmt"
+  },
+  {
+    "name": "NGINX_ERROR_LOG_LEVEL",
+    "description": "The log level for nginx logs.",
+    "type": "string",
+    "default": "warn"
+  },
+  {
+    "name": "NGINX_WORKER_CONNECTIONS",
+    "description": "The number of simultaneous connections that can be handled by each worker connection.",
+    "type": "integer",
+    "default": "1000"
+  },
+  {
+    "name": "NGINX_WORKER_PROCESSES",
+    "description": "The number of worker processes used by nginx.",
+    "type": "integer",
+    "default": "auto"
   },
   {
     "name": "NO_SHUTDOWN_ON_ERROR",
+    "description": "By default, the container will shutdown if any of the services fail. Set this to true to stop this behaviour. This can help debugging/troubleshooting.",
     "type": "boolean",
-    "description": "By default, the container will shutdown if any of the services fail. Set this to true to stop this behaviour. This can help debugging/troubleshooting."
+    "default": "false"
   },
   {
-    "description": "",
-    "name": "PHP_FPM_DP_BROADCASTER_MAX_CHILDREN"
+    "name": "PHP_FPM_DP_BROADCASTER_MAX_CHILDREN",
+    "description": "pm.max_children setting for dp_broadcaster PHP FPM pool.",
+    "type": "integer",
+    "default": "1000"
   },
   {
-    "description": "",
-    "name": "PHP_FPM_DP_BROADCASTER_OVERRIDES"
+    "name": "PHP_FPM_DP_BROADCASTER_OVERRIDES",
+    "description": "PHP FPM configuration to set and/or override in the dp_broadcaster pool configuration.",
+    "type": "string",
+    "example": "pm.max_spare_servers=5"
   },
   {
-    "description": "",
-    "name": "PHP_FPM_DP_DEFAULT_MAX_CHILDREN"
+    "name": "PHP_FPM_DP_DEFAULT_MAX_CHILDREN",
+    "description": "pm.max_children setting for dp_default PHP FPM pool.",
+    "type": "integer",
+    "default": "20"
   },
   {
-    "description": "",
-    "name": "PHP_FPM_DP_DEFAULT_OVERRIDES"
+    "name": "PHP_FPM_DP_DEFAULT_OVERRIDES",
+    "description": "PHP FPM configuration to set and/or override in the dp_default pool configuration.",
+    "type": "string",
+    "example": "pm.max_spare_servers=5"
   },
   {
-    "description": "",
-    "name": "PHP_FPM_DP_GQL_MAX_CHILDREN"
+    "name": "PHP_FPM_DP_GQL_MAX_CHILDREN",
+    "description": "pm.max_children setting for dp_gql PHP FPM pool.",
+    "type": "integer",
+    "default": "20"
   },
   {
-    "description": "",
-    "name": "PHP_FPM_DP_GQL_OVERRIDES"
+    "name": "PHP_FPM_DP_GQL_OVERRIDES",
+    "description": "PHP FPM configuration to set and/or override in the dp_gql pool configuration.",
+    "type": "string",
+    "example": "pm.max_spare_servers=5"
   },
   {
-    "description": "",
-    "name": "PHP_FPM_DP_INTERNAL_MAX_CHILDREN"
+    "name": "PHP_FPM_DP_INTERNAL_MAX_CHILDREN",
+    "description": "pm.max_children setting for dp_interanl PHP FPM pool.",
+    "type": "integer",
+    "default": "1000"
   },
   {
-    "description": "",
-    "name": "PHP_FPM_DP_INTERNAL_OVERRIDES"
+    "name": "PHP_FPM_DP_INTERNAL_OVERRIDES",
+    "description": "PHP FPM configuration to set and/or override in the dp_internal pool configuration.",
+    "type": "string",
+    "example": "pm.max_spare_servers=5"
   },
   {
-    "description": "Listen backlog size for each PHP-FPM pool (default: 1000)",
-    "name": "PHP_FPM_LISTEN_BACKLOG"
+    "description": "Listen backlog size for each PHP-FPM pool",
+    "name": "PHP_FPM_LISTEN_BACKLOG",
+    "type": "integer",
+    "default": "1000"
   },
   {
-    "description": "",
-    "name": "PHP_FPM_LOG_LEVEL"
+    "name": "PHP_FPM_LOG_LEVEL",
+    "description": "The log level for PHP FPM.",
+    "type": "string",
+    "default": "notice"
   },
   {
-    "description": "",
-    "name": "PHP_FPM_OVERRIDES"
+    "name": "PHP_FPM_OVERRIDES",
+    "description": "Global PHP FPM configuration to set and/or override.",
+    "type": "string"
   },
   {
-    "description": "",
-    "name": "PHP_FPM_POOL_OVERRIDES"
+    "name": "PHP_FPM_POOL_OVERRIDES",
+    "description": "PHP FPM configuration to set and/or override in all pool configurations.",
+    "type": "string"
   },
   {
-    "description": "",
-    "name": "PHP_INI_OVERRIDES"
+    "name": "PHP_INI_OVERRIDES",
+    "description": "PHP configuration to set and/or override.",
+    "type": "string"
   },
   {
-    "description": "",
-    "name": "PHP_MEMORY_LIMIT"
+    "name": "PHP_MEMORY_LIMIT",
+    "description": "Value of memory_limit to use in PHP configuration.",
+    "type": "string",
+    "default": "1G"
   },
   {
-    "description": "",
-    "name": "PHP_OPCACHE_ENABLED"
+    "name": "PHP_OPCACHE_ENABLED",
+    "description": "Toggle to enable or disable opcache in PHP.",
+    "type": "boolean",
+    "default": "1"
   },
   {
-    "description": "",
-    "name": "PHP_OPCACHE_MEMORY_CONSUMPTION"
+    "name": "PHP_OPCACHE_MEMORY_CONSUMPTION",
+    "description": "Memory dedicated to opcache.",
+    "type": "integer",
+    "default": "128"
   },
   {
-    "description": "",
-    "name": "PHP_OPCACHE_JIT_BUFFER_SIZE"
+    "description": "The amount of shared memory to reserve for compiled JIT code.",
+    "name": "PHP_OPCACHE_JIT_BUFFER_SIZE",
+    "type": "integer",
+    "default": "0"
   },
   {
-    "description": "",
-    "name": "PHP_OPCACHE_VALIDATE_TIMESTAMPS"
+    "name": "PHP_OPCACHE_VALIDATE_TIMESTAMPS",
+    "description": "Toggle to enable or disable automatic checking for updated scripts.",
+    "type": "boolean",
+    "default": "On"
   },
   {
-    "description": "",
-    "name": "SVC_EMAIL_COLLECT_ARGS_MAX_TIME"
+    "name": "SVC_EMAIL_COLLECT_ARGS_ACCOUNT_REST",
+    "description": "Number of seconds to rest between connections on any specific account.",
+    "type": "integer",
+    "default": "15"
   },
   {
-    "description": "",
-    "name": "SVC_EMAIL_COLLECT_NUMPROCS"
+    "name": "SVC_EMAIL_COLLECT_ARGS_EACH_MAX_TIME",
+    "description": "The maximum number of seconds to spend in a single account per iteration.",
+    "type": "integer",
+    "default": "30"
   },
   {
-    "description": "",
-    "name": "SVC_EMAIL_PROCESS_ARGS_RESERVE_TIME"
+    "name": "SVC_EMAIL_COLLECT_ARGS_EXTRA",
+    "description": "Additional arguments to the email collection service.",
+    "type": "string"
   },
   {
-    "description": "",
-    "name": "SVC_EMAIL_PROCESS_NUMPROCS"
+    "name": "SVC_EMAIL_COLLECT_ARGS_MAX_TIME",
+    "description": "Maximum time (in seconds) to allow the email collection service to run.",
+    "type": "integer",
+    "default": "600"
   },
   {
-    "description": "Dont perform email collection/processing as part of cron (i.e. indicates that email services are being used instead)",
-    "name": "TASKS_DISABLE_EMAIL_IN_JOB"
+    "name": "SVC_EMAIL_COLLECT_ARGS_TIMEOUT",
+    "description": "Max time to spend on any single account before timing out as an error.",
+    "type": "integer",
+    "default": "45"
+  },
+  {
+    "name": "SVC_EMAIL_COLLECT_ENABLED",
+    "description": "Set in 15-run-mode.sh and used in supervisor config - determines if email collection service should run as a standalone process.",
+    "type": "boolean",
+    "default": "false",
+    "isPrivate": true
+  },
+  {
+    "name": "SVC_EMAIL_COLLECT_NUMPROCS",
+    "description": "Number of processes to run for email collection.",
+    "type": "integer",
+    "default": "1"
+  },
+  {
+    "name": "SVC_EMAIL_PROCESS_ARGS_EXTRA",
+    "description": "Additional arguments to the email processing service.",
+    "type": "string"
+  },
+  {
+    "name": "SVC_EMAIL_PROCESS_ARGS_MAX_JOBS",
+    "description": "Stop processing after this many messages or 0 to have no limit.",
+    "type": "integer",
+    "default": "300"
+  },
+  {
+    "name": "SVC_EMAIL_PROCESS_ARGS_MAX_TIME",
+    "description": "The maximum number of seconds the email processing command can run before exiting or 0 to have no max time.",
+    "type": "integer",
+    "default": "600"
+  },
+  {
+    "name": "SVC_EMAIL_PROCESS_ARGS_RESERVE_TIME",
+    "description": "The number of email messages to reserve at one time.",
+    "type": "integer",
+    "default": "5"
+  },
+  {
+    "name": "SVC_EMAIL_PROCESS_ARGS_TIMEOUT",
+    "description": "Max time to spend on any single message before timing out.",
+    "type": "integer",
+    "default": "300"
+  },
+  {
+    "name": "SVC_EMAIL_PROCESS_ARGS_TRIES",
+    "description": "Number of times to attempt a processing a message before logging it failed.",
+    "type": "integer",
+    "default": "3"
+  },
+  {
+    "name": "SVC_EMAIL_PROCESS_ENABLED",
+    "description": "Set in 15-run-mode.sh and used in supervisor config - determines if email processing service should run as a standalone process.",
+    "type": "boolean",
+    "default": "false",
+    "isPrivate": true
+  },
+  {
+    "name": "SVC_EMAIL_PROCESS_NUMPROCS",
+    "description": "Number of processes to run for email processing.",
+    "type": "integer",
+    "default": "1"
+  },
+  {
+    "name": "SVC_NGINX_ENABLED",
+    "description": "Set in 15-run-mode.sh and used in supervisor config - determines if nginx service should run.",
+    "type": "boolean",
+    "default": "false",
+    "isPrivate": true
+  },
+  {
+    "name": "SVC_NGINX_LISTEN_ADDRESS",
+    "description": "The 'listen' directive for the nginx server block.",
+    "type": "string",
+    "default": "*"
+  },
+  {
+    "name": "SVC_PHP_FPM_ENABLED",
+    "description": "Set in 15-run-mode.sh and used in supervisor config - determines if PHP FPM service should run.",
+    "type": "boolean",
+    "default": "false",
+    "isPrivate": true
+  },
+  {
+    "name": "SVC_TASKS_ENABLED",
+    "description": "Set in 15-run-mode.sh and used in supervisor config - determines if tasks service should run.",
+    "type": "boolean",
+    "default": "false",
+    "isPrivate": true
+  },
+  {
+    "name": "TASKS_DISABLE_EMAIL_IN_JOB",
+    "description": "Set in 15-run-mode.sh and used in Deskpro config - don't perform email collection/processing as part of cron (i.e. indicates that email services are being used instead)",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
+    "name": "VECTOR_MARKER",
+    "description": "Marker to assist vector with log rotation.",
+    "type": "string",
+    "default": "E48C59D7-3E1C-4BAF-B6BC-07DC4D99699F-315F22F7-5F3C-47BB-92E1-67EFE58EBFB0",
+    "isPrivate": true
   }
 ]
