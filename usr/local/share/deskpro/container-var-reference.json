@@ -1,14 +1,14 @@
 [
   {
     "name": "AUTO_RUN_INSTALLER",
-    "type": "boolean",
     "description": "Automatically run the installer when the container starts for the first time and the database is empty. You may also want to set: INSTALL_ADMIN_EMAIL, INSTALL_ADMIN_PASSWORD, INSTALL_URL.",
+    "type": "boolean",
     "default": "false"
   },
   {
     "name": "AUTO_RUN_MIGRATIONS",
-    "type": "boolean",
     "description": "When the container starts, if there are any migrations that need to be run, they will be run automatically. Note: There are no locking controls so only enable this on a single container at a time (e.g. the tasks container).",
+    "type": "boolean",
     "default": "false"
   },
   {
@@ -52,11 +52,11 @@
     "default": "/srv/deskpro/INSTANCE_DATA/attachments"
   },
   {
-    "description": "True to make the app behave in 'cloud mode' - i.e. multi-tenant use.",
     "name": "DESKPRO_CLOUD_MODE",
+    "description": "True to make the app behave in 'cloud mode' - i.e. multi-tenant use.",
     "type": "boolean",
-    "setEnv": true,
-    "default": "false"
+    "default": "false",
+    "setEnv": true
   },
   {
     "name": "DESKPRO_CONFIG_EXTENSIONS",
@@ -71,8 +71,9 @@
     "isPrivate": true
   },
   {
+    "name": "DESKPRO_CONFIG_RAW_PHP",
     "description": "Raw PHP code to add to a Deskpro config file. Helpful when you want custom config but do not want to mount a file.",
-    "name": "DESKPRO_CONFIG_RAW_PHP"
+    "type": "string"
   },
   {
     "name": "DESKPRO_DB_HOST",
@@ -145,12 +146,6 @@
     "default": "deskpro"
   },
   {
-    "name": "DESKPRO_ENABLE_OTEL",
-    "description": "Enable OpenTelemetry tracing",
-    "type": "boolean",
-    "default": "false"
-  },
-  {
     "name": "DESKPRO_DB_REPORTS_PORT",
     "description": "Port to connect to reporting read-only database server.",
     "type": "string",
@@ -177,6 +172,12 @@
   {
     "name": "DESKPRO_DISABLE_TELEMETRY",
     "description": "Disable telemetry in Deskpro.",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
+    "name": "DESKPRO_ENABLE_OTEL",
+    "description": "Enable OpenTelemetry tracing",
     "type": "boolean",
     "default": "false"
   },
@@ -221,37 +222,6 @@
     "type": "string"
   },
   {
-    "description": "When using DESKPRO_SITE_INFO_SOURCE, set this to true if the site info is base64 encoded.",
-    "name": "DESKPRO_SITE_INFO_BASE64",
-    "type": "string",
-    "setEnv": true
-  },
-  {
-    "description": "When DESKPRO_SITE_INFO_SOURCE=env, this is env variable that contains the site info.",
-    "name": "DESKPRO_SITE_INFO_ENV_KEY",
-    "type": "string",
-    "setEnv": true
-  },
-  {
-    "description": "When DESKPRO_SITE_INFO_FILE=file, this is file that contains the site info.",
-    "name": "DESKPRO_SITE_INFO_FILE",
-    "type": "string",
-    "setEnv": true
-  },
-  {
-    "description": "When DESKPRO_SITE_INFO_SOURCE=httpheader, this is the header that contains the site info.",
-    "name": "DESKPRO_SITE_INFO_HEADER_NAME",
-    "type": "string",
-    "setEnv": true
-  },
-  {
-    "description": "One of: httpheader, file, env",
-    "name": "DESKPRO_SITE_INFO_SOURCE",
-    "type": "string",
-    "setEnv": true,
-    "example": "httpheader, file, env"
-  },
-  {
     "name": "DESKPRO_LOG_LEVEL",
     "description": "The default log level for most logs.",
     "type": "string",
@@ -262,16 +232,6 @@
     "description": "Log level for email collection.",
     "type": "string",
     "default": "warning"
-  },
-  {
-    "name": "DESKPRO_SVC_KEY",
-    "description": "Similar to DESKPRO_APP_KEY but can be used for multi-tenant services that need secrets before a tenant context is available.",
-    "type": "string"
-  },
-  {
-    "name": "DESKPRO_TENANT_ID",
-    "type": "string",
-    "description": "An ID given to this instance of Deskpro. (Single-tenant value)"
   },
   {
     "name": "DESKPRO_LOG_LEVEL_EMAIL_PROCESSING",
@@ -295,6 +255,37 @@
     "type": "string"
   },
   {
+    "name": "DESKPRO_SITE_INFO_BASE64",
+    "description": "When using DESKPRO_SITE_INFO_SOURCE, set this to true if the site info is base64 encoded.",
+    "type": "string",
+    "setEnv": true
+  },
+  {
+    "name": "DESKPRO_SITE_INFO_ENV_KEY",
+    "description": "When DESKPRO_SITE_INFO_SOURCE=env, this is env variable that contains the site info.",
+    "type": "string",
+    "setEnv": true
+  },
+  {
+    "name": "DESKPRO_SITE_INFO_FILE",
+    "description": "When DESKPRO_SITE_INFO_FILE=file, this is file that contains the site info.",
+    "type": "string",
+    "setEnv": true
+  },
+  {
+    "name": "DESKPRO_SITE_INFO_HEADER_NAME",
+    "description": "When DESKPRO_SITE_INFO_SOURCE=httpheader, this is the header that contains the site info.",
+    "type": "string",
+    "setEnv": true
+  },
+  {
+    "name": "DESKPRO_SITE_INFO_SOURCE",
+    "description": "One of: httpheader, file, env",
+    "type": "string",
+    "example": "httpheader, file, env",
+    "setEnv": true
+  },
+  {
     "name": "DESKPRO_STORAGE_SETTINGS",
     "description": "A JSON-encoded string of storage adapter settings according to the type.",
     "type": "string"
@@ -305,6 +296,16 @@
     "type": "string",
     "example": "db, fs, or s3",
     "default": "db"
+  },
+  {
+    "name": "DESKPRO_SVC_KEY",
+    "description": "Similar to DESKPRO_APP_KEY but can be used for multi-tenant services that need secrets before a tenant context is available.",
+    "type": "string"
+  },
+  {
+    "name": "DESKPRO_TENANT_ID",
+    "description": "An ID given to this instance of Deskpro. (Single-tenant value)",
+    "type": "string"
   },
   {
     "name": "DESKPRO_TEST_RESET_DB_SCRIPT",
@@ -328,13 +329,13 @@
   },
   {
     "name": "HEALTHCHECK_TEST_DB_CONNECTION",
-    "type": "boolean",
-    "description": "Enable checking the database connection with the healthcheck. This confirms that the container can connect to the configured database."
+    "description": "Enable checking the database connection with the healthcheck. This confirms that the container can connect to the configured database.",
+    "type": "boolean"
   },
   {
     "name": "HEALTHCHECK_TEST_DISCOVER",
-    "type": "boolean",
-    "description": "Enable checking the discover endpoint with the healthcheck. This confirms that the container can connect to the database and serve a web request which can be a good indicator of health."
+    "description": "Enable checking the discover endpoint with the healthcheck. This confirms that the container can connect to the database and serve a web request which can be a good indicator of health.",
+    "type": "boolean"
   },
   {
     "name": "HTTP_INTERNAL_MODE",
@@ -408,19 +409,19 @@
   },
   {
     "name": "INSTALL_ADMIN_EMAIL",
-    "type": "string",
     "description": "Used with AUTO_RUN_INSTALLER. The email address of the initial admin user. If not provided, will default to admin@deskprodemo.com.",
+    "type": "string",
     "default": "admin@deskprodemo.com"
   },
   {
     "name": "INSTALL_ADMIN_PASSWORD",
-    "type": "string",
-    "description": "Used with AUTO_RUN_INSTALLER. The account password of the initial admin user. If not provided, will default to a random string."
+    "description": "Used with AUTO_RUN_INSTALLER. The account password of the initial admin user. If not provided, will default to a random string.",
+    "type": "string"
   },
   {
     "name": "INSTALL_URL",
-    "type": "string",
     "description": "Used with AUTO_RUN_INSTALLER. The URL of the Deskpro instance. If not provided, will default to http://127.0.0.1/",
+    "type": "string",
     "default": "http://127.0.0.1"
   },
   {
@@ -521,8 +522,8 @@
     "example": "pm.max_spare_servers=5"
   },
   {
-    "description": "Listen backlog size for each PHP-FPM pool",
     "name": "PHP_FPM_LISTEN_BACKLOG",
+    "description": "Listen backlog size for each PHP-FPM pool",
     "type": "integer",
     "default": "1000"
   },
@@ -560,16 +561,16 @@
     "default": "1"
   },
   {
+    "name": "PHP_OPCACHE_JIT_BUFFER_SIZE",
+    "description": "The amount of shared memory to reserve for compiled JIT code.",
+    "type": "integer",
+    "default": "0"
+  },
+  {
     "name": "PHP_OPCACHE_MEMORY_CONSUMPTION",
     "description": "Memory dedicated to opcache.",
     "type": "integer",
     "default": "128"
-  },
-  {
-    "description": "The amount of shared memory to reserve for compiled JIT code.",
-    "name": "PHP_OPCACHE_JIT_BUFFER_SIZE",
-    "type": "integer",
-    "default": "0"
   },
   {
     "name": "PHP_OPCACHE_VALIDATE_TIMESTAMPS",
