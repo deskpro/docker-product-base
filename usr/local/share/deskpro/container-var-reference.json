@@ -338,13 +338,6 @@
     "type": "boolean"
   },
   {
-    "name": "HTTP_INTERNAL_MODE",
-    "description": "Set in 15-run-mode.sh and used in nginx config file. Determines if nginx should only listen on localhost for internal api calls.",
-    "type": "boolean",
-    "default": "false",
-    "isPrivate": true
-  },
-  {
     "name": "HTTP_SERVE_HOST",
     "description": "Set the HTTP host used for web requests.",
     "type": "string"
@@ -423,13 +416,6 @@
     "description": "Used with AUTO_RUN_INSTALLER. The URL of the Deskpro instance. If not provided, will default to http://127.0.0.1/",
     "type": "string",
     "default": "http://127.0.0.1"
-  },
-  {
-    "name": "IS_EXEC_MODE",
-    "description": "Set in 15-run-mode.sh and used in supervisor config - determines if the container is running in exec mode.",
-    "type": "boolean",
-    "default": "false",
-    "isPrivate": true
   },
   {
     "name": "LOGS_EXPORT_DIR",
@@ -697,15 +683,8 @@
   },
   {
     "name": "TASKS_DISABLE_EMAIL_IN_JOB",
-    "description": "Set in 15-run-mode.sh and used in Deskpro config - don't perform email collection/processing as part of cron (i.e. indicates that email services are being used instead)",
+    "description": "Prevent performing email collection/processing as part of cron (i.e. indicates that distinct email collection/processing services are being used instead)",
     "type": "boolean",
     "default": "false"
-  },
-  {
-    "name": "VECTOR_MARKER",
-    "description": "Marker to assist vector with log rotation.",
-    "type": "string",
-    "default": "E48C59D7-3E1C-4BAF-B6BC-07DC4D99699F-315F22F7-5F3C-47BB-92E1-67EFE58EBFB0",
-    "isPrivate": true
   }
 ]
