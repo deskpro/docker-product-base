@@ -291,9 +291,7 @@ $CONFIG['services'] = [];
 
 {{if getenv "SVC_PHP_FPM_ENABLED"}}
 $CONFIG['services'] = [
-    'deskpro-messenger' => [
-        'base_url' => {{ (getenv "SVC_MESSENGER_BASE_URL" "http://127.0.0.1:24000") | squote }},
-    ]
+    'deskpro-messenger' => []
 ];
 {{end}}
 
