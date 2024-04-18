@@ -38,7 +38,7 @@ function evaluate_configs_main() {
   done
 
   /usr/local/bin/gomplate -f /usr/local/share/deskpro/templates/svc-messenger-api.env.tmpl -o /srv/deskpro/services/messenger-api/.env
-  /usr/local/bin/gomplate -f /usr/local/share/deskpro/templates/svc-deskpro-messenger.env.tmpl -o /srv/deskpro/packages/deskpro-messenger/.env
+  /usr/local/bin/gomplate -f /usr/local/share/deskpro/templates/svc-deskpro-messenger-api.env.tmpl -o /srv/deskpro/packages/deskpro-messenger-api/.env
 
   set -o errexit
 }
