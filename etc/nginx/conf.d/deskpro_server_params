@@ -108,3 +108,18 @@ location ~ ^/deskpro-messenger/app/assets/ {
         return 204;
     }
 }
+
+location ~ ^/deskpro-messenger/ {
+    add_header 'Access-Control-Allow-Origin' '*';
+    add_header 'Access-Control-Allow-Headers' '*';
+    add_header 'Access-Control-Allow-Methods' 'GET,OPTIONS';
+    add_header 'Access-Control-Max-Age' '1728000';
+    add_header 'Cache-Control' 'public, max-age=31536000, immutable';
+
+    if ($request_method = 'OPTIONS') {
+        add_header 'Content-Type' 'text/plain charset=UTF-8';
+        add_header 'Content-Length' 0;
+        return 204;
+    }
+    try_files $uri $uri/ /deskpro-messenger/index.html;
+}
