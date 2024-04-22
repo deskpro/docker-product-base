@@ -75,13 +75,13 @@ system_default = system_default_sect\n\
 [system_default_sect]\n\
 Options = UnsafeLegacyRenegotiation/' /etc/ssl/openssl.cnf
 
-COPY --link --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
-COPY --link --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
+COPY --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
+COPY --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
 
-COPY --link --from=hairyhenderson/gomplate:v3.11.5 /gomplate /usr/local/bin/gomplate
-COPY --link --from=composer:2.5.8 /usr/bin/composer /usr/local/bin/composer
-COPY --link --from=timberio/vector:0.31.0-debian /usr/bin/vector /usr/local/bin/vector
-COPY --link --from=oven/bun:1.0.14-debian /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=hairyhenderson/gomplate:v3.11.5 /gomplate /usr/local/bin/gomplate
+COPY --from=composer:2.5.8 /usr/bin/composer /usr/local/bin/composer
+COPY --from=timberio/vector:0.31.0-debian /usr/bin/vector /usr/local/bin/vector
+COPY --from=oven/bun:1.0.14-debian /usr/local/bin/bun /usr/local/bin/bun
 
 COPY --from=node:18.19-bookworm /usr/local/bin /usr/local/bin
 COPY --from=node:18.19-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
@@ -105,11 +105,11 @@ RUN <<EOT
     mv /tmp/mime.types /etc/nginx
 EOT
 
-COPY --link etc /etc/
-COPY --link usr/local/bin /usr/local/bin/
-COPY --link usr/local/lib /usr/local/lib/
-COPY --link usr/local/sbin /usr/local/sbin/
-COPY --link usr/local/share/deskpro /usr/local/share/deskpro/
+COPY etc /etc/
+COPY usr/local/bin /usr/local/bin/
+COPY usr/local/lib /usr/local/lib/
+COPY usr/local/sbin /usr/local/sbin/
+COPY usr/local/share/deskpro /usr/local/share/deskpro/
 
 RUN <<EOT
     set -e
