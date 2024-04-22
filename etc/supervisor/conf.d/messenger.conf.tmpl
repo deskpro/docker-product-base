@@ -14,7 +14,7 @@ stdout_logfile_backups=1
 environment=HOSTNAME=127.0.0.1,PORT=24000
 
 [program:svc_messenger]
-command=/srv/deskpro/packages/deskpro-messenger/bin/start.sh
+command=/srv/deskpro/packages/deskpro-messenger-api/bin/start.sh
 autostart={{ getenv "SVC_PHP_FPM_ENABLED" "false" | ternary "true" "false" }}
 autorestart=true
 user=dp_app

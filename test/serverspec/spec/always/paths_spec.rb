@@ -106,7 +106,7 @@ describe file('/srv/deskpro/services/messenger-api/.env') do
   it { should be_grouped_into 'root' }
 end
 
-describe file('/srv/deskpro/packages/deskpro-messenger/.env') do
+describe file('/srv/deskpro/packages/deskpro-messenger-api/.env') do
   it { should exist }
   it { should be_owned_by 'root' }
   it { should be_grouped_into 'root' }
