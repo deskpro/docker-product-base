@@ -75,80 +75,67 @@ system_default = system_default_sect\n\
 [system_default_sect]\n\
 Options = UnsafeLegacyRenegotiation/' /etc/ssl/openssl.cnf
 
-COPY --link --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
-COPY --link --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
+COPY --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
+COPY --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
 
-COPY --link --from=hairyhenderson/gomplate:v3.11.5 /gomplate /usr/local/bin/gomplate
-COPY --link --from=composer:2.5.8 /usr/bin/composer /usr/local/bin/composer
-COPY --link --from=timberio/vector:0.31.0-debian /usr/bin/vector /usr/local/bin/vector
-COPY --link --from=oven/bun:1.0.14-debian /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=hairyhenderson/gomplate:v3.11.5 /gomplate /usr/local/bin/gomplate
+COPY --from=composer:2.5.8 /usr/bin/composer /usr/local/bin/composer
+COPY --from=timberio/vector:0.31.0-debian /usr/bin/vector /usr/local/bin/vector
+COPY --from=oven/bun:1.0.14-debian /usr/local/bin/bun /usr/local/bin/bun
 
 COPY --from=node:18.19-bookworm /usr/local/bin /usr/local/bin
 COPY --from=node:18.19-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
 RUN npm install --global tsx
 
-RUN <<EOT
-    set -e
+RUN set -e \
+    && printf '; priority=20\nextension=protobuf.so' > /etc/php/8.3/mods-available/protobuf.ini \
+    && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro.ini \
+    && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro-otel.ini \
+    && phpenmod protobuf deskpro \
+    && phpdismod phar \
+    && rm /etc/php/8.3/fpm/pool.d/www.conf \
+    && mv /etc/nginx/mime.types /tmp/mime.types \
+    && rm -rf /etc/nginx \
+    && mkdir -p /etc/nginx/conf.d \
+    && chmod 0755 /etc/nginx /etc/nginx/conf.d \
+    && mv /tmp/mime.types /etc/nginx
 
-    printf '; priority=20\nextension=protobuf.so' > /etc/php/8.3/mods-available/protobuf.ini
-    printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro.ini
-    printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro-otel.ini
-    phpenmod protobuf deskpro
-    phpdismod phar
-    rm /etc/php/8.3/fpm/pool.d/www.conf
+COPY etc /etc/
+COPY usr/local/bin /usr/local/bin/
+COPY usr/local/lib /usr/local/lib/
+COPY usr/local/sbin /usr/local/sbin/
+COPY usr/local/share/deskpro /usr/local/share/deskpro/
 
-    # we have our own config - we totally replace the defaults
-    mv /etc/nginx/mime.types /tmp/mime.types
-    rm -rf /etc/nginx
-    mkdir -p /etc/nginx/conf.d
-    chmod 0755 /etc/nginx /etc/nginx/conf.d
-    mv /tmp/mime.types /etc/nginx
-EOT
-
-COPY --link etc /etc/
-COPY --link usr/local/bin /usr/local/bin/
-COPY --link usr/local/lib /usr/local/lib/
-COPY --link usr/local/sbin /usr/local/sbin/
-COPY --link usr/local/share/deskpro /usr/local/share/deskpro/
-
-RUN <<EOT
-    set -e
-
-    # dp_app user is used when we run any app code (e.g. php-fpm, CLI tasks, etc)
-    addgroup --gid 1083 dp_app
-    adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1083 --gid 1083 dp_app
-
-    # vector user for logs
-    addgroup --gid 1084 vector
-    adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1084 --gid 1084 vector
-    # add vector to adm group so it can read logs
-    usermod -a -G adm vector
-
-    # we run nginx as its own user
-    addgroup --gid 1085 nginx
-    adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1085 --gid 1085 nginx
-
-    # initialize dirs and owners
-    mkdir -p /var/log/nginx /var/log/php /var/log/deskpro /var/log/supervisor /var/lib/vector
-    mkdir -p /srv/deskpro/INSTANCE_DATA/deskpro-config.d
-    chown root:root /usr/local/bin/vector
-    chown vector:adm /var/lib/vector
-    chown nginx:adm /var/log/nginx
-    chown dp_app:adm /var/log/php /var/log/deskpro
-    chmod -R 0775 /var/log/php /var/log/deskpro
-
-    # set group sticky bit on these dirs so
-    # new logs get created with adm group (so vector can read them)
-    chmod g+s /var/log/nginx /var/log/php /var/log/deskpro
-
-    # extract var names from our reference list
-    # (these lists are used from various helper scripts or entrypoint scripts)
-    jq -r '.[] | select(.isPrivate|not) | .name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-public-var-list
-    jq -r '.[] | select(.isPrivate) | .name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-private-var-list
-    jq -r '.[] | select(.setEnv) | .name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-setenv-var-list
-    jq -r '.[].name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-var-list
-    chmod 644 /usr/local/share/deskpro/*
-EOT
+RUN set -e \
+    # dp_app user is used when we run any app code (e.g. php-fpm, CLI tasks, etc) \
+    && addgroup --gid 1083 dp_app \
+    && adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1083 --gid 1083 dp_app \
+    # vector user for logs \
+    && addgroup --gid 1084 vector \
+    && adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1084 --gid 1084 vector \
+    # add vector to adm group so it can read logs \
+    && usermod -a -G adm vector \
+    # we run nginx as its own user \
+    && addgroup --gid 1085 nginx \
+    && adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1085 --gid 1085 nginx \
+    # initialize dirs and owners \
+    && mkdir -p /var/log/nginx /var/log/php /var/log/deskpro /var/log/supervisor /var/lib/vector \
+    && mkdir -p /srv/deskpro/INSTANCE_DATA/deskpro-config.d \
+    && chown root:root /usr/local/bin/vector \
+    && chown vector:adm /var/lib/vector \
+    && chown nginx:adm /var/log/nginx \
+    && chown dp_app:adm /var/log/php /var/log/deskpro \
+    && chmod -R 0775 /var/log/php /var/log/deskpro \
+    # set group sticky bit on these dirs so \
+    # new logs get created with adm group (so vector can read them) \
+    && chmod g+s /var/log/nginx /var/log/php /var/log/deskpro \
+    # extract var names from our reference list \
+    # (these lists are used from various helper scripts or entrypoint scripts) \
+    && jq -r '.[] | select(.isPrivate|not) | .name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-public-var-list \
+    && jq -r '.[] | select(.isPrivate) | .name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-private-var-list \
+    && jq -r '.[] | select(.setEnv) | .name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-setenv-var-list \
+    && jq -r '.[].name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-var-list \
+    && chmod 644 /usr/local/share/deskpro/*
 
 HEALTHCHECK --interval=10s --timeout=10s --start-period=30s --retries=3 \
     CMD /usr/local/bin/healthcheck
