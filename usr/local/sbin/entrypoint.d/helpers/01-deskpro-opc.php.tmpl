@@ -61,3 +61,6 @@ if ($opcConfig['app_key'] ?? false) {
 if ($opcConfig['license_code'] ?? false) {
   $CONFIG['license_code'] = $opcConfig['license_code'];
 }
+if ($opcConfig['env'] ?? false) {
+  $CONFIG['env'] = array_merge($opcConfig['env'], $CONFIG['env'] ?? []);
+}
