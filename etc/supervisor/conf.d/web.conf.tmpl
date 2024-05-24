@@ -18,7 +18,7 @@ stopwaitsecs=60
 {{end}}
 
 [program:php_fpm]
-command=/usr/sbin/php-fpm81 -F
+command=/usr/sbin/php-fpm83 -F
 autostart={{ getenv "SVC_PHP_FPM_ENABLED" "false" | ternary "true" "false" }}
 autorestart=true
 exitcodes=0

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM alpine:3.18
+FROM alpine:3.19
 WORKDIR /srv/deskpro
 USER root
 
@@ -25,44 +25,42 @@ RUN <<EOT
         nano \
         nginx \
         openssl \
-        php81 \
-        php81-common \
-        php81-ctype \
-        php81-curl \
-        php81-dom \
-        php81-fileinfo \
-        php81-fpm \
-        php81-gd \
-        php81-iconv \
-        php81-imap \
-        php81-intl \
-        php81-ldap \
-        php81-mbstring \
-        php81-mysqlnd \
-        php81-opcache \
-        php81-openssl \
-        php81-pcntl \
-        php81-pdo \
-        php81-pdo_mysql \
-        php81-pecl-protobuf \
-        php81-phar \
-        php81-posix \
-        php81-session \
-        php81-simplexml \
-        php81-soap \
-        php81-sockets \
-        php81-sodium \
-        php81-tokenizer \
-        php81-xml \
-        php81-xmlwriter \
-        php81-zip \
+        php83 \
+        php83-common \
+        php83-fpm \
+        php83-opcache \
+        php83-openssl \
+        php83-iconv \
+        php83-sodium \
+        php83-session \
+        php83-ctype \
+        php83-tokenizer \
+        php83-simplexml \
+        php83-mbstring \
+        php83-xml \
+        php83-dom \
+        php83-pdo \
+        php83-pdo_mysql \
+        php83-gd \
+        php83-curl \
+        php83-mysqlnd \
+        php83-intl \
+        php83-ldap \
+        php83-fileinfo \
+        php83-xmlwriter \
+        php83-imap \
+        php83-soap \
+        php83-zip \
+        php83-posix \
+        php83-sockets \
+        php83-pcntl \
         ripgrep \
         rsync \
         sudo \
         supervisor \
         tzdata
 
-    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community php81-pecl-opentelemetry
+    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community php83-pecl-opentelemetry
 
     cp /usr/share/zoneinfo/UTC /etc/localtime
 
@@ -70,9 +68,9 @@ RUN <<EOT
     find /usr/lib/python3.11 -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
     # Remove default configs because we will install our own
-    rm -f /etc/php81/php.ini \
-        /etc/php81/conf.d/opentelemetry.ini \
-        /etc/php81/php-fpm.d/www.conf \
+    rm -f /etc/php83/php.ini \
+        /etc/php83/conf.d/opentelemetry.ini \
+        /etc/php83/php-fpm.d/www.conf \
         /etc/nginx/nginx.conf \
         /etc/nginx/fastcgi_params \
         /etc/nginx/http.d/default.conf \
@@ -94,8 +92,8 @@ COPY --link usr/local/sbin /usr/local/sbin/
 COPY --link usr/local/share/deskpro /usr/local/share/deskpro/
 
 RUN <<EOT
-    ln -s /etc/php81 /etc/php
-    ln -s /usr/sbin/php-fpm81 /usr/sbin/php-fpm
+    ln -s /etc/php83 /etc/php
+    ln -s /usr/sbin/php-fpm83 /usr/sbin/php-fpm
 
     # dp_app user is used when we run any app code (e.g. php-fpm, CLI tasks, etc)
     addgroup -S -g 1083 dp_app
@@ -107,7 +105,7 @@ RUN <<EOT
     # initialize dirs and owners
     mkdir -p /var/log/nginx /var/log/php /var/log/deskpro /var/log/supervisor /var/lib/vector
     mkdir -p /srv/deskpro/INSTANCE_DATA/deskpro-config.d
-    rm -rf /var/log/php81
+    rm -rf /var/log/php83
     chown root:root /usr/local/bin/vector
     chown vector:adm /var/lib/vector
     chown nginx:adm /var/log/nginx

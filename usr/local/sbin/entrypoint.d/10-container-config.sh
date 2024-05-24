@@ -33,8 +33,8 @@ container_config_main() {
   done < /usr/local/share/deskpro/container-public-var-list
 
   # disable phar php ext
-  if [ -f /etc/php81/conf.d/01_phar.ini ]; then
-    mv /etc/php81/conf.d/01_phar.ini /etc/php81/conf.d/01_phar.ini.off
+  if [ -f /etc/php83/conf.d/01_phar.ini ]; then
+    mv /etc/php83/conf.d/01_phar.ini /etc/php83/conf.d/01_phar.ini.off
   fi
 }
 

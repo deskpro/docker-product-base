@@ -38,7 +38,7 @@ set -- "${POSITIONAL_ARGS[@]}"
 
 # log level has to be notice for this to produce any output
 # so we will create a temp file to pass to it directly
-tmpfile=$(mktemp -p /etc/php81/php-fpm.d zzzz-XXXXXX.conf)
+tmpfile=$(mktemp -p /etc/php83/php-fpm.d zzzz-XXXXXX.conf)
 trap 'rm -f -- "$tmpfile"' EXIT
 {
   echo '[global]'
