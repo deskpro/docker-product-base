@@ -51,6 +51,7 @@ RUN <<EOT
         php83-imap \
         php83-soap \
         php83-zip \
+        php83-phar \
         php83-posix \
         php83-sockets \
         php83-pcntl \
@@ -61,7 +62,7 @@ RUN <<EOT
         tzdata
 
     apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community php83-pecl-opentelemetry
-
+    ln -s /usr/bin/php83 /usr/bin/php
     cp /usr/share/zoneinfo/UTC /etc/localtime
 
     # removes python bytecode files (saves some disk space)
