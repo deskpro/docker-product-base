@@ -8,7 +8,7 @@ patches_main() {
   install_patches "0.0.0"
 
   # but normally only apply patches for the same version
-  if [ -d "/srv/deskpro/deskpro-build.json" ]; then
+  if [ -f "/srv/deskpro/deskpro-build.json" ]; then
     deskpro_version=$(jq -r '.build.coreVersion' /srv/deskpro/deskpro-build.json)
     install_patches "$deskpro_version"
   fi
