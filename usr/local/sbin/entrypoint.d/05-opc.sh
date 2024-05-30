@@ -48,7 +48,7 @@ opc_main() {
       cat "/deskpro/config/${pool}.conf" \
         | sed 's/^user = php$/user = dp_app/g' \
         | sed 's/^group = php$/group = dp_app/g' \
-        | sed "s/^listen = \/run\/php-fpm\/${pool}.sock/listen = \/run\/php_fpm_${pool}.sock/g" \
+        | sed "s/^listen = \/run\/php-fpm\/${pool}.sock$/listen = \/run\/php_fpm_${pool}.sock/g" \
       > "/etc/php/8.3/fpm/pool.d/zz_${pool}.conf"
     fi
   done
