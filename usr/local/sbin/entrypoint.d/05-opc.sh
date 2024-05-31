@@ -43,7 +43,13 @@ opc_main() {
   for pool in "dp_broadcaster" "dp_default" "dp_gql" "dp_internal"; do
     if [ -e "/deskpro/config/${pool}.conf" ]; then
       boot_log_message DEBUG "[bc_opc_2_8] Copying /deskpro/config/${pool}.conf to /etc/php/8.3/fpm/pool.d/zz_${pool}.conf"
-      cp -f "/deskpro/config/${pool}.conf" "/etc/php/8.3/fpm/pool.d/zz_${pool}.conf"
+
+      # copy the config and perform in-place modifications to ensure that the config is valid
+      cat "/deskpro/config/${pool}.conf" \
+        | sed 's/^user = php$/user = dp_app/g' \
+        | sed 's/^group = php$/group = dp_app/g' \
+        | sed "s/^listen = \/run\/php-fpm\/${pool}.sock$/listen = \/run\/php_fpm_${pool}.sock/g" \
+      > "/etc/php/8.3/fpm/pool.d/zz_${pool}.conf"
     fi
   done
 }
