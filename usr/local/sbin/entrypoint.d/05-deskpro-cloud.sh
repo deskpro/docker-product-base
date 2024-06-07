@@ -8,9 +8,7 @@ function deskpro_cloud_main() {
     boot_log_message TRACE "[cloud] Not running in Cloud mode, skipping cloud setup."
     return
   fi
-  cp -r /srv/deskpro/cloud/. /srv/deskpro/INSTANCE_DATA
   echo "set nocompatible" >> /etc/vim/vimrc.local
-
 }
 
 deskpro_cloud_main
