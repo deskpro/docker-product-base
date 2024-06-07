@@ -1,4 +1,13 @@
 #!/bin/bash
 
+if [[ -n "$DESKPRO_SITE_INFO" ]]; then
+  JSON_CONFIG="$('/srv/deskpro/serve/bin/dump-cfg')"
+  export DESKPRO_DB_HOST="$(jq -r '.database.primary.host' <<< "$JSON_CONFIG")"
+  export DESKPRO_DB_PORT="$(jq -r '.database.primary.port' <<< "$JSON_CONFIG")"
+  export DESKPRO_DB_USER="$(jq -r '.database.primary.user' <<< "$JSON_CONFIG")"
+  export DESKPRO_DB_PASS="$(jq -r '.database.primary.password' <<< "$JSON_CONFIG")"
+  export DESKPRO_DB_NAME="$(jq -r '.database.primary.dbname' <<< "$JSON_CONFIG")"
+fi
+
 eval-tpl --file "/usr/local/share/deskpro/templates/user.my.cnf.tmpl" --out "/$HOME/.my-auto.cnf"
 exec mysql --defaults-extra-file="/$HOME/.my-auto.cnf" --defaults-group-suffix="_primary" "$@"
