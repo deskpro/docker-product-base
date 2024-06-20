@@ -19,7 +19,7 @@ location ^~ /sys/services/messenger-api/ {
     proxy_set_header Connection "upgrade";
 }
 
-location ~ ^/deskpro-messenger/app/assets/ {
+location ~ ^/deskpro-messenger/assets/ {
     add_header 'Access-Control-Allow-Origin' '*';
     add_header 'Access-Control-Allow-Headers' '*';
     add_header 'Access-Control-Allow-Methods' 'GET,OPTIONS';
