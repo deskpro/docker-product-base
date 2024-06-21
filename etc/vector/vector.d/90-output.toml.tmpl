@@ -98,6 +98,19 @@ source = '''
 '''
 {{end}}
 
+{{if conv.ToBool (getenv "DESKPRO_LOG_AGGREGATION" "false")}}
+  [transforms.aggregate_deskpro_logs]
+  type = "filter"
+  inputs = ["all_formatted"]
+  condition = ".app == \"deskpro*\""
+
+  [sinks.out_file]
+  type = "file"
+  inputs = ["aggregate_deskpro_logs"]
+  path="{{getenv "LOGS_EXPORT_DIR"}}/deskpro_logs.log"
+
+{{end}}
+
 {{if eq "dir" (getenv "LOGS_EXPORT_TARGET") }}
   {{if eq (getenv "LOGS_EXPORT_DIR") "/dev/null" }}
     # LOGS_EXPORT_DIR=/dev/null
