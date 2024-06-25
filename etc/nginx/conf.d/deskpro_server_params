@@ -30,12 +30,12 @@ location ^~ /sys/services/broadcaster/ {
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
 }
 
-location ~ ^/(admin\-api|agent\-api|sys/services)/ {
+location ~ ^/(admin\-api|agent\-api)/ {
     fastcgi_pass unix:/run/php_fpm_dp_gql.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
 }
 
-location ^~ /sys/services/search-indexing/ {
+location ~ ^/(ticket\-channels|sys/services)/ {
     fastcgi_pass unix:/run/php_fpm_dp_internal.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
 }
