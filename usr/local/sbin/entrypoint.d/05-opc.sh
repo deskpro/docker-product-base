@@ -15,7 +15,7 @@ opc_main() {
 
   # OPC uses nginx on the host as a reverse proxy
   boot_log_message INFO "[opc] Enabling X-Forwarded- headers"
-  export HTTP_USER_REAL_IP_HEADER="X-Forwarded-For"
+  export HTTP_USER_REAL_IP_HEADER="X-Real-IP"
   export HTTP_USER_REAL_PROTO_HEADER="X-Forwarded-Proto"
   export HTTP_USER_REAL_HOST_HEADER="X-Forwarded-Host"
   export HTTP_USER_REAL_PORT_HEADER="X-Forwarded-Port"
