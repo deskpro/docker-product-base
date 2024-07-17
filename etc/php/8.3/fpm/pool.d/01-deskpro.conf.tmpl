@@ -85,7 +85,7 @@ pm = {{ getenv "PHP_FPM_DP_INTERNAL_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand
 php_admin_value[opcache.enable]=0
 
 [dp_gql]
-pm = {{ getenv "PHP_FPM_DP_GWLT_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand") }}
+pm = {{ getenv "PHP_FPM_DP_GQL_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand") }}
 php_admin_value[opcache.enable]=0
 
 [dp_broadcaster]
