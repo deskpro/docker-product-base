@@ -435,6 +435,29 @@
     "default": "100M"
   },
   {
+    "name": "METRICS_AUTH_BEARER_TOKEN",
+    "description": "If set, will require authentication with this value as Bearer token for incoming metrics requests",
+    "type": "string"
+  },
+  {
+    "name": "METRICS_ENABLED",
+    "description": "Toggle to enable or disable metrics collection",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
+    "name": "METRICS_NGINX_ENABLED",
+    "description": "Enables collecting metrics from nginx",
+    "type": "boolean",
+    "default": "true"
+  },
+  {
+    "name": "METRICS_PHP_FPM_ENABLED",
+    "description": "Enables collecting metrics from PHP-FPM",
+    "type": "boolean",
+    "default": "true"
+  },
+  {
     "name": "NGINX_ERROR_LOG_LEVEL",
     "description": "The log level for nginx logs.",
     "type": "string",
