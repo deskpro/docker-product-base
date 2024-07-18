@@ -472,6 +472,12 @@
     "example": "pm.max_spare_servers=5"
   },
   {
+    "name": "PHP_FPM_DP_BROADCASTER_PM_TYPE",
+    "description": "pm setting for dp_broadcaster PHP FPM pool.",
+    "type": "string",
+    "default": "ondemand"
+  },
+  {
     "name": "PHP_FPM_DP_DEFAULT_MAX_CHILDREN",
     "description": "pm.max_children setting for dp_default PHP FPM pool.",
     "type": "integer",
@@ -482,6 +488,12 @@
     "description": "PHP FPM configuration to set and/or override in the dp_default pool configuration.",
     "type": "string",
     "example": "pm.max_spare_servers=5"
+  },
+  {
+    "name": "PHP_FPM_DP_DEFAULT_PM_TYPE",
+    "description": "pm setting for dp_default PHP FPM pool.",
+    "type": "string",
+    "default": "ondemand"
   },
   {
     "name": "PHP_FPM_DP_GQL_MAX_CHILDREN",
@@ -496,6 +508,12 @@
     "example": "pm.max_spare_servers=5"
   },
   {
+    "name": "PHP_FPM_DP_GQL_PM_TYPE",
+    "description": "pm setting for dp_gql PHP FPM pool.",
+    "type": "string",
+    "default": "ondemand"
+  },
+  {
     "name": "PHP_FPM_DP_INTERNAL_MAX_CHILDREN",
     "description": "pm.max_children setting for dp_interanl PHP FPM pool.",
     "type": "integer",
@@ -506,6 +524,12 @@
     "description": "PHP FPM configuration to set and/or override in the dp_internal pool configuration.",
     "type": "string",
     "example": "pm.max_spare_servers=5"
+  },
+  {
+    "name": "PHP_FPM_DP_INTERNAL_PM_TYPE",
+    "description": "pm setting for dp_internal PHP FPM pool.",
+    "type": "string",
+    "default": "ondemand"
   },
   {
     "name": "PHP_FPM_LISTEN_BACKLOG",
@@ -523,6 +547,12 @@
     "name": "PHP_FPM_OVERRIDES",
     "description": "Global PHP FPM configuration to set and/or override.",
     "type": "string"
+  },
+  {
+    "name": "PHP_FPM_PM_TYPE",
+    "description": "default pm setting for PHP FPM pools.",
+    "type": "string",
+    "default": "ondemand"
   },
   {
     "name": "PHP_FPM_POOL_OVERRIDES",
