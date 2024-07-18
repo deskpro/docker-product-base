@@ -170,10 +170,10 @@ ENV LOGS_EXPORT_TARGET ""
 ENV LOGS_EXPORT_DIR ""
 
 # The filename to use when writing logs to LOGS_EXPORT_DIR
-ENV LOGS_EXPORT_FILENAME "{{.container_name}}/{{.app}}/{{.chan}}.log"
+ENV LOGS_EXPORT_FILENAME "{{.container_name}}-{{.app}}.log"
 
 # Log output format: logfmt or json
-ENV LOGS_OUTPUT_FORMAT "logfmt"
+ENV LOGS_OUTPUT_FORMAT "json"
 
 # GID to use for exported log files. By default, logs will be owned by the vector group (GID 1084).
 ENV LOGS_GID ""

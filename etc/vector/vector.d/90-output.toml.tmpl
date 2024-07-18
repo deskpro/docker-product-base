@@ -106,7 +106,7 @@ source = '''
     [sinks.out_file]
     type = "file"
     inputs = ["all_formatted"]
-    path = "{{getenv "LOGS_EXPORT_DIR"}}/{{ getenv "LOGS_EXPORT_FILENAME" "{{.app}}/{{.chan}}.log" }}"
+    path = "{{getenv "LOGS_EXPORT_DIR"}}/{{ getenv "LOGS_EXPORT_FILENAME" "{{.app}}.log" }}"
     encoding.codec = "raw_message"
     encoding.timestamp_format = "rfc3339"
   {{end}}
