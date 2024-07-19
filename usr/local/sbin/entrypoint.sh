@@ -17,9 +17,6 @@ export DOCKER_CMD_ARGS=("${@:2}")
 export DOCKER_EXEC=""
 export DOCKER_EXEC_ARGS=()
 
-# Main logging format: logfmt or json
-export LOGS_OUTPUT_FORMAT="${LOGS_OUTPUT_FORMAT:-logfmt}"
-
 # If this is set, then logs get output to this directory instead of stdout
 export LOGS_EXPORT_DIR="${LOGS_EXPORT_DIR:-}"
 
@@ -117,12 +114,6 @@ main() {
   fi
 
   boot_log_message TRACE "Docker command: $DOCKER_CMD ${DOCKER_CMD_ARGS[*]}"
-
-  if [ "$LOGS_OUTPUT_FORMAT" != "logfmt" ] && [ "$LOGS_OUTPUT_FORMAT" != "json" ]; then
-    export LOGS_OUTPUT_FORMAT=logfmt
-    boot_log_message ERROR "Unknown LOGS_OUTPUT_FORMAT: $LOGS_OUTPUT_FORMAT. Expected logfmt or json."
-  fi
-
   run_entrypoint_script_dir "/usr/local/sbin/entrypoint.d"
   run_entrypoint_script_dir "/deskpro/entrypoint.d"
   unset run_entrypoint_script_dir
@@ -278,11 +269,7 @@ boot_log_message() {
   local lvl="${1^^}"
   local logline=""
 
-  if [ "$LOGS_OUTPUT_FORMAT" == "logfmt" ]; then
-    logline="ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ") app=entrypoint lvl=$lvl msg=$(echo -n "$2" | jq -Rsa .) container_name=$CONTAINER_NAME"
-  else
-    logline="{\"ts\":\"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\",\"app\":\"entrypoint\",\"lvl\":\"$lvl\",\"msg\":$(echo -n "$2" | jq -Rsa .),\"container_name\":\"$CONTAINER_NAME\"}"
-  fi
+  logline="{\"ts\":\"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\",\"app\":\"entrypoint\",\"lvl\":\"$lvl\",\"msg\":$(echo -n "$2" | jq -Rsa .),\"container_name\":\"$CONTAINER_NAME\",\"log_group\":\"docker-boot\"}"
 
   echo "$logline" >> /var/log/docker-boot.log
 

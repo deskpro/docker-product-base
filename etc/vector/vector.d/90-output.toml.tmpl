@@ -11,7 +11,7 @@ inputs = [
   "php_fpm_error",
 
   "deskpro_logs",
-  "deskpro_tasks",
+  "deskpro_services"
 ]
 source = '''
 
@@ -23,7 +23,16 @@ if is_nullish(.lvl) {
   .lvl = string(.parsed.lvl) ?? string(.parsed.level) ?? string(.parsed.level_name) ?? string(.parsed.severity) ?? "INFO"
 }
 
-.ts = to_timestamp(.parsed.ts) ?? to_timestamp(.parsed.timestamp) ?? to_timestamp(.ts) ?? now()
+if is_nullish(.ts) {
+  if is_timestamp(.parsed.ts) {
+    .ts = .parsed.ts
+  } else if is_timestamp(.parsed.timestamp) {
+    .ts = .parsed.timestamp
+  } else {
+    .ts = now()
+  }
+}
+
 .lvl = upcase(.lvl) ?? .lvl
 
 .app = string(.app) ?? null
@@ -36,12 +45,19 @@ if is_nullish(.chan) {
   .chan = "general"
 }
 
+.log_group = string(.log_group) ?? null
+if is_nullish(.log_group) {
+  .log_group = .app + "-" + .chan
+}
+
 .container_name = "{{ getenv "CONTAINER_NAME" }}"
 
 data = {
   "ts": format_timestamp(.ts, format: "%Y-%m-%dT%H:%M:%SZ") ?? .ts,
+  "ts_read": format_timestamp(now(), format: "%Y-%m-%dT%H:%M:%SZ") ?? null,
   "lvl": .lvl,
   "container_name": .container_name,
+  "log_group": .log_group,
   "app": .app,
   "chan": .chan,
   "msg": string(.parsed.msg) ?? string(.parsed.message) ?? string(.message) ?? ""
@@ -72,31 +88,8 @@ if is_object(.parsed) {
   del(.parsed)
 }
 
-.logprops = compact(merge(data, extra))
+. = compact(merge(data, extra))
 '''
-
-{{if eq "logfmt" (getenv "LOGS_OUTPUT_FORMAT") }}
-[transforms.all_formatted]
-type = "remap"
-inputs = ["all"]
-source = '''
-logfmt_order=["ts", "app", "chan", "lvl", "msg", "container_name"]
-if is_array(.logfmt_order) {
-  logfmt_order = unique(append(logfmt_order, .logfmt_order) ?? logfmt_order)
-}
-.orig_message = .message
-.message = encode_logfmt(.logprops, logfmt_order) ?? .orig_message
-'''
-{{else}}
-[transforms.all_formatted]
-type = "remap"
-inputs = ["all"]
-source = '''
-
-.orig_message = .message
-.message = encode_json(.logprops)
-'''
-{{end}}
 
 {{if eq "dir" (getenv "LOGS_EXPORT_TARGET") }}
   {{if eq (getenv "LOGS_EXPORT_DIR") "/dev/null" }}
@@ -105,24 +98,24 @@ source = '''
   {{else}}
     [sinks.out_file]
     type = "file"
-    inputs = ["all_formatted"]
-    path = "{{getenv "LOGS_EXPORT_DIR"}}/{{ getenv "LOGS_EXPORT_FILENAME" "{{.app}}.log" }}"
-    encoding.codec = "raw_message"
+    inputs = ["all"]
+    path = "{{getenv "LOGS_EXPORT_DIR"}}/{{ getenv "LOGS_EXPORT_FILENAME" "{{.log_group}}.log" }}"
+    encoding.codec = "json"
     encoding.timestamp_format = "rfc3339"
   {{end}}
 {{else if eq "cloudwatch" (getenv "LOGS_EXPORT_TARGET") }}
 [sinks.out_cloudwatch_logs]
 type = "aws_cloudwatch_logs"
-inputs = ["all_formatted"]
+inputs = ["all"]
 group_name = "{{ getenv "LOGS_EXPORT_CLOUDWATCH_GROUP_NAME" "deskpro" }}"
 stream_name = "{{ getenv "LOGS_EXPORT_CLOUDWATCH_STREAM_NAME" "{{.app}}/{{.chan}}/{{.container_name}}" }}"
-encoding.codec = "raw_message"
+encoding.codec = "json"
 encoding.timestamp_format = "rfc3339"
 {{else if eq "stdout" (getenv "LOGS_EXPORT_TARGET") }}
 [sinks.out_docker]
 type = "console"
-inputs = ["all_formatted"]
-encoding.codec = "raw_message"
+inputs = ["all"]
+encoding.codec = "json"
 encoding.timestamp_format = "rfc3339"
 target = "stdout"
 {{end}}
