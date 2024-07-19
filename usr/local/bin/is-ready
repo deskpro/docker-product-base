@@ -65,7 +65,13 @@ check_ready() {
     return 1
   fi
 
+
   if [ "$check_tasks" = "1" ]; then
+    if [ -f "/run/container-running-entrypoint" ]; then
+      output "Entrypoint initialisation is running"
+      return 1
+    fi
+
     if [ -f "/run/container-running-installer" ]; then
       output "Installer is running"
       return 1

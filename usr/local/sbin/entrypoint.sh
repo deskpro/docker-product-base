@@ -56,6 +56,10 @@ else
 fi
 
 main() {
+  # store the fact that we're running the entrypoint
+  date -u +"%Y-%m-%dT%H:%M:%SZ" >> /run/container-running-entrypoint
+  chmod 0644 /run/container-running-entrypoint
+
   # remove sentinel files that may be set from previous boots
   # (normally set in container-ready.sh - we want to remove them here, early, because they are used in healthcheck)
   rm -f /run/container-ready /run/container-running-installer /run/container-running-migrations
@@ -138,6 +142,9 @@ main() {
   # store the fact that we've booted once (can be used to check if we're rebooting)
   date -u +"%Y-%m-%dT%H:%M:%SZ" >> /run/container-booted
   chmod 0644 /run/container-booted
+
+  # remove the sentinel file that indicates we're running the entrypoint
+  rm -f /run/container-running-entrypoint
 
   case "$l_docker_exec" in
     exec)
