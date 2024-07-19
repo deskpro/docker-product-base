@@ -18,11 +18,11 @@ group=dp_app
 startsecs=1
 numprocs={{ getenv "SVC_EMAIL_COLLECT_NUMPROCS" "1" }}
 stopsignal=INT
-stopwaitsecs=30
+stopwaitsecs={{ getenv "FAST_SHUTDOWN" "false" | ternary "0" "30" }}
 redirect_stderr=true
 stdout_logfile=/var/log/supervisor/email_collect.log
-stdout_logfile_maxbytes=10000000
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0 {{/* Our rotate-logs task will handle rotation */}}
+stdout_logfile_backups=0
 
 [program:email_process]
 process_name=%(program_name)s_%(process_num)02d
@@ -35,8 +35,8 @@ group=dp_app
 startsecs=1
 numprocs={{ getenv "SVC_EMAIL_PROCESS_NUMPROCS" "1" }}
 stopsignal=INT
-stopwaitsecs=30
+stopwaitsecs={{ getenv "FAST_SHUTDOWN" "false" | ternary "0" "30" }}
 redirect_stderr=true
 stdout_logfile=/var/log/supervisor/email_process.log
-stdout_logfile_maxbytes=10000000
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0 {{/* Our rotate-logs task will handle rotation */}}
+stdout_logfile_backups=0

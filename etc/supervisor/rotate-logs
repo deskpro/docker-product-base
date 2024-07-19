@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # This command is run every 60 seconds (see conf.d/logging.conf rotate_logs event listener)
-# This will read log files and rotate them from mylog.log to mylog.log.1 if they are 10MB or larger.
+# This will read log files and rotate them from mylog.log to mylog.log.1 if they are 15MB or larger.
 #
-# This is because the logs in the filesystem are only meant to be temporary buffers.
+# This is because the logs in the filesystem are only meant to be temporary.
 #
 # Vector is used to process and ship the logs elsewhere. Most commonly this will
 # be by outputting all logs to stdout (e.g. for docker logs) or to output them
@@ -19,16 +19,16 @@ while read -r header; do
   read -r -n "$bytes" event
   echo "$event" >&2
 
-  find /var/log -type f -name '*.log' -size +10M -not -path /var/log/docker-logs | while read f; do
+  find /var/log -type f -name '*.log' -size +15M -not -path /var/log/docker-logs | while read f; do
     echo "Rotating $f ($(stat -c%s "$f"))" >&2
-    copy "$f" "$f.1"
-    echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] Log file started: $f -- ${VECTOR_MARKER}" > "$f"
-  done
 
-  # always correct log files in /var/log/deskpro
-  # (e.g. if someone ran script as root it could create a *new* log file)
-  find /var/log/deskpro -type f -name '*.log' -not -user dp_app | while read f; do
-    chown dp_app:adm "$f"
+    # Copy this file then truncate it below (i.e. analogous to logrotate copytruncate)
+    copy "$f" "$f.1"
+
+    # Vector uses the first line to determine if a file was changed
+    # So this first line would change (new time) so Vector knows to re-process the file
+    # (VECTOR_MARKER is used from our transformations to know we can ignore the line itself)
+    echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] Log file started: $f -- ${VECTOR_MARKER}" > "$f"
   done
 
   printf "RESULT 2\nOK"
