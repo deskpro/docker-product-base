@@ -25,5 +25,5 @@ describe command('gomplate -v') do
 end
 
 describe command('vector -V') do
-  its(:stdout) { should contain('vector 0.31.') }
+  its(:stdout) { should contain('vector 0.39.') }
 end
