@@ -365,7 +365,7 @@ $CONFIG['otel'] = [
 */}}
 {{if getenv "DESKPRO_CONFIG_EXTENSIONS"}}
 {{range ((getenv "DESKPRO_CONFIG_EXTENSIONS") | strings.Split ":") }}
-  {{ $file := . | (strings.ReplaceAll "%ROOT%" "/srv/deskpro") | trimSpace }}
+  {{ $file := . | strings.ReplaceAll "%ROOT%" "/srv/deskpro" | trimSpace }}
   {{if and $file (file.Exists $file)}}
   if (is_file({{ . | squote }})) require_once {{ . | squote }};
   {{end}}
