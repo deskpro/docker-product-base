@@ -58,6 +58,24 @@ location ^~ /sys/services/messenger-api/ {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header Host $host;
 
+    {{if getenv "HTTP_USER_REAL_PROTO_HEADER"}}
+      proxy_set_header X-Forwarded-Proto $http_{{ (getenv "HTTP_USER_REAL_PROTO_HEADER") | toLower | replaceAll "-" "_" }} if_not_empty;
+    {{else}}
+      proxy_set_header X-Forwarded-Proto $proto_for_scheme;
+    {{end}}
+
+    {{if getenv "HTTP_USER_REAL_HOST_HEADER"}}
+      proxy_set_header X-Forwaded-Host $http_{{ (getenv "HTTP_USER_REAL_HOST_HEADER") | toLower | replaceAll "-" "_" }} if_not_empty;
+    {{else if getenv "HTTP_SERVE_HOST"}}
+      proxy_set_header X-Forwarded-Host "{{ getenv "HTTP_SERVE_HOST" "$http_host" }}";
+    {{end}}
+
+    {{if getenv "HTTP_USER_REAL_PORT_HEADER"}}
+      proxy_set_header X-Forwarded-Port $http_{{ (getenv "HTTP_USER_REAL_PORT_HEADER") | toLower | replaceAll "-" "_" }} if_not_empty;
+    {{else}}
+      proxy_set_header X-Forwarded-Port $port_for_scheme;
+    {{end}}
+
     proxy_pass http://127.0.0.1:24000/;
     proxy_redirect / /sys/services/messenger-api/;
 
