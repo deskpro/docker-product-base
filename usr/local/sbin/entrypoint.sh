@@ -34,7 +34,14 @@ export BOOT_LOG_LEVEL="${BOOT_LOG_LEVEL^^}"
 export BOOT_LOG_LEVEL_EXEC="${BOOT_LOG_LEVEL_EXEC:-WARNING}"
 
 # A name used in logs
-export CONTAINER_NAME="${CONTAINER_NAME:-$(hostname)}"
+if [ -z "${CONTAINER_NAME:-}" ]; then
+  # use the ECS task ID if that's available
+  if [ -n "${ECS_CONTAINER_METADATA_URI_V4:-}" ]; then
+    export CONTAINER_NAME="$(curl -s "${ECS_CONTAINER_METADATA_URI_V4}/task" | jq -r '.TaskARN | split("/") | last')"
+  else
+    export CONTAINER_NAME="$(hostname)"
+  fi
+fi
 
 # if LOGS_GID is set then we will add the vector to that group
 if [ -n "$LOGS_GID" ]; then
