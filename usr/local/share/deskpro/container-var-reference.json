@@ -426,14 +426,7 @@
     "name": "LOGS_EXPORT_FILENAME",
     "description": "Override of the logs export filename.",
     "type": "string",
-    "default": "{{.app}}/{{.chan}}.log"
-  },
-  {
-    "name": "LOGS_OUTPUT_FORMAT",
-    "description": "Output format for logs.",
-    "type": "string",
-    "example": "logfmt or json",
-    "default": "logfmt"
+    "default": "{{.container_name}}-{{.log_group}}.log"
   },
   {
     "name": "NGINX_ERROR_LOG_LEVEL",

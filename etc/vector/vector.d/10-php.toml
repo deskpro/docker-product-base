@@ -1,3 +1,5 @@
+# php error logs
+# has some overlap with deskpro app logs -- many PHP errors get caught and logged to app logs
 [sources.php_error_raw]
 type = "file"
 include = ["/var/log/php/error.log", "/var/log/php/error.log.1"]
@@ -17,11 +19,16 @@ if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKE
   abort
 }
 
+.log_group = "php-error"
 .lvl = "ERROR"
 .app = "php"
 .chan = "error"
 
-.parsed = parse_regex(.message, r'^(?P<ts>\[\d+\-\w+\-\d+ \d+:\d+:\d+ .*?\]) (?P<msg>.*)$') ?? {}
+.parsed = parse_regex(.message, r'(?m)^\[(?P<ts>\d+\-\w+\-\d+ \d+:\d+:\d+).*?\] (?P<msg>(.|\n)*)$') ?? {}
+
+if !is_nullish(.parsed.ts) {
+  .ts = parse_timestamp(.parsed.ts, "%d-%b-%Y %H:%M:%S") ?? null
+}
 
 if !is_nullish(.parsed.msg) {
   msg = string(.parsed.msg) ?? ""
@@ -33,6 +40,7 @@ if !is_nullish(.parsed.msg) {
 }
 '''
 
+# php_fpm errors will be things like max children being exceeded
 [sources.php_fpm_error_raw]
 type = "file"
 include = ["/var/log/php/fpm_error.log", "/var/log/php/fpm_error.log.1"]
@@ -42,6 +50,7 @@ ignore_not_found = true
 type = "remap"
 inputs = ["php_fpm_error_raw"]
 source = '''
+.log_group = "php_fpm-error"
 .app = "php_fpm"
 .chan = "error"
 .parsed = parse_regex(.message, r'^(?P<ts>\[\d+\-\w+\-\d+ \d+:\d+:\d+\]) (?P<lvl>\w+): (?P<msg>.*)$') ?? {}

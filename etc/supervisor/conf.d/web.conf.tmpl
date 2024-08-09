@@ -7,14 +7,14 @@ startsecs=1
 startretries=3
 redirect_stderr=true
 stdout_logfile=/var/log/supervisor/nginx.log
-stdout_logfile_maxbytes=10000000
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0 {{/* Our rotate-logs task will handle rotation */}}
+stdout_logfile_backups=0
 {{if conv.ToBool (getenv "HTTP_INTERNAL_MODE") }}
 stopsignal=TERM
 stopwaitsecs=0
 {{else}}
 stopsignal=QUIT
-stopwaitsecs=60
+stopwaitsecs={{ getenv "FAST_SHUTDOWN" "false" | ternary "0" "60" }}
 {{end}}
 
 [program:php_fpm]
@@ -26,12 +26,12 @@ startsecs=1
 startretries=3
 redirect_stderr=true
 stdout_logfile=/var/log/supervisor/php_fpm.log
-stdout_logfile_maxbytes=10000000
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0 {{/* Our rotate-logs task will handle rotation */}}
+stdout_logfile_backups=0
 {{if conv.ToBool (getenv "HTTP_INTERNAL_MODE") }}
 stopsignal=TERM
 stopwaitsecs=0
 {{else}}
 stopsignal=TERM
-stopwaitsecs=60
+stopwaitsecs={{ getenv "FAST_SHUTDOWN" "false" | ternary "0" "60" }}
 {{end}}

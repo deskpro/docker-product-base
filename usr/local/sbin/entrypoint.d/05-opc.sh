@@ -23,9 +23,6 @@ opc_main() {
   boot_log_message INFO "[opc] Installing /srv/deskpro/INSTANCE_DATA/deskpro-config.d/01-deskpro-opc.php"
   cp /usr/local/sbin/entrypoint.d/helpers/01-deskpro-opc.php.tmpl /srv/deskpro/INSTANCE_DATA/deskpro-config.d/01-deskpro-opc.php.tmpl
 
-  boot_log_message DEBUG "[opc] Setting LOGS_EXPORT_FILENAME pattern app.chan.log"
-  export LOGS_EXPORT_FILENAME="{{.container_name}}-{{.app}}.{{.chan}}.log"
-
   boot_log_message DEBUG "[opc] Setting DESKPRO_API_BASE_URL_PRIVATE to use loopback if not set"
   if [ -z "$DESKPRO_API_BASE_URL_PRIVATE" ]; then
     export DESKPRO_API_BASE_URL_PRIVATE="http://127.0.0.1:80"

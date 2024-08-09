@@ -137,23 +137,22 @@ test-custom-logs-group:
         && chmod 0775 /tmp/deskpro-logs
     WITH DOCKER --load deskpro/docker-product-base:test=+base-image
         RUN \
-            # first run - simulate that the migrations need to run
             docker run -d --name test \
                 -e CONTAINER_NAME=logtest \
                 -e LOGS_GID=1988 \
+                -e FAST_SHUTDOWN=0 \ # need to disable fast shutdown so vector has time to write log file we're testing
                 -v /tmp/deskpro-logs:/deskpro/logs \
                 deskpro/docker-product-base:test web \
             && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/custom_log_group/01_custom_log_group_spec.rb' \
-            && docker exec test /usr/bin/php -r 'echo $doesNotExist;' \
+            && docker exec test /usr/bin/php -r 'echo $doesNotExist; /* this causes an error to be logged */' \
             && docker stop test
     END
-    RUN echo "/tmp/deskpro-logs/logtest should be owned by logs_group" && stat /tmp/deskpro-logs/logtest | grep 1988
-    RUN echo "/tmp/deskpro-logs/logtest/php/error.log should be owned by logs_group" && stat /tmp/deskpro-logs/logtest/php/error.log  | grep 1988
+    RUN echo "/tmp/deskpro-logs/logtest-php-error.log should be owned by logs_group" && stat /tmp/deskpro-logs/logtest-php-error.log | grep 1988
 
 # Built on top of the product base image, this just adds test sources
 # and simulation sources used when testing various container features.
 base-image:
-    FROM ../+docker-product-base
+    FROM DOCKERFILE -f ../Dockerfile ../
     RUN DEBIAN_FRONTEND=noninteractive apt-get update \
         && apt-get install --no-install-recommends --no-install-suggests -y ruby \
         && rm -rf /var/lib/apt/lists/* \
@@ -161,6 +160,7 @@ base-image:
     ENV BOOT_LOG_LEVEL=TRACE
     ENV BOOT_LOG_LEVEL_EXEC=TRACE
     ENV HTTP_USE_TESTING_CERTIFICATE=true
+    ENV FAST_SHUTDOWN=true
     COPY --dir serverspec /test/serverspec
     COPY --dir simulate-release/* /srv/deskpro
     RUN \

@@ -26,33 +26,34 @@ http {
     ssl_session_timeout 1h;
     ssl_session_tickets off;
 
-    log_format logfmt escape=json
-      'ts=$time_iso8601 '
-      'method=$request_method '
-      'request_uri="$request_uri" '
-      'status=$status '
-      'host="$host" '
-      'scheme=$scheme '
-      'user_http_referer="$http_referer" '
-      'user_agent="$http_user_agent" '
-      'user_remote_addr=$remote_addr '
-      'user_remote_port=$remote_port '
-      'proxy_addr=$realip_remote_addr '
-      'proxy_port=$realip_remote_port '
-      'request_id="$request_id" '
-      'request_log_transaction_id="$http_x_log_transaction_id" '
-      'bytes_request="$request_length" '
-      'bytes_response="$body_bytes_sent" '
-      'server_protocol="$server_protocol" '
-      'server_port="$server_port" '
-      'upstream_addr="$upstream_addr" '
-      'time_request="$request_time" '
-      'time_upstream_connect="$upstream_connect_time" '
-      'time_upstream_header="$upstream_header_time" '
-      'time_upstream_response="$upstream_response_time"'
-      ;
+    log_format logjson escape=json
+      '{'
+      '"ts":"$time_iso8601", '
+      '"method":"$request_method", '
+      '"request_uri":"$request_uri", '
+      '"status":"$status", '
+      '"host":"$host", '
+      '"scheme":"$scheme", '
+      '"user_http_referer":"$http_referer", '
+      '"user_agent":"$http_user_agent", '
+      '"user_remote_addr":"$remote_addr", '
+      '"user_remote_port":"$remote_port", '
+      '"proxy_addr":"$realip_remote_addr", '
+      '"proxy_port":"$realip_remote_port", '
+      '"request_id":"$request_id", '
+      '"request_log_transaction_id":"$http_x_log_transaction_id", '
+      '"bytes_request":"$request_length", '
+      '"bytes_response":"$body_bytes_sent", '
+      '"server_protocol":"$server_protocol", '
+      '"server_port":"$server_port", '
+      '"upstream_addr":"$upstream_addr", '
+      '"time_request":"$request_time", '
+      '"time_upstream_connect":"$upstream_connect_time", '
+      '"time_upstream_header":"$upstream_header_time", '
+      '"time_upstream_response":"$upstream_response_time"'
+      '}';
 
-    access_log /var/log/nginx/access.log logfmt;
+    access_log /var/log/nginx/access.log logjson;
     error_log /var/log/nginx/error.log {{ getenv "NGINX_ERROR_LOG_LEVEL" "warn" }};
 
     include /etc/nginx/conf.d/*.conf;

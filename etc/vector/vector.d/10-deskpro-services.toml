@@ -1,12 +1,18 @@
-[sources.deskpro_tasks_raw]
+# stdout from deskpro services - these are processes run by supervisor whose output is considered their log output
+[sources.deskpro_services_raw]
 type = "file"
 include = [
+  # cron wrapper that runs many CLI commands
   "/var/log/supervisor/tasks.log",
   "/var/log/supervisor/tasks.log.1",
+
+  # email collection/processing wrapper
   "/var/log/supervisor/email_collect.log",
   "/var/log/supervisor/email_collect.log.1",
   "/var/log/supervisor/email_process.log",
   "/var/log/supervisor/email_process.log.1",
+
+  # node services stdout
   "/var/log/supervisor/svc_messenger.log",
   "/var/log/supervisor/svc_messenger.log.1",
   "/var/log/supervisor/svc_messenger_api.log",
@@ -15,24 +21,36 @@ include = [
 ignore_not_found = true
 max_line_bytes = 2000000
 
-[transforms.deskpro_tasks]
+[transforms.deskpro_services]
 type = "remap"
-inputs = ["deskpro_tasks_raw"]
+inputs = ["deskpro_services_raw"]
 source = '''
 if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
   abort
 }
 
 parsedName = parse_regex(.file, r'/(?P<filename>[\w\.\-]+)\.log(\.\d+)?$') ?? {}
-
 appFromName = string(parsedName.filename) ?? null
 
 if !is_nullish(appFromName) {
-  .app = "deskpro-tasks-" + appFromName
+  .app = "deskpro-" + appFromName
+  .log_group = appFromName
 } else {
   .app = "deskpro-tasks"
+  .log_group = "tasks"
 }
 
+# note: not all lines will always be JSON
 .parsed = parse_json(.message) ?? {}
-.chan = string(.parsed.channel) ?? "process"
+.chan = string(.parsed.channel) ?? "general"
+
+if !is_nullish(.parsed.time) {
+  # node services output a "time" property
+  .ts = parse_timestamp(string(.parsed.time) ?? null, "%+") ?? null
+  del(.parsed.time)
+} else if !is_nullish(.parsed.datetime) {
+  # email proc services may output a "datetime" property
+  .ts = parse_timestamp(string(.parsed.datetime) ?? null, "%+") ?? null
+  del(.parsed.datetime)
+}
 '''

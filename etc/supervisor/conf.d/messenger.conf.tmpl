@@ -5,10 +5,11 @@ autorestart=true
 exitcodes=0
 user=dp_app
 group=dp_app
+stopwaitsecs={{ getenv "FAST_SHUTDOWN" "false" | ternary "0" "10" }}
 startsecs=1
 startretries=3
 redirect_stderr=true
 stdout_logfile=/var/log/supervisor/svc_messenger_api.log
-stdout_logfile_maxbytes=10000000
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0 {{/* Our rotate-logs task will handle rotation */}}
+stdout_logfile_backups=0
 environment=HOSTNAME=127.0.0.1,PORT=24000

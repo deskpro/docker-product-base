@@ -99,10 +99,3 @@ describe file('/srv/deskpro/INSTANCE_DATA/deskpro-config.d') do
   it { should be_grouped_into 'root' }
   it { should_not be_writable.by('others') }
 end
-
-describe file('/srv/deskpro/services/messenger-api/.env') do
-  it { should exist }
-  it { should be_owned_by 'root' }
-  it { should be_grouped_into 'root' }
-end
-

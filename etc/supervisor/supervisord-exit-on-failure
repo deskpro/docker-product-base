@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This script is used to exit the container if a process fails to start properly (i.e. becomes unhealthy)
+
 printf "READY\n";
 
 while read -r header; do
@@ -8,7 +10,7 @@ while read -r header; do
   echo "------------------------------" >&2
   echo "" >&2
   echo "" >&2
-  
+
   echo "$header" >&2
   bytes=$(echo "$header" | sed 's/.*\://')
   read -r -n "$bytes" event
