@@ -197,21 +197,12 @@ log_message() {
   local logline=""
   local chan="${LOG_CHAN}"
 
-  if [ "$LOGS_OUTPUT_FORMAT" == "logfmt" ]; then
-    if [ -n "$chan" ]; then
-      chan=" chan=$chan "
-    else
-      chan=" "
-    fi
-    logline="ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ") app=container-ready${chan}lvl=$lvl msg=$(echo -n "$2" | jq -Rsa .) container_name=$CONTAINER_NAME"
+  if [ -n "$chan" ]; then
+    chan="\"chan\":\"$chan\","
   else
-    if [ -n "$chan" ]; then
-      chan="\"chan\":\"$chan\","
-    else
-      chan=" "
-    fi
-    logline="{\"ts\":\"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\",\"app\":\"container-ready\",${chan}\"lvl\":\"$lvl\",\"msg\":$(echo -n "$2" | jq -Rsa .),\"container_name\":\"$CONTAINER_NAME\"}"
+    chan=" "
   fi
+  logline="{\"ts\":\"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\",\"app\":\"container-ready\",${chan}\"lvl\":\"$lvl\",\"msg\":$(echo -n "$2" | jq -Rsa .),\"container_name\":\"$CONTAINER_NAME\",\"log_group\":\"docker-boot\"}"
 
   echo "$logline" >> /var/log/docker-boot.log
 

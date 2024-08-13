@@ -9,8 +9,8 @@ startsecs=1
 stopsignal=INT
 redirect_stderr=true
 stdout_logfile=/var/log/supervisor/tasks.log
-stdout_logfile_maxbytes=10000000
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0 {{/* Our rotate-logs task will handle rotation */}}
+stdout_logfile_backups=0
 stopsignal=TERM
-stopwaitsecs=60
+stopwaitsecs={{ getenv "FAST_SHUTDOWN" "false" | ternary "0" "60" }}
 environment=CRON_STATUS_FILEPATH="{{ getenv "CRON_STATUS_FILEPATH" "" }}"

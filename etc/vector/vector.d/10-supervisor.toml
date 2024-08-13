@@ -1,3 +1,8 @@
+# These are basically supervisor logs
+# or stdout from processes that supervisor manages
+# that don't have their own log handling elsewhere.
+
+# Supervisors own logs
 [sources.supervisord_raw]
 type = "file"
 include = [
@@ -14,21 +19,14 @@ if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKE
   abort
 }
 
+.log_group = "supervisor-procs"
 .app = "supervisord"
 .chan = "process"
 .parsed = parse_regex(.message, r'^(?P<ts>\d+\-\d+\-\d+ \d+:\d+:\d+),\d+ (?P<lvl>\w+) (?P<msg>.*)$') ?? {}
-.ts = to_timestamp(.parsed.ts) ?? now()
+.ts = parse_timestamp(.parsed.ts, "%Y-%m-%d %H:%M:%S") ?? now()
 '''
 
-[sources.vector_raw]
-type = "internal_logs"
-
-[sinks.vector_logs]
-type = "file"
-inputs = ["vector_raw"]
-path = "/var/log/vector.log"
-encoding.codec = "json"
-
+# nginx stdout -- typically empty unless there's a very low-level error
 [sources.nginx_process_raw]
 type = "file"
 include = [
@@ -45,11 +43,13 @@ if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKE
   abort
 }
 
+.log_group = "supervisor-procs"
 .app = "nginx"
 .chan = "process"
 .lvl = "INFO"
 '''
 
+# php_fpm stdout -- typically empty unless there's a very low-level error
 [sources.php_fpm_raw]
 type = "file"
 include = [
@@ -66,6 +66,7 @@ if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKE
   abort
 }
 
+.log_group = "supervisor-procs"
 .app = "php_fpm"
 .chan = "process"
 .lvl = "INFO"

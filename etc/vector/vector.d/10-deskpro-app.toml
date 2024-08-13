@@ -1,3 +1,5 @@
+# Deskpro application logs - from Laravel/Symfony
+# Contain things like exception traces or other interesting events via loggers
 [sources.deskpro_logs_raw]
 type = "file"
 include = ["/var/log/deskpro/*.log", "/var/log/deskpro/*.log.1"]
@@ -11,6 +13,7 @@ if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKE
   abort
 }
 
+.log_group = "deskpro-app"
 .app = "deskpro"
 .chan = "general"
 .lvl = "ERROR"
@@ -26,7 +29,9 @@ if !is_nullish(object(json) ?? null) {
   .lvl = string(json.level_name) ?? string(json.level) ?? "ERROR"
 
   if !is_nullish(string(json.datetime.date) ?? null) {
-    .ts = to_timestamp(string(json.datetime.date) ?? null) ?? null
+    .ts = parse_timestamp(string(json.datetime.date) ?? null, "%+") ?? null
+  } else if !is_nullish(string(json.datetime) ?? null) {
+    .ts = parse_timestamp(string(json.datetime) ?? null, "%+") ?? null
   }
 
   request_id = string(json.context.request_id) ?? string(json.extra.request_id) ?? null

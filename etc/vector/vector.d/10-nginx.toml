@@ -1,23 +1,28 @@
-[sources.nginx_access_logfmt]
+# nginx access logs
+[sources.nginx_access_raw]
 type = "file"
 include = ["/var/log/nginx/access.log", "/var/log/log/nginx/access.log.1"]
 ignore_not_found = true
 
 [transforms.nginx_access]
 type = "remap"
-inputs = ["nginx_access_logfmt"]
+inputs = ["nginx_access_raw"]
 source = '''
 if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
   abort
 }
 
+.log_group = "nginx-access"
 .app = "nginx"
 .chan = "access"
 .lvl = "INFO"
 
-.parsed = parse_logfmt!(.message)
+.parsed = parse_json!(.message)
 .parsed.msg = ""
-.logfmt_order = ["method", "request_uri", "status", "host", "scheme"]
+
+if !is_nullish(.parsed.ts) {
+  .ts = parse_timestamp(.parsed.ts, "%+") ?? null
+}
 
 status_int = int(.parsed.status) ?? 200
 if status_int >= 500 {
@@ -27,6 +32,7 @@ if status_int >= 500 {
 }
 '''
 
+# nginx error logs
 [sources.nginx_error_raw]
 type = "file"
 include = ["/var/log/nginx/error.log", "/var/log/nginx/error.log.1"]
@@ -40,6 +46,7 @@ if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKE
   abort
 }
 
+.log_group = "nginx-error"
 .app = "nginx"
 .chan = "error"
 .parsed = parse_nginx_log(.message, "error") ?? {}
