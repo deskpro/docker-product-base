@@ -39,6 +39,7 @@ RUN apt-get update \
     vim-tiny \
     nginx \
     openssl \
+    php8.3-bcmath \
     php8.3-cli \
     php8.3-common \
     php8.3-ctype \
