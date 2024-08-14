@@ -55,6 +55,7 @@ RUN apt-get update \
     php8.3-mysqlnd \
     php8.3-opcache \
     php8.3-soap \
+    php8.3-sqlite3 \
     php8.3-xml \
     php8.3-zip \
     ripgrep \
