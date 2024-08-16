@@ -35,9 +35,10 @@ RUN apt-get update \
     git \
     jq \
     libfcgi-bin \
+    libldap-common \
     nano \
-    vim-tiny \
     nginx \
+    vim-tiny \
     openssl \
     php8.3-bcmath \
     php8.3-cli \
