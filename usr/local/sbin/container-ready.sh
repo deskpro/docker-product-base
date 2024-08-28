@@ -206,6 +206,7 @@ log_message() {
 
   echo "$logline" >> /var/log/docker-boot.log
 
+  LOGS_EXPORT_DIR=$(container-var LOGS_EXPORT_DIR --default "")
   if [ -n "$LOGS_EXPORT_DIR" ]; then
     echo "$logline" >> "$LOGS_EXPORT_DIR/docker-boot.log"
   fi
