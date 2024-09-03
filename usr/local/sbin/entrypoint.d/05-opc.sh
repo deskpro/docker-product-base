@@ -43,6 +43,7 @@ opc_main() {
 
       # copy the config and perform in-place modifications to ensure that the config is valid
       cat "/deskpro/config/${pool}.conf" \
+        | tr -d '\r' \
         | sed 's/^user = php$/user = dp_app/g' \
         | sed 's/^group = php$/group = dp_app/g' \
         | sed "s/^listen = \/run\/php-fpm\/${pool}.sock$/listen = \/run\/php_fpm_${pool}.sock/g" \
