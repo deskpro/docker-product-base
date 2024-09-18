@@ -705,6 +705,13 @@
     "isPrivate": true
   },
   {
+    "name": "SVC_VECTOR_ENABLED",
+    "description": "Used in supervisor config - determines if the vector logging service should run.",
+    "type": "boolean",
+    "default": "true",
+    "isPrivate": true
+  },
+  {
     "name": "TASKS_DISABLE_EMAIL_IN_JOB",
     "description": "Prevent performing email collection/processing as part of cron (i.e. indicates that distinct email collection/processing services are being used instead)",
     "type": "boolean",
