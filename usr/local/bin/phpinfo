@@ -39,7 +39,7 @@ if [[ $use_php_fpm -eq 1 ]]; then
   SCRIPT_NAME=/usr/local/share/deskpro/phpinfo.php \
     SCRIPT_FILENAME=/usr/local/share/deskpro/phpinfo.php \
     REQUEST_METHOD=GET \
-    cgi-fcgi -bind -connect /run/php_fpm_dp_default.sock
+    cgi-fcgi -bind -connect /tmp/php_fpm_dp_default.sock
 else
   php /usr/local/share/deskpro/phpinfo.php
 fi

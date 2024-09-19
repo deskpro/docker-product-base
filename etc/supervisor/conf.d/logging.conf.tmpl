@@ -19,7 +19,6 @@ environment=VECTOR_MARKER="{{ getenv "VECTOR_MARKER" "" }}",VECTOR_COLOR=never
 
 [eventlistener:rotate_logs]
 command=/etc/supervisor/rotate-logs
-user=vector
 events=TICK_60
 autorestart=true
 buffer_size=1
