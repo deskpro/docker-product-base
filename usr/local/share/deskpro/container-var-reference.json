@@ -429,6 +429,12 @@
     "default": "{{.container_name}}-{{.log_group}}.log"
   },
   {
+    "name": "NGINX_CLIENT_MAX_BODY_SIZE",
+    "description": "The client_max_body_size for the ngin configuration.",
+    "type": "string",
+    "default": "100M"
+  },
+  {
     "name": "NGINX_ERROR_LOG_LEVEL",
     "description": "The log level for nginx logs.",
     "type": "string",

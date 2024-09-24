@@ -19,7 +19,7 @@ gzip_proxied expired no-cache no-store private auth;
 fastcgi_buffering off;
 proxy_request_buffering off;
 proxy_buffering off;
-client_max_body_size 100M;
+client_max_body_size {{ getenv "NGINX_CLIENT_MAX_BODY_SIZE" "100M" }};;
 
 location / {
     try_files $uri $uri/ /index.php?$query_string;
