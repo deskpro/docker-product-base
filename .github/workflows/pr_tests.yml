@@ -27,4 +27,5 @@ jobs:
       - name: Run tests
         run: |
           earthly config global.buildkit_max_parallelism 1
+          earthly -P ./test+test-autoinstall
           earthly -P ./test+test
