@@ -6,10 +6,16 @@ numprocs=1
 startsecs=0
 autostart=true
 autorestart=true
+{{if eq "stdout" (getenv "LOGS_EXPORT_TARGET") }}stdout_logfile=/dev/fd/1
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/fd/2
+stderr_logfile_maxbytes=0
+redirect_stderr=false
+{{else}}
 redirect_stderr=true
 stdout_logfile=/var/log/vector.log
 stdout_logfile_maxbytes=10000000
-stdout_logfile_backups=0
+stdout_logfile_backups=0{{end}}
 stopsignal=TERM
 stopwaitsecs={{ getenv "FAST_SHUTDOWN" "false" | ternary "0" "8" }}
 # makes vector start first and shut down last so it
