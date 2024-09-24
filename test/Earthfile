@@ -106,6 +106,7 @@ test-automigrations:
                 -e AUTO_RUN_MIGRATIONS=true \
                 -v /tmp/sim:/run/sim \
                 deskpro/docker-product-base:test web \
+            && docker exec test /bin/sh -c '/usr/local/bin/is-ready --check-tasks --wait --timeout 60 -v' \
             && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/automigrations/01_migrations_spec.rb' \
             && docker stop test \
             # second run - verify that migrations doesn't run again
