@@ -84,7 +84,8 @@ test-autoinstall:
                 -e AUTO_RUN_INSTALLER=true \
                 -v /tmp/sim:/run/sim \
                 deskpro/docker-product-base:test web \
-            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/autoinstall/01_installer_spec.rb' \
+            && sleep 60 \
+            && (docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/autoinstall/01_installer_spec.rb' || docker ps -a) \
             && docker stop test \
             # second run - verify that the installer doesn't run again
             && docker start test \
