@@ -430,7 +430,7 @@
   },
   {
     "name": "NGINX_CLIENT_MAX_BODY_SIZE",
-    "description": "The client_max_body_size for the ngin configuration.",
+    "description": "The client_max_body_size for the nginx configuration.",
     "type": "string",
     "default": "100M"
   },

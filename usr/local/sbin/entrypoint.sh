@@ -69,20 +69,18 @@ main() {
 
   boot_log_message TRACE "--- STARTING DESKPRO CONTAINER ---"
 
-  # If LOGS_EXPORT_DIR not explicitly set
-  # but there is a mounted logs dir at the standard location
-  # then we can enable export to that dir automatically
-  if [ -z "$LOGS_EXPORT_DIR" ]; then
-    if [ -d "$CUSTOM_MOUNT_BASEDIR/logs" ]; then
-      export LOGS_EXPORT_DIR="$CUSTOM_MOUNT_BASEDIR/logs"
-      boot_log_message INFO "Setting LOGS_EXPORT_DIR to mounted logs directory"
-    fi
-  fi
-
   # special 'false' value to explicitly disable log shipping
   # (e.g. if logs dir is mounted as per above, you may want to disable it explicitly)
   if [ "$LOGS_EXPORT_DIR" == "false" ]; then
     export LOGS_EXPORT_DIR=""
+  elif [ -z "$LOGS_EXPORT_DIR" ]; then
+    # If LOGS_EXPORT_DIR not explicitly set
+    # but there is a mounted logs dir at the standard location
+    # then we can enable export to that dir automatically
+    if [ -d "$CUSTOM_MOUNT_BASEDIR/logs" ]; then
+      export LOGS_EXPORT_DIR="$CUSTOM_MOUNT_BASEDIR/logs"
+      boot_log_message INFO "Setting LOGS_EXPORT_DIR to mounted logs directory"
+    fi
   fi
 
   # log to file when running exec/bash so the users terminal isn't spammed with output
@@ -280,13 +278,15 @@ boot_log_message() {
 
   echo "$logline" >> /var/log/docker-boot.log
 
-  if [ -n "$LOGS_EXPORT_DIR" ]; then
-    if [ ! -f "$LOGS_EXPORT_DIR/docker-boot.log" ]; then
-      touch "$LOGS_EXPORT_DIR/docker-boot.log"
-      # make sure its not readable by anyone else but root
-      chmod 0660 "$LOGS_EXPORT_DIR/docker-boot.log" || true
+  if [ -d "$LOGS_EXPORT_DIR" ]; then
+    if [ -n "$LOGS_EXPORT_DIR" ]; then
+      if [ ! -f "$LOGS_EXPORT_DIR/docker-boot.log" ]; then
+        touch "$LOGS_EXPORT_DIR/docker-boot.log"
+        # make sure its not readable by anyone else but root
+        chmod 0660 "$LOGS_EXPORT_DIR/docker-boot.log" || true
+      fi
+      echo "$logline" >> "$LOGS_EXPORT_DIR/docker-boot.log"
     fi
-    echo "$logline" >> "$LOGS_EXPORT_DIR/docker-boot.log"
   fi
 
   [[ ${levels[$lvl]} ]] || return 0
