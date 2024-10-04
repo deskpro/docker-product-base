@@ -25,24 +25,43 @@ location / {
     try_files $uri $uri/ /index.php?$query_string;
 }
 
+{{if (getenv "DESKPRO_BLOBS_PATH") }}
+location ^~ /sys/services/blobs/private {
+  internal;
+  alias {{ regexp.Replace "(/+|/*$)" "/" (getenv "DESKPRO_BLOBS_PATH") }};
+}
+{{end}}
+
+location ^~ /sys/services/blobs/fetch {
+    fastcgi_pass unix:/run/php_fpm_dp_internal.sock;
+    include /etc/nginx/conf.d/deskpro_fastcgi_params;
+    {{if not (getenv "DESKPRO_BLOBS_PATH" )}}
+    include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
+    {{end}}
+}
+
 location ^~ /sys/services/broadcaster/ {
     fastcgi_pass unix:/run/php_fpm_dp_broadcaster.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
+    include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
 
 location ~ ^/(admin\-api|agent\-api)/ {
     fastcgi_pass unix:/run/php_fpm_dp_gql.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
+    include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
 
 location ~ ^/(ticket\-channels|sys/services)/ {
     fastcgi_pass unix:/run/php_fpm_dp_internal.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
+    include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
 
 location ^~ /api/ {
     fastcgi_pass $dpv5_api_backend;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
+    include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
 
 location ^~ /sys/services/messenger-api/ {
@@ -105,6 +124,7 @@ location ~ ^/deskpro-messenger/assets/ {
 location ^~ /firebase-messaging-sw.js {
     fastcgi_pass unix:/run/php_fpm_dp_default.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
+    include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
 
 location ~ ^/deskpro-messenger/ {
@@ -112,11 +132,13 @@ location ~ ^/deskpro-messenger/ {
     add_header X-Content-Type-Options "nosniff";
     fastcgi_pass unix:/run/php_fpm_dp_default.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
+    include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
 
 location ~ \.php$ {
     fastcgi_pass unix:/run/php_fpm_dp_default.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
+    include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
 
 location ~ /assets/[a-zA-Z0-9_\-\.]+/(pub|web)/.*?$ {
