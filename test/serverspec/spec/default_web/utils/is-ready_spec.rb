@@ -10,6 +10,7 @@ describe "Check behaviour of is-ready utility" do
     FileUtils.touch('/run/container-ready')
     FileUtils.remove_file('/run/container-running-installer', true)
     FileUtils.remove_file('/run/container-running-migrations', true)
+    FileUtils.remove_file('/run/container-running-entrypoint', true)
   end
 
   it "Blocks when using --wait", :slow do
@@ -87,8 +88,22 @@ describe "Check behaviour of is-ready utility" do
     expect(exit_code).to eq 0
   end
 
-  it "Post-boot tasks matter with --check-tasks" do
+  it "Post-boot migration tasks matter with --check-tasks" do
     FileUtils.touch('/run/container-running-migrations')
+    system('is-ready --check-tasks')
+    exit_code = $?.exitstatus
+    expect(exit_code).to eq 1
+  end
+
+  it "Post-boot installer tasks matter with --check-tasks" do
+    FileUtils.touch('/run/container-running-installer')
+    system('is-ready --check-tasks')
+    exit_code = $?.exitstatus
+    expect(exit_code).to eq 1
+  end
+
+  it "Post-boot entrypoint tasks matter with --check-tasks" do
+    FileUtils.touch('/run/container-running-entrypoint')
     system('is-ready --check-tasks')
     exit_code = $?.exitstatus
     expect(exit_code).to eq 1
