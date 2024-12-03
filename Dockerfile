@@ -96,7 +96,7 @@ RUN set -e \
     && printf '; priority=20\nextension=protobuf.so' > /etc/php/8.3/mods-available/protobuf.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro-otel.ini \
-    && phpenmod protobuf deskpro \
+    && phpenmod protobuf deskpro deskpro-otel \
     && phpdismod phar \
     && rm /etc/php/8.3/fpm/pool.d/www.conf \
     && mv /etc/nginx/mime.types /tmp/mime.types \
