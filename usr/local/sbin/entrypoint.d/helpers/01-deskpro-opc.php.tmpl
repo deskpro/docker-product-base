@@ -42,6 +42,10 @@ if ($opcConfig['elastic'] ?? false) {
   $CONFIG['elastic'] = $opcConfig['elastic'];
 }
 
+if ($opcConfig['redis'] ?? false) {
+  $CONFIG['redis'] = $opcConfig['redis'];
+}
+
 if ($opcConfig['paths']['blobs_path'] ?? false) {
   $CONFIG['paths']['blobs_path'] = $opcConfig['paths']['blobs_path'];
 }
