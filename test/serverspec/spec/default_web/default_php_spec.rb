@@ -71,7 +71,7 @@ describe "Check default PHP and PHP-FPM configurations" do
   end
 
   describe command('phpfpminfo --pool dp_default') do
-    its(:stdout) { should contain "listen = /run/php_fpm_dp_default.sock" }
+    its(:stdout) { should contain "listen = /tmp/php_fpm_dp_default.sock" }
     its(:stdout) { should match /php_admin_value\[display_errors\] =\s*$/ }
     its(:stdout) { should contain "pm = ondemand" }
     its(:stdout) { should contain "pm.max_children = 20" }
@@ -81,7 +81,7 @@ describe "Check default PHP and PHP-FPM configurations" do
   end
 
   describe command('phpfpminfo --pool dp_internal') do
-    its(:stdout) { should contain "listen = /run/php_fpm_dp_internal.sock" }
+    its(:stdout) { should contain "listen = /tmp/php_fpm_dp_internal.sock" }
     its(:stdout) { should match /php_admin_value\[display_errors\] =\s*$/ }
     its(:stdout) { should contain "pm = ondemand" }
     its(:stdout) { should contain "pm.max_children = 1000" }
@@ -91,7 +91,7 @@ describe "Check default PHP and PHP-FPM configurations" do
   end
 
   describe command('phpfpminfo --pool dp_gql') do
-    its(:stdout) { should contain "listen = /run/php_fpm_dp_gql.sock" }
+    its(:stdout) { should contain "listen = /tmp/php_fpm_dp_gql.sock" }
     its(:stdout) { should match /php_admin_value\[display_errors\] =\s*$/ }
     its(:stdout) { should contain "pm = ondemand" }
     its(:stdout) { should contain "pm.max_children = 20" }
@@ -101,7 +101,7 @@ describe "Check default PHP and PHP-FPM configurations" do
   end
 
   describe command('phpfpminfo --pool dp_broadcaster') do
-    its(:stdout) { should contain "listen = /run/php_fpm_dp_broadcaster.sock" }
+    its(:stdout) { should contain "listen = /tmp/php_fpm_dp_broadcaster.sock" }
     its(:stdout) { should match /php_admin_value\[display_errors\] =\s*$/ }
     its(:stdout) { should contain "pm = ondemand" }
     its(:stdout) { should contain "pm.max_children = 1000" }

@@ -25,7 +25,7 @@ function deskpro_config_main() {
     done
   } > /srv/deskpro/INSTANCE_DATA/config.php
 
-  chown root:root "/srv/deskpro/INSTANCE_DATA/config.php"
+  chown dp_app:dp_app "/srv/deskpro/INSTANCE_DATA/config.php"
   chmod 0644 "/srv/deskpro/INSTANCE_DATA/config.php"
 }
 

@@ -5,7 +5,7 @@ worker_processes 1;
 worker_processes {{ getenv "NGINX_WORKER_PROCESSES" "auto" }};
 {{end}}
 pcre_jit on;
-pid /run/nginx.pid;
+pid /tmp/nginx.pid;
 
 events {
     worker_connections {{ getenv "NGINX_WORKER_CONNECTIONS" "10000" }};
@@ -25,6 +25,12 @@ http {
     ssl_session_cache shared:SSL:2m;
     ssl_session_timeout 1h;
     ssl_session_tickets off;
+
+    client_body_temp_path /tmp/client_temp;
+    proxy_temp_path       /tmp/proxy_temp_path;
+    fastcgi_temp_path     /tmp/fastcgi_temp;
+    uwsgi_temp_path       /tmp/uwsgi_temp;
+    scgi_temp_path        /tmp/scgi_temp;
 
     log_format logjson escape=json
       '{'

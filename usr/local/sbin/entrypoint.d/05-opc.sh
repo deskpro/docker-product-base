@@ -35,7 +35,7 @@ opc_main() {
 
   boot_log_message DEBUG "[bc_opc_2_8] Linking /run/php-fpm/dp_default.sock -> /run/php_fpm_dp_default.sock"
   mkdir -p /run/php-fpm
-  ln -sf /run/php_fpm_dp_default.sock /run/php-fpm/dp_default.sock
+  ln -sf /tmp/php_fpm_dp_default.sock /run/php-fpm/dp_default.sock
 
   for pool in "dp_broadcaster" "dp_default" "dp_gql" "dp_internal"; do
     if [ -e "/deskpro/config/${pool}.conf" ]; then

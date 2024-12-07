@@ -1,9 +1,9 @@
 upstream dpv5_api {
-  server unix:/run/php_fpm_dp_default.sock max_fails=0 fail_timeout=0;
+  server unix:/tmp/php_fpm_dp_default.sock max_fails=0 fail_timeout=0;
 }
 
 upstream dpv5_api_internal {
-  server unix:/run/php_fpm_dp_internal.sock max_fails=0 fail_timeout=0;
+  server unix:/tmp/php_fpm_dp_internal.sock max_fails=0 fail_timeout=0;
 }
 
 # dpv5_api_backend: Use separate fpm-pool for internal requests

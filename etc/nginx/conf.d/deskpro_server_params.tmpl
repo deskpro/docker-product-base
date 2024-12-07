@@ -41,19 +41,19 @@ location ^~ /sys/services/blobs/fetch {
 }
 
 location ^~ /sys/services/broadcaster/ {
-    fastcgi_pass unix:/run/php_fpm_dp_broadcaster.sock;
+    fastcgi_pass unix:/tmp/php_fpm_dp_broadcaster.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
     include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
 
 location ~ ^/(admin\-api|agent\-api)/ {
-    fastcgi_pass unix:/run/php_fpm_dp_gql.sock;
+    fastcgi_pass unix:/tmp/php_fpm_dp_gql.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
     include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
 
 location ~ ^/(ticket\-channels|sys/services)/ {
-    fastcgi_pass unix:/run/php_fpm_dp_internal.sock;
+    fastcgi_pass unix:/tmp/php_fpm_dp_internal.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
     include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
@@ -122,7 +122,7 @@ location ~ ^/deskpro-messenger/assets/ {
 }
 
 location ^~ /firebase-messaging-sw.js {
-    fastcgi_pass unix:/run/php_fpm_dp_default.sock;
+    fastcgi_pass unix:/tmp/php_fpm_dp_default.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
     include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
@@ -130,13 +130,13 @@ location ^~ /firebase-messaging-sw.js {
 location ~ ^/deskpro-messenger/ {
     add_header X-XSS-Protection "1; mode=block";
     add_header X-Content-Type-Options "nosniff";
-    fastcgi_pass unix:/run/php_fpm_dp_default.sock;
+    fastcgi_pass unix:/tmp/php_fpm_dp_default.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
     include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
 
 location ~ \.php$ {
-    fastcgi_pass unix:/run/php_fpm_dp_default.sock;
+    fastcgi_pass unix:/tmp/php_fpm_dp_default.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
     include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }

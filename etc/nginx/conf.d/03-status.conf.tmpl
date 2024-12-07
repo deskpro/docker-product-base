@@ -30,6 +30,6 @@ server {
 
     fastcgi_param SCRIPT_NAME '/fpm/status';
     fastcgi_param SCRIPT_FILENAME '/fpm/status';
-    fastcgi_pass unix:/run/php_fpm_$fpm_pool.status.sock;
+    fastcgi_pass unix:/tmp/php_fpm_$fpm_pool.status.sock;
   }
 }
