@@ -1,7 +1,7 @@
 # builder stage -- builds PHP packages
 # outputs: /usr/lib/php/20230831/protobuf.so
 # outputs: /usr/lib/php/20230831/opentelemetry.so
-FROM debian:12.2-slim AS builder-php-exts
+FROM debian:12.8-slim AS builder-php-exts
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https software-properties-common curl lsb-release \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
@@ -18,7 +18,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # stage1 -- debian with packages
-FROM debian:12.2-slim AS stage1
+FROM debian:12.8-slim AS stage1
 ENV TZ=UTC
 WORKDIR /srv/deskpro
 USER root
