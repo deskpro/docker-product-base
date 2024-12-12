@@ -55,3 +55,29 @@ source = '''
 .chan = "error"
 .parsed = parse_regex(.message, r'^(?P<ts>\[\d+\-\w+\-\d+ \d+:\d+:\d+\]) (?P<lvl>\w+): (?P<msg>.*)$') ?? {}
 '''
+
+{{ if getenv "METRICS_ENABLED" "false" }}
+{{ if getenv "METRICS_PHP_FPM_ENABLED" "true" }}
+[sources.php_fpm_metrics_source]
+type = "prometheus_scrape"
+endpoints = [
+  "http://localhost:10001/fpm/dp_default/status?openmetrics",
+  "http://localhost:10001/fpm/dp_broadcaster/status?openmetrics",
+  "http://localhost:10001/fpm/dp_gql/status?openmetrics",
+  "http://localhost:10001/fpm/dp_internal/status?openmetrics",
+]
+endpoint_tag = "endpoint"
+scrape_interval_secs = 60
+
+[transforms.php_fpm_metrics]
+type = "remap"
+inputs = ["php_fpm_metrics_source"]
+source = '''
+parsed = parse_regex!(.tags.endpoint, r'/fpm/(?P<pool>[^/]+)/status')
+
+.tags.pool = parsed.pool
+
+del(.tags.endpoint)
+'''
+{{ end }}
+{{ end }}
