@@ -40,6 +40,7 @@ RUN apt-get update \
     nginx \
     vim-tiny \
     openssl \
+    poppler-utils \
     php8.3-bcmath \
     php8.3-cli \
     php8.3-common \
