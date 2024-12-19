@@ -42,6 +42,7 @@ http {
       '"proxy_port":"$realip_remote_port", '
       '"request_id":"$request_id", '
       '"request_log_transaction_id":"$http_x_log_transaction_id", '
+      '"trace_id":"$http_traceparent", '
       '"bytes_request":"$request_length", '
       '"bytes_response":"$body_bytes_sent", '
       '"server_protocol":"$server_protocol", '
