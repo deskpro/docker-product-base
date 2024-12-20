@@ -536,6 +536,24 @@
     "default": "ondemand"
   },
   {
+    "name": "PHP_FPM_DP_AI_MAX_CHILDREN",
+    "description": "pm.max_children setting for dp_ai PHP FPM pool.",
+    "type": "integer",
+    "default": "20"
+  },
+  {
+    "name": "PHP_FPM_DP_AI_OVERRIDES",
+    "description": "PHP FPM configuration to set and/or override in the dp_ai pool configuration.",
+    "type": "string",
+    "example": "pm.max_spare_servers=5"
+  },
+  {
+    "name": "PHP_FPM_DP_AI_PM_TYPE",
+    "description": "pm setting for dp_ai PHP FPM pool.",
+    "type": "string",
+    "default": "ondemand"
+  },
+  {
     "name": "PHP_FPM_DP_INTERNAL_MAX_CHILDREN",
     "description": "pm.max_children setting for dp_interanl PHP FPM pool.",
     "type": "integer",

@@ -46,6 +46,11 @@ location ^~ /sys/services/broadcaster/ {
     include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
 
+location ^~ /sys/services/ai-tools/ {
+    fastcgi_pass unix:/run/php_fpm_dp_ai.sock;
+    include /etc/nginx/conf.d/deskpro_fastcgi_params;
+}
+
 location ~ ^/(admin\-api|agent\-api)/ {
     fastcgi_pass unix:/run/php_fpm_dp_gql.sock;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
