@@ -72,6 +72,14 @@ php_admin_value[disable_functions] = system, exec, shell_exec, passthru, phpinfo
 {{ getenv "PHP_FPM_POOL_OVERRIDES" }}
 {{ getenv "PHP_FPM_DP_BROADCASTER_OVERRIDES" }}
 
+[dp_ai]
+{{ template "pool_defaults" "dp_ai" }}
+pm = {{ getenv "PHP_FPM_DP_AI_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand") }}
+pm.max_children = {{ getenv "PHP_FPM_DP_AI_MAX_CHILDREN" "20" }}
+pm.process_idle_timeout = 15s
+pm.max_requests=1000
+{{ getenv "PHP_FPM_POOL_OVERRIDES" }}
+{{ getenv "PHP_FPM_DP_AI_OVERRIDES" }}
 
 {{if conv.ToBool (getenv "HTTP_INTERNAL_MODE" "false")}}
 ; HTTP_INTERNAL_MODE=true so we make all pools ondemand
@@ -91,5 +99,9 @@ php_admin_value[opcache.enable]=0
 
 [dp_broadcaster]
 pm = {{ getenv "PHP_FPM_DP_BROADCASTER_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand") }}
+php_admin_value[opcache.enable]=0
+
+[dp_ai]
+pm = {{ getenv "PHP_FPM_DP_AI_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand") }}
 php_admin_value[opcache.enable]=0
 {{end}}
