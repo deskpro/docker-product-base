@@ -1,11 +1,15 @@
 # builder stage -- builds PHP packages
 # outputs: /usr/lib/php/20230831/protobuf.so
 # outputs: /usr/lib/php/20230831/opentelemetry.so
+# outputs: /usr/lib/newrelic-php5/agent/x64/newrelic-20230831.so
+# outputs: /usr/bin/newrelic-daemon
 FROM debian:12.8-slim AS builder-php-exts
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https software-properties-common curl lsb-release \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
+    && curl -fsSL https://download.newrelic.com/548C16BF.gpg | gpg --dearmor -o /usr/share/keyrings/download.newrelic.com-newrelic.gpg \
     && sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' \
+    && sh -c 'echo "deb [signed-by=/usr/share/keyrings/download.newrelic.com-newrelic.gpg] http://apt.newrelic.com/debian/ newrelic non-free" | tee /etc/apt/sources.list.d/newrelic.list' \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --no-install-suggests -y \
     make \
@@ -14,6 +18,7 @@ RUN apt-get update \
     php8.3-common \
     php8.3-xml \
     php-pear \
+    newrelic-php5 \
     && pecl install opentelemetry protobuf \
     && rm -rf /var/lib/apt/lists/*
 
@@ -76,6 +81,8 @@ RUN apt-get update \
 FROM stage1 AS stage2
 COPY --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
 COPY --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
+COPY --from=builder-php-exts /usr/lib/newrelic-php5/agent/x64/newrelic-20230831.so /usr/lib/php/20230831/newrelic.so
+COPY --from=builder-php-exts /usr/bin/newrelic-daemon /usr/local/bin/newrelic-daemon
 COPY --from=hairyhenderson/gomplate:v3.11.5 /gomplate /usr/local/bin/gomplate
 COPY --from=composer:2.5.8 /usr/bin/composer /usr/local/bin/composer
 COPY --from=timberio/vector:0.39.0-debian /usr/bin/vector /usr/local/bin/vector
@@ -85,19 +92,20 @@ COPY --from=node:18.19-bookworm /usr/local/lib/node_modules /usr/local/lib/node_
 RUN npm install --global tsx
 
 RUN sed -i 's/providers = provider_sect/providers = provider_sect\n\
-ssl_conf = ssl_sect\n\
-\n\
-[ssl_sect]\n\
-system_default = system_default_sect\n\
-\n\
-[system_default_sect]\n\
-Options = UnsafeLegacyRenegotiation/' /etc/ssl/openssl.cnf
+    ssl_conf = ssl_sect\n\
+    \n\
+    [ssl_sect]\n\
+    system_default = system_default_sect\n\
+    \n\
+    [system_default_sect]\n\
+    Options = UnsafeLegacyRenegotiation/' /etc/ssl/openssl.cnf
 
 RUN set -e \
     && printf '; priority=20\nextension=protobuf.so' > /etc/php/8.3/mods-available/protobuf.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro-otel.ini \
-    && phpenmod protobuf deskpro \
+    && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/newrelic.ini \
+    && phpenmod protobuf deskpro newrelic \
     && phpdismod phar \
     && rm /etc/php/8.3/fpm/pool.d/www.conf \
     && mv /etc/nginx/mime.types /tmp/mime.types \

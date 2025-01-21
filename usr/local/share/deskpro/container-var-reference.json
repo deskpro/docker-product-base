@@ -176,6 +176,12 @@
     "default": "false"
   },
   {
+    "name": "DESKPRO_ENABLE_NEWRELIC",
+    "description": "Enable NewRelic APM integration.",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
     "name": "DESKPRO_ENABLE_OTEL",
     "description": "Enable OpenTelemetry tracing",
     "type": "boolean",
@@ -238,6 +244,17 @@
     "description": "Log level for email processing.",
     "type": "string",
     "default": "warning"
+  },
+  {
+    "name": "DESKPRO_NR_APP_NAME",
+    "description": "Application name for NewRelic integration.",
+    "type": "string",
+    "default": "Deskpro"
+  },
+  {
+    "name": "DESKPRO_NR_LICENSE",
+    "description": "License key for NewRelic integration.",
+    "type": "string"
   },
   {
     "name": "DESKPRO_SENTRY_BACKEND_DSN",
