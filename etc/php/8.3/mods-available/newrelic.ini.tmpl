@@ -8,6 +8,9 @@ newrelic.logfile = "/var/log/newrelic/php_agent.log"
 newrelic.appname = {{ getenv "DESKPRO_NR_APP_NAME" "Deskpro" | quote }}
 newrelic.daemon.logfile = "/var/log/newrelic/newrelic-daemon.log"
 newrelic.daemon.location = "/usr/local/bin/newrelic-daemon"
+{{if getenv "DESKPRO_NR_DAEMON_ADDRESS"}}
+newrelic.daemon.address = {{ getenv "DESKPRO_NR_DAEMON_ADDRESS" "" | quote }}
+{{end}}
 {{else}}
 # To enable newrelic extension, set DESKPRO_ENABLE_NEWRELIC=true
 # extension = "newrelic.so"

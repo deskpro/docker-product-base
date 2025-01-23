@@ -92,13 +92,13 @@ COPY --from=node:18.19-bookworm /usr/local/lib/node_modules /usr/local/lib/node_
 RUN npm install --global tsx
 
 RUN sed -i 's/providers = provider_sect/providers = provider_sect\n\
-    ssl_conf = ssl_sect\n\
-    \n\
-    [ssl_sect]\n\
-    system_default = system_default_sect\n\
-    \n\
-    [system_default_sect]\n\
-    Options = UnsafeLegacyRenegotiation/' /etc/ssl/openssl.cnf
+ssl_conf = ssl_sect\n\
+\n\
+[ssl_sect]\n\
+system_default = system_default_sect\n\
+\n\
+[system_default_sect]\n\
+Options = UnsafeLegacyRenegotiation/' /etc/ssl/openssl.cnf
 
 RUN set -e \
     && printf '; priority=20\nextension=protobuf.so' > /etc/php/8.3/mods-available/protobuf.ini \
@@ -135,16 +135,16 @@ RUN set -e \
     && addgroup --gid 1085 nginx \
     && adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1085 --gid 1085 nginx \
     # initialize dirs and owners
-    && mkdir -p /var/log/nginx /var/log/php /var/log/deskpro /var/log/supervisor /var/lib/vector \
+    && mkdir -p /var/log/nginx /var/log/php /var/log/deskpro /var/log/supervisor /var/lib/vector /var/log/newrelic \
     && mkdir -p /srv/deskpro/INSTANCE_DATA/deskpro-config.d \
     && chown root:root /usr/local/bin/vector \
     && chown vector:adm /var/lib/vector \
     && chown nginx:adm /var/log/nginx \
-    && chown dp_app:adm /var/log/php /var/log/deskpro \
-    && chmod -R 0775 /var/log/php /var/log/deskpro \
+    && chown dp_app:adm /var/log/php /var/log/deskpro /var/log/newrelic \
+    && chmod -R 0775 /var/log/php /var/log/deskpro /var/log/newrelic \
     # set group sticky bit on these dirs so
     # new logs get created with adm group (so vector can read them)
-    && chmod g+s /var/log/nginx /var/log/php /var/log/deskpro \
+    && chmod g+s /var/log/nginx /var/log/php /var/log/deskpro /var/log/newrelic \
     # extract var names from our reference list
     # (these lists are used from various helper scripts or entrypoint scripts)
     && jq -r '.[] | select(.isPrivate|not) | .name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-public-var-list \

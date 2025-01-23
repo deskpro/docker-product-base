@@ -252,6 +252,12 @@
     "default": "Deskpro"
   },
   {
+    "name": "DESKPRO_NR_DAEMON_ADDRESS",
+    "description": "Network address of an external NewRelic proxy daemon to use instead of the internal one.",
+    "type": "string",
+    "example": "1.2.3.4:31339"
+  },
+  {
     "name": "DESKPRO_NR_LICENSE",
     "description": "License key for NewRelic integration.",
     "type": "string"
