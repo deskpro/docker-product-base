@@ -11,6 +11,7 @@ newrelic.daemon.location = "/usr/local/bin/newrelic-daemon"
 {{if getenv "DESKPRO_NR_DAEMON_ADDRESS"}}
 newrelic.daemon.address = {{ getenv "DESKPRO_NR_DAEMON_ADDRESS" "" | quote }}
 {{end}}
+newrelic.framework = "no_framework"
 {{else}}
 # To enable newrelic extension, set DESKPRO_ENABLE_NEWRELIC=true
 # extension = "newrelic.so"
