@@ -1,0 +1,57 @@
+# newrelic php agent logs
+[sources.newrelic_php_agent_raw]
+type = "file"
+include = ["/var/log/newrelic/php_agent.log"]
+ignore_not_found = true
+
+[transforms.newrelic_php_agent]
+type = "remap"
+inputs = ["newrelic_php_agent_raw"]
+source = '''
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+.log_group = "newrelic-php-agent" 
+.app = "newrelic"
+.chan = "agent"
+.lvl = "INFO"
+
+.parsed = parse_regex(.message, r'^(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} [+-]\d{4}) \((?P<pid>\d+ \d+)\) (?P<lvl>\w+): (?P<msg>.+)$') ?? {}
+.ts = parse_timestamp(.parsed.ts, format: "%Y-%m-%d %H:%M:%S%.3f %z") ?? now()
+if !is_nullish(.parsed.pid) {
+  .pid = .parsed.pid
+}
+if !is_nullish(.parsed.lvl) {
+  .lvl = upcase!(.parsed.lvl)
+}
+'''
+
+# newrelic daemon
+[sources.newrelic_daemon_raw]
+type = "file"
+include = ["/var/log/newrelic/newrelic-daemon.log"]
+ignore_not_found = true
+
+[transforms.newrelic_daemon]
+type = "remap"
+inputs = ["newrelic_daemon_raw"]
+source = '''
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+.log_group = "newrelic-daemon" 
+.app = "newrelic"
+.chan = "daemon"
+.lvl = "INFO"
+
+.parsed = parse_regex(.message, r'^(?P<ts>\S+ \S+) \((?P<pid>\d+)\) (?P<lvl>\w+): (?P<msg>.+)$') ?? {}
+.ts = parse_timestamp(.parsed.ts, format: "%Y-%m-%d %H:%M:%S%.3f %z") ?? now()
+if !is_nullish(.parsed.pid) {
+  .pid = to_int!(.parsed.pid)
+}
+if !is_nullish(.parsed.lvl) {
+  .lvl = upcase!(.parsed.lvl)
+}
+'''
