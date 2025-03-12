@@ -4,12 +4,11 @@
 # outputs: /usr/lib/newrelic-php5/agent/x64/newrelic-20230831.so
 # outputs: /usr/bin/newrelic-daemon
 FROM debian:12.8-slim AS builder-php-exts
+ENV NEW_RELIC_AGENT_VERSION=11.6.0.19
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https software-properties-common curl lsb-release \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
-    && curl -fsSL https://download.newrelic.com/548C16BF.gpg | gpg --dearmor -o /usr/share/keyrings/download.newrelic.com-newrelic.gpg \
     && sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' \
-    && sh -c 'echo "deb [signed-by=/usr/share/keyrings/download.newrelic.com-newrelic.gpg] http://apt.newrelic.com/debian/ newrelic non-free" | tee /etc/apt/sources.list.d/newrelic.list' \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --no-install-suggests -y \
     make \
@@ -18,9 +17,10 @@ RUN apt-get update \
     php8.3-common \
     php8.3-xml \
     php-pear \
-    newrelic-php5 \
     && pecl install opentelemetry protobuf \
-    && rm -rf /var/lib/apt/lists/*
+    && curl -L https://download.newrelic.com/php_agent/archive/${NEW_RELIC_AGENT_VERSION}/newrelic-php5-${NEW_RELIC_AGENT_VERSION}-linux.tar.gz | tar -C /tmp -zx \
+    && NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTALL_SILENT=true /tmp/newrelic-php5-${NEW_RELIC_AGENT_VERSION}-linux/newrelic-install install \
+    && rm -rf /var/lib/apt/lists/* /tmp/newrelic-php5-* /tmp/nrinstall*
 
 # stage1 -- debian with packages
 FROM debian:12.8-slim AS stage1
@@ -81,7 +81,7 @@ RUN apt-get update \
 FROM stage1 AS stage2
 COPY --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
 COPY --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
-COPY --from=builder-php-exts /usr/lib/newrelic-php5/agent/x64/newrelic-20230831.so /usr/lib/php/20230831/newrelic.so
+COPY --from=builder-php-exts /usr/lib/php/20230831/newrelic.so /usr/lib/php/20230831/newrelic.so
 COPY --from=builder-php-exts /usr/bin/newrelic-daemon /usr/local/bin/newrelic-daemon
 COPY --from=hairyhenderson/gomplate:v3.11.5 /gomplate /usr/local/bin/gomplate
 COPY --from=composer:2.5.8 /usr/bin/composer /usr/local/bin/composer
