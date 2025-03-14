@@ -38,7 +38,7 @@ custom_https_cert() {
 custom_ca_certs() {
   if [ -d /deskpro/ssl/ca-certificates ]; then
     boot_log_message INFO "Installing custom CA certificates"
-    cp -r /deskpro/ssl/ca-certificates/* /usr/local/share/ca-certificates/
+    rsync -aL --exclude='.*' /deskpro/ssl/ca-certificates/ /usr/local/share/ca-certificates/
     chown -R root:root /usr/local/share/ca-certificates
     export UPDATE_CERT_BUNDLE=true
   fi
