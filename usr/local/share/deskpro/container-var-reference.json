@@ -212,6 +212,12 @@
     "default": "deskpro"
   },
   {
+    "name": "DESKPRO_ES_TIKA_HOST",
+    "description": "Full URL to Apache Tika service used for attachment indexing.",
+    "type": "string",
+    "example": "http://tika.example.com:9998"
+  },
+  {
     "name": "DESKPRO_ES_URL",
     "description": "Full URL to Elasticsearch server (no trailing slash).",
     "type": "string",
