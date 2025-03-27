@@ -258,6 +258,17 @@
     "example": "1.2.3.4:31339"
   },
   {
+    "name": "DESKPRO_NR_INI_OVERRIDES",
+    "description": "NewRelic configuration to set and/or override.",
+    "type": "string"
+  },
+  {
+    "name": "DESKPRO_NR_INSTRUMENT_BROWSER",
+    "description": "Whether to enable browser instrumentation in NewRelic or not.",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
     "name": "DESKPRO_NR_LICENSE",
     "description": "License key for NewRelic integration.",
     "type": "string"
