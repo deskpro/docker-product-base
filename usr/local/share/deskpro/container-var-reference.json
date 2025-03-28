@@ -504,6 +504,12 @@
     "default": "warn"
   },
   {
+    "name": "NGINX_LARGE_CLIENT_HEADER_BUFFERS",
+    "description": "The number and size of buffers used for reading large client request headers.",
+    "type": "string",
+    "default": "4 16k"
+  },
+  {
     "name": "NGINX_WORKER_CONNECTIONS",
     "description": "The number of simultaneous connections that can be handled by each worker connection.",
     "type": "integer",
