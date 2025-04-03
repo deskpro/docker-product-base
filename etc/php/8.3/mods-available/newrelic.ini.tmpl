@@ -12,6 +12,9 @@ newrelic.daemon.location = "/usr/local/bin/newrelic-daemon"
 newrelic.daemon.address = {{ getenv "DESKPRO_NR_DAEMON_ADDRESS" "" | quote }}
 {{end}}
 newrelic.framework = "no_framework"
+newrelic.browser_monitoring.auto_instrument = {{ (getenv "DESKPRO_NR_INSTRUMENT_BROWSER" "false") | conv.ToBool | ternary "true" "false" }}
+
+{{ getenv "DESKPRO_NR_INI_OVERRIDES" }}
 {{else}}
 # To enable newrelic extension, set DESKPRO_ENABLE_NEWRELIC=true
 # extension = "newrelic.so"
