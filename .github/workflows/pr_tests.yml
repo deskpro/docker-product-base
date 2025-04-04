@@ -1,0 +1,31 @@
+name: Spec tests
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run_test_suite:
+    name: Run test suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Earthly
+        uses: earthly/actions-setup@v1
+        with:
+          version: 0.8.14
+
+      - name: Run tests
+        run: |
+          earthly config global.buildkit_max_parallelism 1
+          earthly -P ./test+test-autoinstall
+          earthly -P ./test+test
