@@ -17,6 +17,8 @@ http {
     default_type application/octet-stream;
     server_tokens off;
 
+    large_client_header_buffers {{ getenv "NGINX_LARGE_CLIENT_HEADER_BUFFERS" "4 16k" }};
+
     types_hash_bucket_size 96;
     client_max_body_size 256M;
     tcp_nopush on;

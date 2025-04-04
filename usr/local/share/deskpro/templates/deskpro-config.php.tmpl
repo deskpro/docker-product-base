@@ -72,6 +72,10 @@ $CONFIG['elastic'] = [
     'retries' => 3,
     'index_name' => {{ $es_index_name | squote }},
     'tenant_id' => {{ (printf "%s%s" $es_tenant_id (test.Ternary "_tenant" "" (eq $es_tenant_id $es_index_name))) | squote }},
+
+    {{if getenv "DESKPRO_ES_TIKA_HOST"}}
+    'tika_host' => {{ (getenv "DESKPRO_ES_TIKA_HOST") | squote }},
+    {{end}}
 ];
 
 #######################################################################

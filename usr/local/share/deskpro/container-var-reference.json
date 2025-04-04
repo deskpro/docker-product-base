@@ -212,6 +212,12 @@
     "default": "deskpro"
   },
   {
+    "name": "DESKPRO_ES_TIKA_HOST",
+    "description": "Full URL to Apache Tika service used for attachment indexing.",
+    "type": "string",
+    "example": "http://tika.example.com:9998"
+  },
+  {
     "name": "DESKPRO_ES_URL",
     "description": "Full URL to Elasticsearch server (no trailing slash).",
     "type": "string",
@@ -496,6 +502,12 @@
     "description": "The log level for nginx logs.",
     "type": "string",
     "default": "warn"
+  },
+  {
+    "name": "NGINX_LARGE_CLIENT_HEADER_BUFFERS",
+    "description": "The number and size of buffers used for reading large client request headers.",
+    "type": "string",
+    "default": "4 16k"
   },
   {
     "name": "NGINX_WORKER_CONNECTIONS",
