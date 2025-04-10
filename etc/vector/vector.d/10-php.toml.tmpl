@@ -56,8 +56,8 @@ source = '''
 .parsed = parse_regex(.message, r'^(?P<ts>\[\d+\-\w+\-\d+ \d+:\d+:\d+\]) (?P<lvl>\w+): (?P<msg>.*)$') ?? {}
 '''
 
-{{ if getenv "METRICS_ENABLED" "false" }}
-{{ if getenv "METRICS_PHP_FPM_ENABLED" "true" }}
+{{ if conv.ToBool (getenv "METRICS_ENABLED" "false") }}
+{{ if conv.ToBool (getenv "METRICS_PHP_FPM_ENABLED" "true") }}
 [sources.php_fpm_metrics_source]
 type = "prometheus_scrape"
 endpoints = [

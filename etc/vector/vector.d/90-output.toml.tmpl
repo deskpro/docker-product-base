@@ -123,19 +123,19 @@ encoding.timestamp_format = "rfc3339"
 target = "stdout"
 {{end}}
 
-{{if getenv "METRICS_ENABLED" "false"}}
+{{if conv.ToBool (getenv "METRICS_ENABLED" "false")}}
 [sinks.metrics_prometheus_exporter]
 type = "prometheus_exporter"
 inputs = [
-  {{if getenv "METRICS_NGINX_ENABLED" "true"}}
+  {{if conv.ToBool (getenv "METRICS_NGINX_ENABLED" "true")}}
     "nginx_metrics",
   {{end}}
-  {{if getenv "METRICS_PHP_FPM_ENABLED" "true"}}
+  {{if conv.ToBool (getenv "METRICS_PHP_FPM_ENABLED" "true")}}
     "php_fpm_metrics",
   {{end}}
 ]
 flush_period_secs = 300
-{{if getenv "METRICS_AUTH_BEARER_TOKEN" "false"}}
+{{if ne "" (getenv "METRICS_AUTH_BEARER_TOKEN")}}
 auth.strategy = "bearer"
 auth.token = "{{ getenv "METRICS_AUTH_BEARER_TOKEN" }}"
 {{end}}
