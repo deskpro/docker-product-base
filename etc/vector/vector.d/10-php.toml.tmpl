@@ -56,6 +56,34 @@ source = '''
 .parsed = parse_regex(.message, r'^(?P<ts>\[\d+\-\w+\-\d+ \d+:\d+:\d+\]) (?P<lvl>\w+): (?P<msg>.*)$') ?? {}
 '''
 
+# php fpm slow logs
+[sources.php_fpm_slow_raw]
+type = "file"
+include = ["/var/log/php/fpm_slow.log", "/var/log/php/fpm_slow.log.1"]
+ignore_not_found = true
+max_line_bytes = 2000000
+  [sources.php_fpm_slow_raw.multiline]
+  start_pattern = '^\[\d+\-\w+\-\d+ \d+:\d+:\d+[^]]*\] '
+  mode = "halt_before"
+  condition_pattern = '^\[\d+\-\w+\-\d+ \d+:\d+:\d+[^]]*\] '
+  timeout_ms = 1000
+
+[transforms.php_fpm_slow]
+type = "remap"
+inputs = ["php_fpm_slow_raw"]
+source = '''
+.log_group = "php_fpm-slow"
+.lvl = "WARNING"
+.app = "php_fpm"
+.chan = "error"
+
+.parsed = parse_regex(.message, r'(?m)^\[(?P<ts>\d+\-\w+\-\d+ \d+:\d+:\d+)[^]]*\]\s+\[pool (?P<pool>[^]]+)\] pid (?P<pid>\d+)\n(?P<msg>(.|\n)*)$') ?? {}
+
+if !is_nullish(.parsed.ts) {
+  .ts = parse_timestamp(.parsed.ts, "%d-%b-%Y %H:%M:%S") ?? null
+}
+'''
+
 {{ if conv.ToBool (getenv "METRICS_ENABLED" "false") }}
 {{ if conv.ToBool (getenv "METRICS_PHP_FPM_ENABLED" "true") }}
 [sources.php_fpm_metrics_source]

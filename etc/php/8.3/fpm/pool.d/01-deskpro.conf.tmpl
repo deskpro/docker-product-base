@@ -9,6 +9,9 @@ listen.mode = 0666
 pm.status_listen = /run/php_fpm_{{.}}.status.sock
 pm.status_path = /fpm/status
 
+request_slowlog_timeout = 55
+slowlog = /var/log/php/fpm_slow.log
+
 catch_workers_output = yes
 clear_env = no
 request_terminate_timeout = 60
