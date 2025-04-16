@@ -23,6 +23,7 @@ for f in \
   "/var/log/php/error.log" \
   "/var/log/php/fpm_error.log" \
   "/var/log/php/fpm_slow.log" \
+  "/var/log/php/access.log" \
   "/var/log/supervisor/tasks.log" \
   "/var/log/supervisor/email_collect.log" \
   "/var/log/supervisor/email_process.log" \
