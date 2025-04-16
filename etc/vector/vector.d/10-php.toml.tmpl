@@ -72,6 +72,10 @@ max_line_bytes = 2000000
 type = "remap"
 inputs = ["php_fpm_slow_raw"]
 source = '''
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
 .log_group = "php_fpm-slow"
 .lvl = "WARNING"
 .app = "php_fpm"
@@ -107,5 +111,72 @@ parsed = parse_regex!(.tags.endpoint, r'/fpm/(?P<pool>[^/]+)/status')
 
 del(.tags.endpoint)
 '''
+
+[sources.php_fpm_access_log_metrics_raw]
+type = "file"
+include = ["/var/log/php/access.log", "/var/log/php/access.log.1"]
+ignore_not_found = true
+
+[transforms.php_fpm_access_log_parse_metrics]
+type = "remap"
+inputs = [ "php_fpm_access_log_metrics_raw" ]
+source = """
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+data, err = parse_json(.message)
+if err != null {
+    log("unable to parse php fpm access log: " + err, level: "error")
+    abort
+}
+
+input_metrics, err = object(data.metrics)
+if err != null {
+    log("input metrics is not an object: " + err, level: "error")
+    abort
+}
+
+tags, err = object(data.tags)
+if err != null {
+    log("tags is not an object: " + err, level: "error")
+    abort
+}
+
+metrics = []
+
+for_each(input_metrics) -> |key, value| {
+  float_value, err = to_float(value)
+  if err != null {
+    log("metric value is not a float: " + key + ": " + err)
+  } else {
+    metrics = append(metrics, [
+      {
+        "name": "phpfpm_request_" + key + "_count",
+        "timestamp": .timestamp,
+        "kind": "incremental",
+        "counter": { "value": 1.0 },
+        "tags": tags,
+      },
+      {
+        "name": "phpfpm_request_" + key + "_sum",
+        "timestamp": .timestamp,
+        "kind": "incremental",
+        "counter": { "value": float_value },
+        "tags": tags,
+      },
+    ])
+  }
+}
+
+. = metrics
+"""
+
+[transforms.php_fpm_access_log_metrics]
+type = "log_to_metric"
+inputs = ["php_fpm_access_log_parse_metrics"]
+all_metrics = true
+metrics = []
+
 {{ end }}
 {{ end }}

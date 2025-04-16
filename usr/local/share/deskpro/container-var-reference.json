@@ -492,6 +492,12 @@
     "default": "true"
   },
   {
+    "name": "METRICS_PHP_FPM_ACCESS_LOG_FORMAT",
+    "description": "Format string of the PHP-FPM access logs. Used to collect metrics.",
+    "type": "string",
+    "default": "{\"metrics\":{\"cpu_total\":\"%{total}C\",\"memory_bytes\":\"%{bytes}M\",\"duration_ms\":\"%{milliseconds}d\"},\"tags\":{\"pool\":\"%n\"}}"
+  },
+  {
     "name": "METRICS_PHP_FPM_ENABLED",
     "description": "Enables collecting metrics from PHP-FPM",
     "type": "boolean",
