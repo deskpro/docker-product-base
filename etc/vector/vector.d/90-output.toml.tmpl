@@ -9,6 +9,7 @@ inputs = [
   "nginx_error",
   "php_error",
   "php_fpm_error",
+  "php_fpm_slow",
 
   "deskpro_logs",
   "deskpro_services",
@@ -132,6 +133,7 @@ inputs = [
   {{end}}
   {{if conv.ToBool (getenv "METRICS_PHP_FPM_ENABLED" "true")}}
     "php_fpm_metrics",
+    "php_fpm_access_log_metrics",
   {{end}}
 ]
 flush_period_secs = 300
