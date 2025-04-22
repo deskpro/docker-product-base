@@ -63,9 +63,9 @@ __VAL__,
 {{$es_tenant_id:=(getenv "DESKPRO_ES_TENANT_ID" (getenv "DESKPRO_DB_NAME" "deskpro"))}}
 $CONFIG['elastic'] = [
     {{if getenv "DESKPRO_ES_URL"}}
-    'hosts' => [{{ (getenv "DESKPRO_ES_URL") | squote }}],
+    'host' => {{ (getenv "DESKPRO_ES_URL") | squote }},
     {{else}}
-    'hosts' => [],
+    'host' => '',
     {{end}}
 
     'verify_ssl' => false,
