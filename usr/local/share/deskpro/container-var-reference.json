@@ -176,6 +176,12 @@
     "default": "false"
   },
   {
+    "name": "DESKPRO_ENABLE_NEWRELIC",
+    "description": "Enable NewRelic APM integration.",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
     "name": "DESKPRO_ENABLE_OTEL",
     "description": "Enable OpenTelemetry tracing",
     "type": "boolean",
@@ -204,6 +210,12 @@
     "description": "Name of Elasticsearch alias to use.",
     "type": "string",
     "default": "deskpro"
+  },
+  {
+    "name": "DESKPRO_ES_TIKA_HOST",
+    "description": "Full URL to Apache Tika service used for attachment indexing.",
+    "type": "string",
+    "example": "http://tika.example.com:9998"
   },
   {
     "name": "DESKPRO_ES_URL",
@@ -238,6 +250,34 @@
     "description": "Log level for email processing.",
     "type": "string",
     "default": "warning"
+  },
+  {
+    "name": "DESKPRO_NR_APP_NAME",
+    "description": "Application name for NewRelic integration.",
+    "type": "string",
+    "default": "Deskpro"
+  },
+  {
+    "name": "DESKPRO_NR_DAEMON_ADDRESS",
+    "description": "Network address of an external NewRelic proxy daemon to use instead of the internal one.",
+    "type": "string",
+    "example": "1.2.3.4:31339"
+  },
+  {
+    "name": "DESKPRO_NR_INI_OVERRIDES",
+    "description": "NewRelic configuration to set and/or override.",
+    "type": "string"
+  },
+  {
+    "name": "DESKPRO_NR_INSTRUMENT_BROWSER",
+    "description": "Whether to enable browser instrumentation in NewRelic or not.",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
+    "name": "DESKPRO_NR_LICENSE",
+    "description": "License key for NewRelic integration.",
+    "type": "string"
   },
   {
     "name": "DESKPRO_SENTRY_BACKEND_DSN",
@@ -435,10 +475,45 @@
     "default": "100M"
   },
   {
+    "name": "METRICS_AUTH_BEARER_TOKEN",
+    "description": "If set, will require authentication with this value as Bearer token for incoming metrics requests",
+    "type": "string"
+  },
+  {
+    "name": "METRICS_ENABLED",
+    "description": "Toggle to enable or disable metrics collection",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
+    "name": "METRICS_NGINX_ENABLED",
+    "description": "Enables collecting metrics from nginx",
+    "type": "boolean",
+    "default": "true"
+  },
+  {
+    "name": "METRICS_PHP_FPM_ACCESS_LOG_FORMAT",
+    "description": "Format string of the PHP-FPM access logs. Used to collect metrics.",
+    "type": "string",
+    "default": "{\"metrics\":{\"cpu_total\":\"%{total}C\",\"memory_bytes\":\"%{bytes}M\",\"duration_ms\":\"%{milliseconds}d\"},\"tags\":{\"pool\":\"%n\"}}"
+  },
+  {
+    "name": "METRICS_PHP_FPM_ENABLED",
+    "description": "Enables collecting metrics from PHP-FPM",
+    "type": "boolean",
+    "default": "true"
+  },
+  {
     "name": "NGINX_ERROR_LOG_LEVEL",
     "description": "The log level for nginx logs.",
     "type": "string",
     "default": "warn"
+  },
+  {
+    "name": "NGINX_LARGE_CLIENT_HEADER_BUFFERS",
+    "description": "The number and size of buffers used for reading large client request headers.",
+    "type": "string",
+    "default": "4 16k"
   },
   {
     "name": "NGINX_WORKER_CONNECTIONS",

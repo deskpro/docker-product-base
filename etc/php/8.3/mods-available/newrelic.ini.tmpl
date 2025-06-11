@@ -1,0 +1,21 @@
+; priority=90
+
+{{if conv.ToBool (getenv "DESKPRO_ENABLE_NEWRELIC" "false") }}
+extension = "newrelic.so"
+[newrelic]
+newrelic.license = {{ getenv "DESKPRO_NR_LICENSE" "" | quote }}
+newrelic.logfile = "/var/log/newrelic/php_agent.log"
+newrelic.appname = {{ getenv "DESKPRO_NR_APP_NAME" "Deskpro" | quote }}
+newrelic.daemon.logfile = "/var/log/newrelic/newrelic-daemon.log"
+newrelic.daemon.location = "/usr/local/bin/newrelic-daemon"
+{{if getenv "DESKPRO_NR_DAEMON_ADDRESS"}}
+newrelic.daemon.address = {{ getenv "DESKPRO_NR_DAEMON_ADDRESS" "" | quote }}
+{{end}}
+newrelic.framework = "no_framework"
+newrelic.browser_monitoring.auto_instrument = {{ (getenv "DESKPRO_NR_INSTRUMENT_BROWSER" "false") | conv.ToBool | ternary "true" "false" }}
+
+{{ getenv "DESKPRO_NR_INI_OVERRIDES" }}
+{{else}}
+# To enable newrelic extension, set DESKPRO_ENABLE_NEWRELIC=true
+# extension = "newrelic.so"
+{{end}}

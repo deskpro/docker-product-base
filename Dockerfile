@@ -1,7 +1,10 @@
 # builder stage -- builds PHP packages
 # outputs: /usr/lib/php/20230831/protobuf.so
 # outputs: /usr/lib/php/20230831/opentelemetry.so
-FROM debian:12.2-slim AS builder-php-exts
+# outputs: /usr/lib/newrelic-php5/agent/x64/newrelic-20230831.so
+# outputs: /usr/bin/newrelic-daemon
+FROM debian:12.8-slim AS builder-php-exts
+ENV NEW_RELIC_AGENT_VERSION=11.6.0.19
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https software-properties-common curl lsb-release \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
@@ -15,10 +18,12 @@ RUN apt-get update \
     php8.3-xml \
     php-pear \
     && pecl install opentelemetry protobuf \
-    && rm -rf /var/lib/apt/lists/*
+    && curl -L https://download.newrelic.com/php_agent/archive/${NEW_RELIC_AGENT_VERSION}/newrelic-php5-${NEW_RELIC_AGENT_VERSION}-linux.tar.gz | tar -C /tmp -zx \
+    && NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTALL_SILENT=true /tmp/newrelic-php5-${NEW_RELIC_AGENT_VERSION}-linux/newrelic-install install \
+    && rm -rf /var/lib/apt/lists/* /tmp/newrelic-php5-* /tmp/nrinstall*
 
 # stage1 -- debian with packages
-FROM debian:12.2-slim AS stage1
+FROM debian:12.8-slim AS stage1
 ENV TZ=UTC
 WORKDIR /srv/deskpro
 USER root
@@ -40,6 +45,7 @@ RUN apt-get update \
     nginx \
     vim-tiny \
     openssl \
+    poppler-utils \
     php8.3-bcmath \
     php8.3-cli \
     php8.3-common \
@@ -75,9 +81,11 @@ RUN apt-get update \
 FROM stage1 AS stage2
 COPY --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
 COPY --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
+COPY --from=builder-php-exts /usr/lib/php/20230831/newrelic.so /usr/lib/php/20230831/newrelic.so
+COPY --from=builder-php-exts /usr/bin/newrelic-daemon /usr/local/bin/newrelic-daemon
 COPY --from=hairyhenderson/gomplate:v3.11.5 /gomplate /usr/local/bin/gomplate
 COPY --from=composer:2.5.8 /usr/bin/composer /usr/local/bin/composer
-COPY --from=timberio/vector:0.39.0-debian /usr/bin/vector /usr/local/bin/vector
+COPY --from=timberio/vector:0.46.1-debian /usr/bin/vector /usr/local/bin/vector
 COPY --from=node:18.19-bookworm /usr/local/bin /usr/local/bin
 COPY --from=node:18.19-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
 
@@ -96,7 +104,8 @@ RUN set -e \
     && printf '; priority=20\nextension=protobuf.so' > /etc/php/8.3/mods-available/protobuf.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro-otel.ini \
-    && phpenmod protobuf deskpro deskpro-otel \
+    && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/newrelic.ini \
+    && phpenmod protobuf deskpro deskpro-otel newrelic \
     && phpdismod phar \
     && rm /etc/php/8.3/fpm/pool.d/www.conf \
     && mv /etc/nginx/mime.types /tmp/mime.types \
@@ -126,16 +135,16 @@ RUN set -e \
     && addgroup --gid 1085 nginx \
     && adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1085 --gid 1085 nginx \
     # initialize dirs and owners
-    && mkdir -p /var/log/nginx /var/log/php /var/log/deskpro /var/log/supervisor /var/lib/vector \
+    && mkdir -p /var/log/nginx /var/log/php /var/log/deskpro /var/log/supervisor /var/lib/vector /var/log/newrelic \
     && mkdir -p /srv/deskpro/INSTANCE_DATA/deskpro-config.d \
     && chown root:root /usr/local/bin/vector \
     && chown vector:adm /var/lib/vector \
     && chown nginx:adm /var/log/nginx \
-    && chown dp_app:adm /var/log/php /var/log/deskpro \
-    && chmod -R 0775 /var/log/php /var/log/deskpro \
+    && chown dp_app:adm /var/log/php /var/log/deskpro /var/log/newrelic \
+    && chmod -R 0775 /var/log/php /var/log/deskpro /var/log/newrelic \
     # set group sticky bit on these dirs so
     # new logs get created with adm group (so vector can read them)
-    && chmod g+s /var/log/nginx /var/log/php /var/log/deskpro \
+    && chmod g+s /var/log/nginx /var/log/php /var/log/deskpro /var/log/newrelic \
     # extract var names from our reference list
     # (these lists are used from various helper scripts or entrypoint scripts)
     && jq -r '.[] | select(.isPrivate|not) | .name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-public-var-list \

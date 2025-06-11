@@ -51,3 +51,20 @@ if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKE
 .chan = "error"
 .parsed = parse_nginx_log(.message, "error") ?? {}
 '''
+
+{{ if conv.ToBool (getenv "METRICS_ENABLED" "false") }}
+{{ if conv.ToBool (getenv "METRICS_NGINX_ENABLED" "true") }}
+[sources.nginx_metrics_source]
+type = "nginx_metrics"
+endpoints = ["http://localhost:10001/nginx/status"]
+scrape_interval_secs = 60
+
+[transforms.nginx_metrics]
+type = "remap"
+inputs = ["nginx_metrics_source"]
+source = '''
+del(.tags.endpoint)
+del(.tags.host)
+'''
+{{ end }}
+{{ end }}
