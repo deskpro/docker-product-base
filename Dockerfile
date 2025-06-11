@@ -105,7 +105,7 @@ RUN set -e \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro-otel.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/newrelic.ini \
-    && phpenmod protobuf deskpro newrelic \
+    && phpenmod protobuf deskpro deskpro-otel newrelic \
     && phpdismod phar \
     && rm /etc/php/8.3/fpm/pool.d/www.conf \
     && mv /etc/nginx/mime.types /tmp/mime.types \

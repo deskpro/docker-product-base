@@ -42,6 +42,10 @@ if ($opcConfig['elastic'] ?? false) {
   $CONFIG['elastic'] = $opcConfig['elastic'];
 }
 
+if ($opcConfig['redis'] ?? false) {
+  $CONFIG['redis'] = $opcConfig['redis'];
+}
+
 if ($opcConfig['paths']['blobs_path'] ?? false) {
   $CONFIG['paths']['blobs_path'] = $opcConfig['paths']['blobs_path'];
 }
@@ -61,6 +65,11 @@ if ($opcConfig['app_key'] ?? false) {
 if ($opcConfig['license_code'] ?? false) {
   $CONFIG['license_code'] = $opcConfig['license_code'];
 }
+
 if ($opcConfig['env'] ?? false) {
   $CONFIG['env'] = array_merge($opcConfig['env'], $CONFIG['env'] ?? []);
+}
+
+if ($opcConfig['otel'] ?? false) {
+  $CONFIG['otel'] = array_merge($opcConfig['otel'], $CONFIG['otel'] ?? []);
 }
