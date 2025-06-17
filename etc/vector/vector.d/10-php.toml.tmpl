@@ -117,6 +117,33 @@ type = "file"
 include = ["/var/log/php/access.log", "/var/log/php/access.log.1"]
 ignore_not_found = true
 
+[transforms.php_fpm_access]
+type = "remap"
+inputs = ["php_fpm_access_log_metrics_raw"]
+source = '''
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+.log_group = "php_fpm-access"
+.app = "php_fpm"
+.chan = "access"
+.lvl = "INFO"
+
+data, err = parse_json(.message)
+if err != null {
+    log("unable to parse php fpm access log: " + err, level: "error")
+    abort
+}
+
+.parsed = data
+.parsed.msg = ""
+
+if !is_nullish(.parsed.ts) {
+  .ts = parse_timestamp(.parsed.ts, "%+") ?? null
+}
+'''
+
 [transforms.php_fpm_access_log_parse_metrics]
 type = "remap"
 inputs = [ "php_fpm_access_log_metrics_raw" ]

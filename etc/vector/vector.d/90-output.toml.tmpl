@@ -11,6 +11,12 @@ inputs = [
   "php_fpm_error",
   "php_fpm_slow",
 
+{{ if conv.ToBool (getenv "METRICS_ENABLED" "false") }}
+{{ if conv.ToBool (getenv "METRICS_PHP_FPM_ENABLED" "true") }}
+  "php_fpm_access",
+{{end}}
+{{end}}
+
   "deskpro_logs",
   "deskpro_services",
 
