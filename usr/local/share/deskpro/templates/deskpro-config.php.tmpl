@@ -238,6 +238,7 @@ $CONFIG['sentry'] = [
         'dsn' => {{ (getenv "DESKPRO_SENTRY_FRONTEND_DSN" "https://27e0abb58c2a46cdb30bbaec4da00ce9@o311856.ingest.sentry.io/5891499") | squote }},
     ],
 ];
+$CONFIG['app_settings']['apps']['sentry']['dsn'] = {{ (getenv "DESKPRO_SENTRY_APPS_DSN" "https://918745f8931fbcce3d5f7b857014be1f@o311856.ingest.us.sentry.io/4508024778784768") | squote }};
 {{end}}
 
 
