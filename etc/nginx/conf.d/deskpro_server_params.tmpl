@@ -194,4 +194,8 @@ location ^~ /apps-proxy/ {
     add_header 'Access-Control-Allow-Origin' '*';
     add_header 'Access-Control-Allow-Headers' '*';
     add_header 'Access-Control-Max-Age' '1728000';
+
+    fastcgi_pass unix:/run/php_fpm_dp_internal.sock;
+    include /etc/nginx/conf.d/deskpro_fastcgi_params;
+    include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }
