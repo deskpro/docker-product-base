@@ -1,3 +1,11 @@
 #!/bin/bash
 docker buildx create --name multiarch --driver docker-container --use
-docker buildx build --platform linux/arm64,linux/amd64 --build-arg BUILDKIT_MULTI_PLATFORM=1 -f $DOCKERFILE_PATH -t $IMAGE_NAME --push .
+
+# For local testing, use a default image name if not provided
+if [ -z "$IMAGE_NAME" ]; then
+  # Build without pushing for local testing
+  docker buildx build --platform linux/arm64,linux/amd64 --build-arg BUILDKIT_MULTI_PLATFORM=1 -f ${DOCKERFILE_PATH:-Dockerfile} .
+else
+  # Use the provided image name and push to registry
+  docker buildx build --platform linux/arm64,linux/amd64 --build-arg BUILDKIT_MULTI_PLATFORM=1 -f ${DOCKERFILE_PATH:-Dockerfile} -t $IMAGE_NAME --push .
+fi
