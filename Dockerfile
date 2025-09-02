@@ -267,10 +267,10 @@ RUN echo 'Dpkg::Options {' > /etc/apt/apt.conf.d/01autoconf \
     && echo '}' >> /etc/apt/apt.conf.d/01autoconf \
     # Create proper symlinks for our security-patched libraries to avoid ldconfig warnings
     && cd /usr/local/lib \
-    && for lib in libexpat.so.1 libaom.so.3 libz.so.1 libtiff.so.6; do \
-        if [ -f "$lib" ] && [ ! -L "$lib" ]; then \
-            base=$(echo $lib | cut -d. -f1-2); \
-            if [ ! -e "$base" ]; then ln -sf "$lib" "$base"; fi; \
+    && for base in libexpat libaom libz libtiff; do \
+        sofile=$(ls -1 ${base}.so.* 2>/dev/null | sort -V | tail -n 1); \
+        if [ -n "$sofile" ] && [ ! -e "${base}.so" ]; then \
+            ln -sf "$sofile" "${base}.so"; \
         fi; \
     done \
     && ldconfig
