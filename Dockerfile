@@ -162,7 +162,14 @@ RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local.conf \
     && ldconfig \
     # Remove vulnerable system packages BEFORE installing packages that might depend on them
     && apt-get update \
-    && apt-get remove -y libsqlite3-0 libexpat1 libaom3 2>/dev/null || true \
+    && for pkg in libsqlite3-0 libexpat1 libaom3; do \
+        if ! apt-get remove -y "$pkg"; then \
+          if ! dpkg -s "$pkg" 2>&1 | grep -q "is not installed"; then \
+            echo "Failed to remove $pkg"; \
+            exit 1; \
+          fi; \
+        fi; \
+      done \
     && ldconfig
 
 # Now install packages - they will use our security-patched versions
