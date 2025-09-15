@@ -226,7 +226,7 @@ RUN apt-get update \
     python3-pip \
     && find /usr/lib/python3.11 -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete \
     # Install secure Python packages via pip (CVE-2023-50782, CVE-2025-47273 fixes)
-    && pip3 install --break-system-packages setuptools>=78.1.1 cryptography>=42.0.0 \
+    && pip3 install --break-system-packages "setuptools>=78.1.1" "cryptography>=42.0.0" \
     # Update CPAN for Perl security (CVE-2023-31484 fix) - simplified approach
     && perl -MCPAN -e 'install App::cpanminus' \
     && apt-get -y clean \
