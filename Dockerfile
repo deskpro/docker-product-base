@@ -5,6 +5,7 @@
 # outputs: /usr/bin/newrelic-daemon
 FROM debian:12.11-slim AS builder-php-exts
 ENV NEW_RELIC_AGENT_VERSION=11.6.0.19
+RUN grep -q '^VERSION_ID=' /etc/os-release || echo 'VERSION_ID="12.11"' >> /etc/os-release
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https software-properties-common curl lsb-release build-essential \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
