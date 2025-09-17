@@ -337,6 +337,8 @@ RUN set -e \
     && jq -r '.[].name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-var-list \
     && chmod 644 /usr/local/share/deskpro/*
 
+RUN grep -q '^VERSION_ID=' /etc/os-release || echo 'VERSION_ID="12"' >> /etc/os-release
+
 HEALTHCHECK --interval=10s --timeout=10s --start-period=30s --retries=3 \
     CMD /usr/local/bin/healthcheck
 
