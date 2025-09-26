@@ -5,7 +5,6 @@
 # outputs: /usr/bin/newrelic-daemon
 FROM debian:12.11-slim AS builder-php-exts
 ENV NEW_RELIC_AGENT_VERSION=11.6.0.19
-RUN grep -q '^VERSION_ID=' /etc/os-release || echo 'VERSION_ID="12.11"' >> /etc/os-release
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https software-properties-common curl lsb-release build-essential \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
@@ -337,6 +336,8 @@ RUN set -e \
     && jq -r '.[] | select(.setEnv) | .name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-setenv-var-list \
     && jq -r '.[].name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-var-list \
     && chmod 644 /usr/local/share/deskpro/*
+
+RUN grep -q '^VERSION_ID=' /etc/os-release || echo 'VERSION_ID="12"' >> /etc/os-release
 
 HEALTHCHECK --interval=10s --timeout=10s --start-period=30s --retries=3 \
     CMD /usr/local/bin/healthcheck
