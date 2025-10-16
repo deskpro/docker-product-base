@@ -163,13 +163,13 @@ RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local.conf \
     # Remove vulnerable system packages BEFORE installing packages that might depend on them
     && apt-get update \
     && for pkg in libsqlite3-0 libexpat1 libaom3; do \
-        if ! apt-get remove -y "$pkg"; then \
-          if ! dpkg -s "$pkg" 2>&1 | grep -q "is not installed"; then \
-            echo "Failed to remove $pkg"; \
-            exit 1; \
-          fi; \
-        fi; \
-      done \
+    if ! apt-get remove -y "$pkg"; then \
+    if ! dpkg -s "$pkg" 2>&1 | grep -q "is not installed"; then \
+    echo "Failed to remove $pkg"; \
+    exit 1; \
+    fi; \
+    fi; \
+    done \
     && ldconfig
 
 # Now install packages - they will use our security-patched versions
@@ -245,8 +245,8 @@ COPY --from=ghcr.io/jqlang/jq:1.8.1 /jq /usr/local/bin/jq
 COPY --from=hairyhenderson/gomplate:v3.11.5 /gomplate /usr/local/bin/gomplate
 COPY --from=composer:2.5.8 /usr/bin/composer /usr/local/bin/composer
 COPY --from=timberio/vector:0.46.1-debian /usr/bin/vector /usr/local/bin/vector
-COPY --from=node:22.20-bookworm /usr/local/bin /usr/local/bin
-COPY --from=node:22.20-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node:20.19-bookworm /usr/local/bin /usr/local/bin
+COPY --from=node:20.19-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
 
 RUN npm install --global tsx
 
@@ -268,21 +268,21 @@ RUN echo 'Dpkg::Options {' > /etc/apt/apt.conf.d/01autoconf \
     # Create proper symlinks for our security-patched libraries to avoid ldconfig warnings
     && cd /usr/local/lib \
     && for base in libexpat libaom libz libtiff; do \
-        sofile=$(ls -1 ${base}.so.* 2>/dev/null | sort -V | tail -n 1); \
-        if [ -n "$sofile" ] && [ ! -e "${base}.so" ]; then \
-            ln -sf "$sofile" "${base}.so"; \
-        fi; \
+    sofile=$(ls -1 ${base}.so.* 2>/dev/null | sort -V | tail -n 1); \
+    if [ -n "$sofile" ] && [ ! -e "${base}.so" ]; then \
+    ln -sf "$sofile" "${base}.so"; \
+    fi; \
     done \
     && ldconfig
 
 RUN sed -i 's/providers = provider_sect/providers = provider_sect\n\
-ssl_conf = ssl_sect\n\
-\n\
-[ssl_sect]\n\
-system_default = system_default_sect\n\
-\n\
-[system_default_sect]\n\
-Options = UnsafeLegacyRenegotiation/' /etc/ssl/openssl.cnf
+    ssl_conf = ssl_sect\n\
+    \n\
+    [ssl_sect]\n\
+    system_default = system_default_sect\n\
+    \n\
+    [system_default_sect]\n\
+    Options = UnsafeLegacyRenegotiation/' /etc/ssl/openssl.cnf
 
 RUN set -e \
     && printf '; priority=20\nextension=protobuf.so' > /etc/php/8.3/mods-available/protobuf.ini \
