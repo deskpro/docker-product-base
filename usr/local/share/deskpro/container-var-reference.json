@@ -534,6 +534,44 @@
     "default": "false"
   },
   {
+    "name": "PANGEA_SVC_ENABLED",
+    "description": "Enables the Pangea AI Safety service.",
+    "type": "bool",
+    "default": "false"
+  },
+  {
+    "name": "PANGEA_SERVICE_TOKEN",
+    "description": "The service token for the Pangea AI Safety service.",
+    "type": "string"
+  },
+  {
+    "name": "PANGEA_AI_GUARD_BASE_ENABLED",
+    "description": "Enables the Pangea AI Guard service.",
+    "type": "bool",
+    "default": "true"
+  },
+  {
+    "name": "PANGEA_AI_GUARD_BASE_URL",
+    "description": "The base URL for the Pangea AI Guard service API endpoints.",
+    "type": "string"
+  },
+  {
+    "name": "PANGEA_PROMPT_GUARD_ENABLED",
+    "description": "Enables the Pangea Prompt Guard service.",
+    "type": "bool",
+    "default": "true"
+  },
+  {
+    "name": "PANGEA_PROMPT_GUARD_BASE_URL",
+    "description": "The base URL for the Pangea Prompt Guard service API endpoints.",
+    "type": "string"
+  },
+  {
+    "name": "PANGEA_TENANT_ID",
+    "description": "An optional tenant ID for the Pangea AI Safety service to distinguish between different tenants on the same edge service.",
+    "type": "string"
+  },
+  {
     "name": "PHP_FPM_DP_BROADCASTER_MAX_CHILDREN",
     "description": "pm.max_children setting for dp_broadcaster PHP FPM pool.",
     "type": "integer",
