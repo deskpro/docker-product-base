@@ -73,3 +73,7 @@ if ($opcConfig['env'] ?? false) {
 if ($opcConfig['otel'] ?? false) {
   $CONFIG['otel'] = array_merge($opcConfig['otel'], $CONFIG['otel'] ?? []);
 }
+
+if ($opcConfig['pangea'] ?? false) {
+  $CONFIG['pangea'] = array_merge($opcConfig['pangea'], $CONFIG['pangea'] ?? []);
+}

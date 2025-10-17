@@ -358,6 +358,22 @@ $CONFIG['otel'] = [
   'enabled' => {{ (getenv "DESKPRO_ENABLE_OTEL" "false") | conv.ToBool | ternary "true" "false" }},
 ];
 
+{{if ((getenv "PANGEA_SVC_ENABLED") | conv.ToBool)}}
+//######################################################################
+// AI Safety
+//######################################################################
+$CONFIG['pangea'] = [
+  'api_key' => {{ getenv "PANGEA_SERVICE_TOKEN" | squote }},
+  'ai_guard_enabled' => {{ (getenv "PANGEA_AI_GUARD_BASE_ENABLED" "true") | conv.ToBool | ternary "true" "false" }},
+  'ai_guard_base_url' => {{ getenv "PANGEA_AI_GUARD_BASE_URL" | squote }},
+  'prompt_guard_enabled' => {{ (getenv "PANGEA_PROMPT_GUARD_ENABLED" "true") | conv.ToBool | ternary "true" "false" }},
+  'prompt_guard_base_url' => {{ getenv "PANGEA_PROMPT_GUARD_BASE_URL" | squote }},
+  {{if getenv "PANGEA_TENANT_ID"}}
+  'tenant_id' => {{ getenv "PANGEA_TENANT_ID" | squote }},
+  {{end}}
+];
+{{end}}
+
 #######################################################################
 # extensions
 #######################################################################
