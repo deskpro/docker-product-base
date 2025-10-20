@@ -245,8 +245,8 @@ COPY --from=ghcr.io/jqlang/jq:1.8.1 /jq /usr/local/bin/jq
 COPY --from=hairyhenderson/gomplate:v3.11.5 /gomplate /usr/local/bin/gomplate
 COPY --from=composer:2.5.8 /usr/bin/composer /usr/local/bin/composer
 COPY --from=timberio/vector:0.46.1-debian /usr/bin/vector /usr/local/bin/vector
-COPY --from=node:18.19-bookworm /usr/local/bin /usr/local/bin
-COPY --from=node:18.19-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node:22.20-bookworm /usr/local/bin /usr/local/bin
+COPY --from=node:22.20-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
 
 RUN npm install --global tsx
 
