@@ -1,11 +1,27 @@
 #!/bin/bash
 docker buildx create --name multiarch --driver docker-container --use
 
+# Simple build using system packages from debian:12.13-slim
+echo "Building with debian:12.13-slim system packages (no source compilation)"
+
+# Get current git commit for traceability
+COMMIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+echo "Base image commit: $COMMIT_SHA"
+
 # For local testing, use a default image name if not provided
 if [ -z "$IMAGE_NAME" ]; then
   # Build without pushing for local testing
-  docker buildx build --platform linux/arm64,linux/amd64 --build-arg BUILDKIT_MULTI_PLATFORM=1 -f ${DOCKERFILE_PATH:-Dockerfile} .
+  docker buildx build \
+    --platform linux/arm64,linux/amd64 \
+    --build-arg USE_SYSTEM_PACKAGES_ONLY=true \
+    --build-arg BASE_IMAGE_COMMIT="$COMMIT_SHA" \
+    -f ${DOCKERFILE_PATH:-Dockerfile} .
 else
   # Use the provided image name and push to registry
-  docker buildx build --platform linux/arm64,linux/amd64 --build-arg BUILDKIT_MULTI_PLATFORM=1 -f ${DOCKERFILE_PATH:-Dockerfile} -t $IMAGE_NAME --push .
+  docker buildx build \
+    --platform linux/arm64,linux/amd64 \
+    --build-arg USE_SYSTEM_PACKAGES_ONLY=true \
+    --build-arg BASE_IMAGE_COMMIT="$COMMIT_SHA" \
+    -f ${DOCKERFILE_PATH:-Dockerfile} \
+    -t $IMAGE_NAME --push .
 fi
