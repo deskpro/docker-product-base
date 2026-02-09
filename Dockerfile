@@ -191,8 +191,7 @@ RUN mkdir -p /etc/systemd/system \
     # Clean up
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/* \
-    # Create vim symlink and clean up MySQL binaries we don't need
-    && rm -rf /usr/bin/mariadb-* 2>/dev/null || true \
+    # Create vim symlink
     && ln -sf /usr/bin/vim.tiny /usr/bin/vim \
     # Restore real logger for runtime and create /dev/log
     && rm -f /usr/bin/logger \
