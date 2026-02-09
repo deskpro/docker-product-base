@@ -9,5 +9,7 @@ if [[ -n "$DESKPRO_SITE_INFO" ]]; then
   export DESKPRO_DB_NAME="$(jq -r '.database.primary.dbname' <<< "$JSON_CONFIG")"
 fi
 
-eval-tpl --file "/usr/local/share/deskpro/templates/user.my.cnf.tmpl" --out "/$HOME/.my-auto.cnf"
-exec mysql --defaults-extra-file="/$HOME/.my-auto.cnf" --defaults-group-suffix="_primary" "$@"
+cnf_file_path="$(gomplate -i '{{ path.Join .Env.HOME ".my-auto.cnf" }}')"
+
+eval-tpl --file "/usr/local/share/deskpro/templates/user.my.cnf.tmpl" --out "$cnf_file_path"
+exec mysql --defaults-extra-file="$cnf_file_path" --defaults-group-suffix="_primary" "$@"
