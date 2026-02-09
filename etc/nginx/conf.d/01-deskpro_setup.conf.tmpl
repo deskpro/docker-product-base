@@ -33,8 +33,7 @@ map $upstream_http_x_frame_options $dp_x_frame_options {
 # Map Upstream X-Content-Type-Options header to remove duplicates and clean up
 map $upstream_http_x_content_type_options $dp_content_type_options {
     default "nosniff";
-    "nosniff" "";
-    "nosniff, nosniff" "";
+    ~*nosniff "";
 }
 
 # Map Upstream X-XSS-Protection header to remove duplicates and clean up
