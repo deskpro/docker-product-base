@@ -23,3 +23,21 @@ map $scheme $proto_for_scheme {
   "https" {{ getenv "HTTP_USER_SET_HTTPS_PROTO" "https" }};
   default {{ getenv "HTTP_USER_SET_HTTP_PROTO" "http" }};
 }
+
+# Map Upstream X-Frame-Options header to remove duplicates and clean up
+map $upstream_http_x_frame_options $dp_x_frame_options {
+    default "SAMEORIGIN";
+    "SAMEORIGIN" "";
+}
+
+# Map Upstream X-Content-Type-Options header to remove duplicates and clean up
+map $upstream_http_x_content_type_options $dp_content_type_options {
+    default "nosniff";
+    ~*nosniff "";
+}
+
+# Map Upstream X-XSS-Protection header to remove duplicates and clean up
+map $upstream_http_x_xss_protection $dp_x_xss_protection {
+    default "1; mode=block";
+    "1; mode=block" "";
+}
