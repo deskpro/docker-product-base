@@ -31,26 +31,7 @@ RUN apt-get update && apt-get install -y curl ca-certificates \
     && chmod +x /usr/local/bin/gomplate \
     && /usr/local/bin/gomplate --version
 
-# Install nginx from official repository with OpenTelemetry module
-FROM debian:13.3-slim AS builder-nginx
-ARG NGINX_VERSION="1.28.2"
-ARG NGINX_GPG_KEY_FINGERPRINTS="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62:8540A6F18833A80E9C1653A42FD21310B49F6B46:9E9BE90EACBCDE69FE9B204CBCDCD8A38D88A2B3"
 
-RUN apt-get update \
-    && apt-get install -y curl gnupg2 ca-certificates lsb-release debian-archive-keyring \
-    && curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor > /usr/share/keyrings/nginx-archive-keyring.gpg \
-    # verify key is what we expect
-    && key_fingerprints="$(gpg --show-keys --with-colons /usr/share/keyrings/nginx-archive-keyring.gpg | awk -F: '$1 == "fpr" { print $10 }' | sort | paste -s -d:)" \
-    && [ "$NGINX_GPG_KEY_FINGERPRINTS" = "$key_fingerprints" ] || { \
-    echo "nginx key fingerprints do not match"; \
-    exit 1; \
-    } \
-    && printf "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] https://nginx.org/packages/debian %s nginx\n" "$(lsb_release -cs)" | tee /etc/apt/sources.list.d/nginx.list \
-    && printf "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" | tee /etc/apt/preferences.d/99nginx \
-    && apt-get update \
-    && apt-get install -y nginx=${NGINX_VERSION}-* nginx-module-otel \
-    && mkdir -p /var/cache/nginx /usr/lib/nginx/modules \
-    && ls -la /usr/sbin/nginx /etc/nginx /usr/lib/nginx/modules/
 
 # builder stage -- builds essential security-patched packages from source
 # SIMPLIFIED: Use system packages from debian:12.13-slim instead of source builds
@@ -186,14 +167,32 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     php8.3-zip \
     php-common \
     php8.3 \
-    # Clean up
+    # Clean up PHP installation
+    && apt-get -y clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install nginx with OpenTelemetry module (inlined for proper dependency resolution)
+ARG NGINX_VERSION="1.28.2"
+ARG NGINX_GPG_KEY_FINGERPRINTS="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62:8540A6F18833A80E9C1653A42FD21310B49F6B46:9E9BE90EACBCDE69FE9B204CBCDCD8A38D88A2B3"
+
+RUN apt-get update \
+    && apt-get install -y curl gnupg2 ca-certificates lsb-release debian-archive-keyring \
+    && curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor > /usr/share/keyrings/nginx-archive-keyring.gpg \
+    # verify key is what we expect
+    && key_fingerprints="$(gpg --show-keys --with-colons /usr/share/keyrings/nginx-archive-keyring.gpg | awk -F: '$1 == "fpr" { print $10 }' | sort | paste -s -d:)" \
+    && [ "$NGINX_GPG_KEY_FINGERPRINTS" = "$key_fingerprints" ] || { \
+        echo "nginx key fingerprints do not match"; \
+        exit 1; \
+    } \
+    && printf "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] https://nginx.org/packages/debian %s nginx\n" "$(lsb_release -cs)" | tee /etc/apt/sources.list.d/nginx.list \
+    && printf "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" | tee /etc/apt/preferences.d/99nginx \
+    && apt-get update \
+    && apt-get install -y nginx=${NGINX_VERSION}-* nginx-module-otel \
+    # Clean up nginx installation
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/* \
-    # Create nginx user and directories for the source-built nginx
-    && groupadd -r nginx 2>/dev/null || groupadd nginx \
-    && useradd -r -g nginx -s /sbin/nologin -d /var/cache/nginx -c nginx nginx 2>/dev/null || useradd -s /sbin/nologin -d /var/cache/nginx -c nginx -g nginx nginx \
-    && mkdir -p /var/cache/nginx /var/log/nginx \
-    && chown -R nginx:nginx /var/cache/nginx /var/log/nginx
+    # Nginx package creates user and directories automatically - no manual setup needed
+    && ls -la /usr/sbin/nginx /etc/nginx /usr/lib/nginx/modules/
 
 # stage2 -- packages from other images
 FROM stage1 AS stage2
@@ -204,9 +203,7 @@ COPY --from=builder-php-exts /usr/bin/newrelic-daemon /usr/local/bin/newrelic-da
 COPY --from=ghcr.io/jqlang/jq:1.8.1 /jq /usr/local/bin/jq
 # Security-patched packages already installed in stage1
 COPY --from=builder-go-binaries /usr/local/bin/gomplate /usr/local/bin/gomplate
-COPY --from=builder-nginx /usr/sbin/nginx /usr/sbin/nginx
-COPY --from=builder-nginx /etc/nginx /etc/nginx
-COPY --from=builder-nginx /usr/lib/nginx /usr/lib/nginx
+# Nginx installed directly in stage1 - no COPY needed
 COPY --from=composer:2.9.2 /usr/bin/composer /usr/local/bin/composer
 COPY --from=timberio/vector:0.51.1-debian /usr/bin/vector /usr/local/bin/vector
 COPY --from=node:22-bookworm /usr/local/bin /usr/local/bin
