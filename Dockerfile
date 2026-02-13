@@ -187,7 +187,7 @@ RUN apt-get update \
     && printf "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] https://nginx.org/packages/debian %s nginx\n" "$(lsb_release -cs)" | tee /etc/apt/sources.list.d/nginx.list \
     && printf "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" | tee /etc/apt/preferences.d/99nginx \
     && apt-get update \
-    && apt-get install -y nginx=${NGINX_VERSION}-* nginx-module-otel \
+    && apt-get install -y "nginx=${NGINX_VERSION}-*" "nginx-module-otel=${NGINX_VERSION}+*" \
     # Clean up nginx installation
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/* \
