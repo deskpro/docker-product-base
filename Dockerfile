@@ -3,10 +3,10 @@
 # outputs: /usr/lib/php/20230831/opentelemetry.so
 # outputs: /usr/lib/newrelic-php5/agent/x64/newrelic-20230831.so
 # outputs: /usr/bin/newrelic-daemon
-FROM debian:12.13-slim AS builder-php-exts
+FROM debian:13.3-slim AS builder-php-exts
 ENV NEW_RELIC_AGENT_VERSION=12.4.0.29
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https software-properties-common curl lsb-release build-essential \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https curl lsb-release build-essential \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
     && sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' \
     && apt-get update \
@@ -23,7 +23,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/newrelic-php5-* /tmp/nrinstall*
 
 # Use pre-built gomplate v5.0.0 binary to avoid vulnerable indirect dependencies
-FROM debian:12.13-slim AS builder-go-binaries
+FROM debian:13.3-slim AS builder-go-binaries
 RUN apt-get update && apt-get install -y curl ca-certificates \
     && TARGET_ARCH=$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/') \
     && echo "Downloading gomplate v5.0.0 for architecture: $TARGET_ARCH" \
@@ -31,73 +31,11 @@ RUN apt-get update && apt-get install -y curl ca-certificates \
     && chmod +x /usr/local/bin/gomplate \
     && /usr/local/bin/gomplate --version
 
-# Build nginx from source for CVE-2023-44487 fix
-FROM debian:12.13-slim AS builder-nginx
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpcre3-dev \
-    libssl-dev \
-    zlib1g-dev \
-    libgd-dev \
-    libxml2-dev \
-    libxslt1-dev \
-    curl \
-    ca-certificates \
-    && NGINX_VERSION=1.28.2 \
-    && curl -fsSL "http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" -o nginx.tar.gz \
-    && tar -xzf nginx.tar.gz && cd nginx-${NGINX_VERSION} \
-    && ./configure \
-    --prefix=/etc/nginx \
-    --sbin-path=/usr/sbin/nginx \
-    --modules-path=/usr/lib/nginx/modules \
-    --conf-path=/etc/nginx/nginx.conf \
-    --error-log-path=/var/log/nginx/error.log \
-    --http-log-path=/var/log/nginx/access.log \
-    --pid-path=/var/run/nginx.pid \
-    --lock-path=/var/run/nginx.lock \
-    --http-client-body-temp-path=/var/cache/nginx/client_temp \
-    --http-proxy-temp-path=/var/cache/nginx/proxy_temp \
-    --http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp \
-    --http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp \
-    --http-scgi-temp-path=/var/cache/nginx/scgi_temp \
-    --user=nginx \
-    --group=nginx \
-    --with-compat \
-    --with-file-aio \
-    --with-threads \
-    --with-http_addition_module \
-    --with-http_auth_request_module \
-    --with-http_dav_module \
-    --with-http_flv_module \
-    --with-http_gunzip_module \
-    --with-http_gzip_static_module \
-    --with-http_mp4_module \
-    --with-http_random_index_module \
-    --with-http_realip_module \
-    --with-http_secure_link_module \
-    --with-http_slice_module \
-    --with-http_ssl_module \
-    --with-http_stub_status_module \
-    --with-http_sub_module \
-    --with-http_v2_module \
-    --with-http_image_filter_module=dynamic \
-    --with-http_xslt_module=dynamic \
-    --with-stream \
-    --with-stream_realip_module \
-    --with-stream_ssl_module \
-    --with-stream_ssl_preread_module \
-    && make -j$(nproc) \
-    && make install \
-    && mkdir -p /var/cache/nginx /usr/lib/nginx/modules \
-    # Download prebuilt OpenTelemetry nginx module (1.27.3 module compatible with 1.28.2) \
-    && curl -fsSL "https://github.com/open-telemetry/opentelemetry-cpp-contrib/releases/download/nginx/v0.1.1/otel_ngx_module-debian-11-1.27.3.so" \
-    -o /usr/lib/nginx/modules/ngx_otel_module.so \
-    && chmod 644 /usr/lib/nginx/modules/ngx_otel_module.so \
-    && ls -la /usr/sbin/nginx /etc/nginx /usr/lib/nginx/modules/
+
 
 # builder stage -- builds essential security-patched packages from source
 # SIMPLIFIED: Use system packages from debian:12.13-slim instead of source builds
-FROM debian:12.13-slim AS builder-security-packages
+FROM debian:13.3-slim AS builder-security-packages
 ARG USE_SYSTEM_PACKAGES_ONLY=true
 
 # If using system packages only, just install the latest available packages
@@ -125,7 +63,7 @@ RUN mkdir -p /usr/local/bin /usr/local/lib \
     && ln -sf /usr/bin/rsync /usr/local/bin/rsync \
     && echo "System package setup complete"
 # stage1 -- debian with security patches first, then packages
-FROM debian:12.13-slim AS stage1
+FROM debian:13.3-slim AS stage1
 ARG BASE_IMAGE_COMMIT="unknown"
 LABEL org.deskpro.base-image-commit="$BASE_IMAGE_COMMIT"
 ENV TZ=UTC
@@ -147,7 +85,6 @@ RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local.conf \
     && apt-get install -y \
     ca-certificates \
     apt-transport-https \
-    software-properties-common \
     gnupg \
     lsb-release \
     sudo \
@@ -185,8 +122,8 @@ RUN mkdir -p /etc/systemd/system \
     tzdata \
     python3-pip \
     cpanminus \
-    libpcre3 \
-    libssl3 \
+    libpcre2-8-0 \
+    libssl3t64 \
     zlib1g \
     # Clean up
     && apt-get -y clean \
@@ -202,7 +139,7 @@ RUN mkdir -p /etc/systemd/system \
 RUN export DEBIAN_FRONTEND=noninteractive \
     # Add PHP repository for latest versions
     && apt-get update \
-    && apt-get install -y ca-certificates apt-transport-https software-properties-common curl lsb-release \
+    && apt-get install -y ca-certificates apt-transport-https curl lsb-release \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list \
     && apt-get update \
@@ -230,14 +167,32 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     php8.3-zip \
     php-common \
     php8.3 \
-    # Clean up
+    # Clean up PHP installation
+    && apt-get -y clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install nginx with OpenTelemetry module (inlined for proper dependency resolution)
+ARG NGINX_VERSION="1.28.2"
+ARG NGINX_GPG_KEY_FINGERPRINTS="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62:8540A6F18833A80E9C1653A42FD21310B49F6B46:9E9BE90EACBCDE69FE9B204CBCDCD8A38D88A2B3"
+
+RUN apt-get update \
+    && apt-get install -y curl gnupg2 ca-certificates lsb-release debian-archive-keyring \
+    && curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor > /usr/share/keyrings/nginx-archive-keyring.gpg \
+    # verify key is what we expect
+    && key_fingerprints="$(gpg --show-keys --with-colons /usr/share/keyrings/nginx-archive-keyring.gpg | awk -F: '$1 == "fpr" { print $10 }' | sort | paste -s -d:)" \
+    && [ "$NGINX_GPG_KEY_FINGERPRINTS" = "$key_fingerprints" ] || { \
+        echo "nginx key fingerprints do not match"; \
+        exit 1; \
+    } \
+    && printf "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] https://nginx.org/packages/debian %s nginx\n" "$(lsb_release -cs)" | tee /etc/apt/sources.list.d/nginx.list \
+    && printf "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" | tee /etc/apt/preferences.d/99nginx \
+    && apt-get update \
+    && apt-get install -y "nginx=${NGINX_VERSION}-*" "nginx-module-otel=${NGINX_VERSION}+*" \
+    # Clean up nginx installation
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/* \
-    # Create nginx user and directories for the source-built nginx
-    && groupadd -r nginx 2>/dev/null || groupadd nginx \
-    && useradd -r -g nginx -s /sbin/nologin -d /var/cache/nginx -c nginx nginx 2>/dev/null || useradd -s /sbin/nologin -d /var/cache/nginx -c nginx -g nginx nginx \
-    && mkdir -p /var/cache/nginx /var/log/nginx \
-    && chown -R nginx:nginx /var/cache/nginx /var/log/nginx
+    # Nginx package creates user and directories automatically - no manual setup needed
+    && ls -la /usr/sbin/nginx /etc/nginx /usr/lib/nginx/modules/
 
 # stage2 -- packages from other images
 FROM stage1 AS stage2
@@ -248,9 +203,7 @@ COPY --from=builder-php-exts /usr/bin/newrelic-daemon /usr/local/bin/newrelic-da
 COPY --from=ghcr.io/jqlang/jq:1.8.1 /jq /usr/local/bin/jq
 # Security-patched packages already installed in stage1
 COPY --from=builder-go-binaries /usr/local/bin/gomplate /usr/local/bin/gomplate
-COPY --from=builder-nginx /usr/sbin/nginx /usr/sbin/nginx
-COPY --from=builder-nginx /etc/nginx /etc/nginx
-COPY --from=builder-nginx /usr/lib/nginx /usr/lib/nginx
+# Nginx installed directly in stage1 - no COPY needed
 COPY --from=composer:2.9.2 /usr/bin/composer /usr/local/bin/composer
 COPY --from=timberio/vector:0.51.1-debian /usr/bin/vector /usr/local/bin/vector
 COPY --from=node:22-bookworm /usr/local/bin /usr/local/bin
@@ -306,14 +259,8 @@ RUN set -e \
     && phpenmod protobuf deskpro deskpro-otel newrelic \
     && phpdismod phar \
     && rm -f /etc/php/8.3/fpm/pool.d/www.conf \
-    # Handle nginx mime.types - it might be in different locations or not exist yet
-    && ([ -f /etc/nginx/mime.types ] && cp /etc/nginx/mime.types /tmp/mime.types || \
-    [ -f /usr/share/nginx/mime.types ] && cp /usr/share/nginx/mime.types /tmp/mime.types || \
-    touch /tmp/mime.types) \
-    && rm -rf /etc/nginx \
-    && mkdir -p /etc/nginx/conf.d \
-    && chmod 0755 /etc/nginx /etc/nginx/conf.d \
-    && mv /tmp/mime.types /etc/nginx/mime.types
+    # Preserve nginx configuration from official package
+    && chmod 0755 /etc/nginx /etc/nginx/conf.d
 
 # build -- final stage adds our custom stuff
 FROM stage2 AS build
