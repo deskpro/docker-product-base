@@ -34,13 +34,13 @@ RUN apt-get update && apt-get install -y curl ca-certificates \
 
 
 # builder stage -- builds essential security-patched packages from source
-# SIMPLIFIED: Use system packages from debian:12.13-slim instead of source builds
+# SIMPLIFIED: Use system packages from debian:13.3-slim instead of source builds
 FROM debian:13.3-slim AS builder-security-packages
 ARG USE_SYSTEM_PACKAGES_ONLY=true
 
 # If using system packages only, just install the latest available packages
 RUN if [ "$USE_SYSTEM_PACKAGES_ONLY" = "true" ]; then \
-    echo "Using debian:12.13-slim system packages instead of source builds" \
+    echo "Using debian:13.3-slim system packages instead of source builds" \
     && apt-get update \
     && apt-get install -y \
     sqlite3 libsqlite3-0 \
@@ -80,8 +80,9 @@ RUN echo "System packages with symlinks copied successfully"
 # Configure dynamic linker and install system packages (simplified approach)
 RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local.conf \
     && ldconfig \
-    # Install system packages - debian:12.13-slim has latest security updates
+    # Install system packages - debian:13.3-slim has latest security updates
     && apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y \
     ca-certificates \
     apt-transport-https \
@@ -206,8 +207,8 @@ COPY --from=builder-go-binaries /usr/local/bin/gomplate /usr/local/bin/gomplate
 # Nginx installed directly in stage1 - no COPY needed
 COPY --from=composer:2.9.2 /usr/bin/composer /usr/local/bin/composer
 COPY --from=timberio/vector:0.51.1-debian /usr/bin/vector /usr/local/bin/vector
-COPY --from=node:22-bookworm /usr/local/bin /usr/local/bin
-COPY --from=node:22-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node:22.22.2-bookworm /usr/local/bin /usr/local/bin
+COPY --from=node:22.22.2-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
 RUN npm install --global tsx
 
 # Install system packages needed for verification and runtime

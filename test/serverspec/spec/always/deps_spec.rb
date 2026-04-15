@@ -21,9 +21,9 @@ describe command('php -v') do
 end
 
 describe command('gomplate -v') do
-  its(:stdout) { should contain('gomplate version 3.') }
+  its(:stdout) { should contain('gomplate version 5.') }
 end
 
 describe command('vector -V') do
-  its(:stdout) { should contain('vector 0.39.') }
+  its(:stdout) { should contain('vector 0.51.') }
 end
