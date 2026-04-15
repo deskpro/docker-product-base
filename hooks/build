@@ -2,7 +2,7 @@
 docker buildx create --name multiarch --driver docker-container --use
 
 # Simple build using system packages from debian:12.13-slim
-echo "Building with debian:12.13-slim system packages (no source compilation)"
+echo "Building with debian:13.3-slim system packages (no source compilation)"
 
 # Get current git commit for traceability
 COMMIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
