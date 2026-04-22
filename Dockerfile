@@ -173,7 +173,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && rm -rf /var/lib/apt/lists/*
 
 # Install nginx with OpenTelemetry module (inlined for proper dependency resolution)
-ARG NGINX_VERSION="1.28.2"
+ARG NGINX_VERSION="1.30.0"
 ARG NGINX_GPG_KEY_FINGERPRINTS="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62:8540A6F18833A80E9C1653A42FD21310B49F6B46:9E9BE90EACBCDE69FE9B204CBCDCD8A38D88A2B3"
 
 RUN apt-get update \
@@ -205,7 +205,7 @@ COPY --from=ghcr.io/jqlang/jq:1.8.1 /jq /usr/local/bin/jq
 # Security-patched packages already installed in stage1
 COPY --from=builder-go-binaries /usr/local/bin/gomplate /usr/local/bin/gomplate
 # Nginx installed directly in stage1 - no COPY needed
-COPY --from=composer:2.9.2 /usr/bin/composer /usr/local/bin/composer
+COPY --from=composer:2.9.7 /usr/bin/composer /usr/local/bin/composer
 COPY --from=timberio/vector:0.51.1-debian /usr/bin/vector /usr/local/bin/vector
 COPY --from=node:22.22.2-bookworm /usr/local/bin /usr/local/bin
 COPY --from=node:22.22.2-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
