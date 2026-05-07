@@ -162,6 +162,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     php8.3-mbstring \
     php8.3-mysqlnd \
     php8.3-opcache \
+    php8.3-redis \
     php8.3-soap \
     php8.3-sqlite3 \
     php8.3-xml \

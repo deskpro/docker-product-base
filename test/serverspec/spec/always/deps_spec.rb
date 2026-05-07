@@ -27,3 +27,31 @@ end
 describe command('vector -V') do
   its(:stdout) { should contain('vector 0.51.') }
 end
+
+%w[
+  bcmath
+  ctype
+  curl
+  dom
+  fileinfo
+  gd
+  iconv
+  imap
+  intl
+  ldap
+  mbstring
+  mysqlnd
+  newrelic
+  opentelemetry
+  protobuf
+  redis
+  soap
+  sqlite3
+  xml
+  zip
+  Zend\ OPcache
+].each do |ext|
+  describe command('php -m') do
+    its(:stdout) { should match(/^#{Regexp.escape(ext)}$/) }
+  end
+end
