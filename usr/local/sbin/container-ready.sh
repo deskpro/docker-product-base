@@ -172,8 +172,7 @@ run_migrations() {
 #######################################################################
 run_app_cmd() {
   export LOG_CHAN="task-stdout"
-  sudo -E -u dp_app -D /srv/deskpro \
-    "$@" 2>&1 \
+  (cd /srv/deskpro && sudo -E -u dp_app "$@") 2>&1 \
     | while IFS= read -r line
       do
         log_message INFO "$line"

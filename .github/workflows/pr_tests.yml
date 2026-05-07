@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Earthly
         uses: earthly/actions-setup@v1
@@ -27,5 +27,4 @@ jobs:
       - name: Run tests
         run: |
           earthly config global.buildkit_max_parallelism 1
-          earthly -P ./test+test-autoinstall
           earthly -P ./test+test

@@ -41,8 +41,6 @@ end
   ldap
   mbstring
   mysqlnd
-  newrelic
-  opentelemetry
   protobuf
   redis
   soap
@@ -53,5 +51,16 @@ end
 ].each do |ext|
   describe command('php -m') do
     its(:stdout) { should match(/^#{Regexp.escape(ext)}$/) }
+  end
+end
+
+# newrelic and opentelemetry are opt-in (loaded via DESKPRO_ENABLE_NEWRELIC /
+# DESKPRO_ENABLE_OTEL). Assert the .so files are present in the image.
+%w[
+  newrelic.so
+  opentelemetry.so
+].each do |so|
+  describe file("/usr/lib/php/20230831/#{so}") do
+    it { should exist }
   end
 end
