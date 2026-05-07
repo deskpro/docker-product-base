@@ -27,3 +27,40 @@ end
 describe command('vector -V') do
   its(:stdout) { should contain('vector 0.51.') }
 end
+
+%w[
+  bcmath
+  ctype
+  curl
+  dom
+  fileinfo
+  gd
+  iconv
+  imap
+  intl
+  ldap
+  mbstring
+  mysqlnd
+  protobuf
+  redis
+  soap
+  sqlite3
+  xml
+  zip
+  Zend\ OPcache
+].each do |ext|
+  describe command('php -m') do
+    its(:stdout) { should match(/^#{Regexp.escape(ext)}$/) }
+  end
+end
+
+# newrelic and opentelemetry are opt-in (loaded via DESKPRO_ENABLE_NEWRELIC /
+# DESKPRO_ENABLE_OTEL). Assert the .so files are present in the image.
+%w[
+  newrelic.so
+  opentelemetry.so
+].each do |so|
+  describe file("/usr/lib/php/20230831/#{so}") do
+    it { should exist }
+  end
+end

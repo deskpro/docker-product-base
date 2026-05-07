@@ -162,6 +162,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     php8.3-mbstring \
     php8.3-mysqlnd \
     php8.3-opcache \
+    php8.3-redis \
     php8.3-soap \
     php8.3-sqlite3 \
     php8.3-xml \
@@ -280,9 +281,10 @@ RUN set -e \
     && adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1084 --gid 1084 vector \
     # add vector to adm group so it can read logs
     && usermod -a -G adm vector \
-    # we run nginx as its own user
-    && (getent group nginx >/dev/null 2>&1 || addgroup --gid 1085 nginx) \
-    && (id nginx >/dev/null 2>&1 || adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1085 --gid 1085 nginx) \
+    # we run nginx as its own user. The nginx package creates the user with
+    # a distro-default UID/GID, so force it to our fixed UID 1085 if it exists.
+    && if getent group nginx >/dev/null 2>&1; then groupmod -g 1085 nginx; else addgroup --gid 1085 nginx; fi \
+    && if id nginx >/dev/null 2>&1; then usermod -u 1085 -g 1085 nginx; else adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1085 --gid 1085 nginx; fi \
     # initialize dirs and owners
     && mkdir -p /var/log/nginx /var/log/php /var/log/deskpro /var/log/supervisor /var/lib/vector /var/log/newrelic \
     && mkdir -p /srv/deskpro/INSTANCE_DATA/deskpro-config.d \

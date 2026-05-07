@@ -154,7 +154,7 @@ test-custom-logs-group:
 base-image:
     FROM DOCKERFILE -f ../Dockerfile ../
     RUN DEBIAN_FRONTEND=noninteractive apt-get update \
-        && apt-get install --no-install-recommends --no-install-suggests -y ruby \
+        && apt-get install --no-install-recommends --no-install-suggests -y ruby iproute2 \
         && rm -rf /var/lib/apt/lists/* \
         && gem install bundler serverspec rake
     ENV BOOT_LOG_LEVEL=TRACE
