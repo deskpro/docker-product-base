@@ -4,7 +4,7 @@
 # outputs: /usr/lib/newrelic-php5/agent/x64/newrelic-20230831.so
 # outputs: /usr/bin/newrelic-daemon
 FROM debian:13.5-slim AS builder-php-exts
-ENV NEW_RELIC_AGENT_VERSION=12.4.0.29
+ENV NEW_RELIC_AGENT_VERSION=12.7.0.36
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https curl lsb-release build-essential \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
@@ -22,12 +22,12 @@ RUN apt-get update \
     && NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTALL_SILENT=true /tmp/newrelic-php5-${NEW_RELIC_AGENT_VERSION}-linux/newrelic-install install \
     && rm -rf /var/lib/apt/lists/* /tmp/newrelic-php5-* /tmp/nrinstall*
 
-# Use pre-built gomplate v5.0.0 binary to avoid vulnerable indirect dependencies
+# Use pre-built gomplate v5.1.0 binary to avoid vulnerable indirect dependencies
 FROM debian:13.5-slim AS builder-go-binaries
 RUN apt-get update && apt-get install -y curl ca-certificates \
     && TARGET_ARCH=$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/') \
-    && echo "Downloading gomplate v5.0.0 for architecture: $TARGET_ARCH" \
-    && curl -fsSL "https://github.com/hairyhenderson/gomplate/releases/download/v5.0.0/gomplate_linux-${TARGET_ARCH}" -o /usr/local/bin/gomplate \
+    && echo "Downloading gomplate v5.1.0 for architecture: $TARGET_ARCH" \
+    && curl -fsSL "https://github.com/hairyhenderson/gomplate/releases/download/v5.1.0/gomplate_linux-${TARGET_ARCH}" -o /usr/local/bin/gomplate \
     && chmod +x /usr/local/bin/gomplate \
     && /usr/local/bin/gomplate --version
 
