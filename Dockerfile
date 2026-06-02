@@ -3,7 +3,7 @@
 # outputs: /usr/lib/php/20230831/opentelemetry.so
 # outputs: /usr/lib/newrelic-php5/agent/x64/newrelic-20230831.so
 # outputs: /usr/bin/newrelic-daemon
-FROM debian:13.3-slim AS builder-php-exts
+FROM debian:13.5-slim AS builder-php-exts
 ENV NEW_RELIC_AGENT_VERSION=12.4.0.29
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https curl lsb-release build-essential \
@@ -23,7 +23,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/newrelic-php5-* /tmp/nrinstall*
 
 # Use pre-built gomplate v5.0.0 binary to avoid vulnerable indirect dependencies
-FROM debian:13.3-slim AS builder-go-binaries
+FROM debian:13.5-slim AS builder-go-binaries
 RUN apt-get update && apt-get install -y curl ca-certificates \
     && TARGET_ARCH=$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/') \
     && echo "Downloading gomplate v5.0.0 for architecture: $TARGET_ARCH" \
@@ -34,13 +34,13 @@ RUN apt-get update && apt-get install -y curl ca-certificates \
 
 
 # builder stage -- builds essential security-patched packages from source
-# SIMPLIFIED: Use system packages from debian:13.3-slim instead of source builds
-FROM debian:13.3-slim AS builder-security-packages
+# SIMPLIFIED: Use system packages from debian:13.5-slim instead of source builds
+FROM debian:13.5-slim AS builder-security-packages
 ARG USE_SYSTEM_PACKAGES_ONLY=true
 
 # If using system packages only, just install the latest available packages
 RUN if [ "$USE_SYSTEM_PACKAGES_ONLY" = "true" ]; then \
-    echo "Using debian:13.3-slim system packages instead of source builds" \
+    echo "Using debian:13.5-slim system packages instead of source builds" \
     && apt-get update \
     && apt-get install -y \
     sqlite3 libsqlite3-0 \
@@ -63,7 +63,7 @@ RUN mkdir -p /usr/local/bin /usr/local/lib \
     && ln -sf /usr/bin/rsync /usr/local/bin/rsync \
     && echo "System package setup complete"
 # stage1 -- debian with security patches first, then packages
-FROM debian:13.3-slim AS stage1
+FROM debian:13.5-slim AS stage1
 ARG BASE_IMAGE_COMMIT="unknown"
 LABEL org.deskpro.base-image-commit="$BASE_IMAGE_COMMIT"
 ENV TZ=UTC
@@ -80,7 +80,7 @@ RUN echo "System packages with symlinks copied successfully"
 # Configure dynamic linker and install system packages (simplified approach)
 RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local.conf \
     && ldconfig \
-    # Install system packages - debian:13.3-slim has latest security updates
+    # Install system packages - debian:13.5-slim has latest security updates
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y \
@@ -174,7 +174,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && rm -rf /var/lib/apt/lists/*
 
 # Install nginx with OpenTelemetry module (inlined for proper dependency resolution)
-ARG NGINX_VERSION="1.30.0"
+ARG NGINX_VERSION="1.30.2"
 ARG NGINX_GPG_KEY_FINGERPRINTS="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62:8540A6F18833A80E9C1653A42FD21310B49F6B46:9E9BE90EACBCDE69FE9B204CBCDCD8A38D88A2B3"
 
 RUN apt-get update \
@@ -208,15 +208,29 @@ COPY --from=builder-go-binaries /usr/local/bin/gomplate /usr/local/bin/gomplate
 # Nginx installed directly in stage1 - no COPY needed
 COPY --from=composer:2.9.7 /usr/bin/composer /usr/local/bin/composer
 COPY --from=timberio/vector:0.51.1-debian /usr/bin/vector /usr/local/bin/vector
-COPY --from=node:22.22.2-bookworm /usr/local/bin /usr/local/bin
-COPY --from=node:22.22.2-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
-RUN npm install --global tsx
+COPY --from=node:22.22.3-bookworm /usr/local/bin /usr/local/bin
+COPY --from=node:22.22.3-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
+# Upgrade npm -- the npm bundled with node ships a vulnerable picomatch
+# (CVE-2026-33671); this pinned npm pulls the patched picomatch 4.0.4.
+ARG NPM_VERSION="11.16.0"
+RUN npm install --global "npm@${NPM_VERSION}" \
+    && npm install --global tsx
 
 # Install system packages needed for verification and runtime
 RUN apt-get update && apt-get install -y \
     sqlite3 libsqlite3-0 \
     curl libcurl4 libcurl4-openssl-dev \
     rsync \
+    && rm -rf /var/lib/apt/lists/*
+
+# Final security upgrade -- the early apt-get upgrade in stage1 runs before
+# php/nginx/node and the packages above are installed, so transitively-pulled
+# packages (e.g. libnghttp2, python3, libgnutls*) can still carry CVEs.
+# Re-run upgrade against fresh lists so all installed packages get the latest
+# Debian security patches (+deb13uN).
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
+    && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Verify installations
