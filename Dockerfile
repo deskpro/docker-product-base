@@ -213,8 +213,13 @@ COPY --from=node:22.22.3-bookworm /usr/local/lib/node_modules /usr/local/lib/nod
 # Upgrade npm -- the npm bundled with node ships a vulnerable picomatch
 # (CVE-2026-33671); this pinned npm pulls the patched picomatch 4.0.4.
 ARG NPM_VERSION="11.16.0"
+ARG TSX_VERSION="4.22.4"
+# tsx vendors esbuild; force patched 0.28.1 (GHSA-gv7w-rqvm-qjhr, GHSA-g7r4-m6w7-qqqr)
+ARG ESBUILD_VERSION="0.28.1"
 RUN npm install --global "npm@${NPM_VERSION}" \
-    && npm install --global tsx
+    && npm install --global "tsx@${TSX_VERSION}" \
+    && npm install --prefix /usr/local/lib/node_modules/tsx --save-exact "esbuild@${ESBUILD_VERSION}" \
+    && /usr/local/lib/node_modules/tsx/node_modules/esbuild/bin/esbuild --version
 
 # Install system packages needed for verification and runtime
 RUN apt-get update && apt-get install -y \
@@ -232,6 +237,18 @@ RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Pin openssl stack to patched release (CVE-2026-45447); dedicated layer busts
+# stale apt-layer cache that can freeze stage1 at the vulnerable deb13u1.
+ARG OPENSSL_VERSION="3.5.6-1~deb13u2"
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+       "openssl=${OPENSSL_VERSION}" \
+       "libssl3t64=${OPENSSL_VERSION}" \
+       "openssl-provider-legacy=${OPENSSL_VERSION}" \
+    && apt-get -y clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && openssl version -v
 
 # Verify installations
 RUN ldconfig \
