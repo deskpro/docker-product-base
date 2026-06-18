@@ -293,7 +293,8 @@ RUN set -e \
     && phpdismod phar \
     && rm -f /etc/php/8.3/fpm/pool.d/www.conf \
     # Preserve nginx configuration from official package
-    && chmod 0755 /etc/nginx /etc/nginx/conf.d
+    && chmod 0755 /etc/nginx /etc/nginx/conf.d \
+    && rm -f /etc/nginx/conf.d/default.conf
 
 # build -- final stage adds our custom stuff
 FROM stage2 AS build
