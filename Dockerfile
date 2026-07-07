@@ -238,17 +238,23 @@ RUN apt-get update \
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Pin openssl stack to patched release (CVE-2026-45447); dedicated layer busts
-# stale apt-layer cache that can freeze stage1 at the vulnerable deb13u1.
+# Pin patched security releases in a dedicated layer; busts stale apt-layer
+# cache that can freeze earlier stages at a vulnerable version.
+#   openssl stack  -- CVE-2026-45447 (use-after-free, DoS/RCE)
+#   libssh2 (via libcurl) -- CVE-2026-55200 (use-after-free, PoC exists)
 ARG OPENSSL_VERSION="3.5.6-1~deb13u2"
+ARG LIBSSH2_VERSION="1.11.1-1+deb13u1"
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
        "openssl=${OPENSSL_VERSION}" \
        "libssl3t64=${OPENSSL_VERSION}" \
        "openssl-provider-legacy=${OPENSSL_VERSION}" \
+       "libssh2-1t64=${LIBSSH2_VERSION}" \
+       "libssh2-1-dev=${LIBSSH2_VERSION}" \
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/* \
-    && openssl version -v
+    && openssl version -v \
+    && dpkg-query -W libssh2-1t64
 
 # Verify installations
 RUN ldconfig \
