@@ -1,5 +1,18 @@
 #!/bin/bash
-docker buildx create --name multiarch --driver docker-container --use
+set -euo pipefail
+
+# Always build/push both platforms for this repo.
+PLATFORMS="linux/amd64,linux/arm64"
+
+# Force a docker-container buildx driver for multi-arch builds.
+BUILDER_NAME="multiarch"
+if docker buildx inspect "$BUILDER_NAME" >/dev/null 2>&1; then
+  docker buildx use "$BUILDER_NAME"
+else
+  docker buildx create --name "$BUILDER_NAME" --driver docker-container --use
+fi
+docker buildx inspect --bootstrap >/dev/null
+
 
 # Simple build using system packages from debian:12.13-slim
 echo "Building with debian:13.3-slim system packages (no source compilation)"
@@ -12,14 +25,14 @@ echo "Base image commit: $COMMIT_SHA"
 if [ -z "$IMAGE_NAME" ]; then
   # Build without pushing for local testing
   docker buildx build \
-    --platform linux/arm64,linux/amd64 \
+    --platform "$PLATFORMS" \
     --build-arg USE_SYSTEM_PACKAGES_ONLY=true \
     --build-arg BASE_IMAGE_COMMIT="$COMMIT_SHA" \
     -f ${DOCKERFILE_PATH:-Dockerfile} .
 else
   # Use the provided image name and push to registry
   docker buildx build \
-    --platform linux/arm64,linux/amd64 \
+    --platform "$PLATFORMS" \
     --build-arg USE_SYSTEM_PACKAGES_ONLY=true \
     --build-arg BASE_IMAGE_COMMIT="$COMMIT_SHA" \
     -f ${DOCKERFILE_PATH:-Dockerfile} \
