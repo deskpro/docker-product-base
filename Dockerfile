@@ -305,11 +305,12 @@ Options = UnsafeLegacyRenegotiation/' /etc/ssl/openssl.cnf
 RUN set -e \
     # Create PHP configuration files
     && printf '; priority=20\nextension=protobuf.so' > /etc/php/8.3/mods-available/protobuf.ini \
+    && printf '; priority=20\nextension=grpc.so' > /etc/php/8.3/mods-available/grpc.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro-otel.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/newrelic.ini \
     # Enable PHP modules
-    && phpenmod protobuf deskpro deskpro-otel newrelic \
+    && phpenmod protobuf grpc deskpro deskpro-otel newrelic \
     && phpdismod phar \
     && rm -f /etc/php/8.3/fpm/pool.d/www.conf \
     # Preserve nginx configuration from official package
