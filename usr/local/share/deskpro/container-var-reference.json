@@ -224,6 +224,45 @@
     "example": "https://username:password!#$?*abc@foo.com:9200"
   },
   {
+    "name": "DESKPRO_REDIS_URL",
+    "description": "Full redis connection URL (may include credentials). Overrides host/port when set.",
+    "type": "string",
+    "example": "redis://user:password@redis.example.com:6379/0"
+  },
+  {
+    "name": "DESKPRO_REDIS_HOST",
+    "description": "IP/Hostname of redis server.",
+    "type": "string",
+    "example": "redis"
+  },
+  {
+    "name": "DESKPRO_REDIS_USER",
+    "description": "Username to connect to redis (redis 6+ ACL).",
+    "type": "string"
+  },
+  {
+    "name": "DESKPRO_REDIS_PASS",
+    "description": "Password to connect to redis.",
+    "type": "string"
+  },
+  {
+    "name": "DESKPRO_REDIS_PORT",
+    "description": "Port of redis server.",
+    "type": "string",
+    "default": "6379"
+  },
+  {
+    "name": "DESKPRO_REDIS_DATABASE",
+    "description": "Redis database number.",
+    "type": "string",
+    "default": "0"
+  },
+  {
+    "name": "DESKPRO_REDIS_PREFIX",
+    "description": "Optional key prefix for redis.",
+    "type": "string"
+  },
+  {
     "name": "DESKPRO_LICENSE_KEY",
     "description": "A license key. This would override any in-product license management because it is effectively hard-coded.",
     "type": "string"
