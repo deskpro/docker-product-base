@@ -16,18 +16,31 @@ RUN apt-get update \
     php8.3-dev \
     php8.3-common \
     php8.3-xml \
+    php8.3-grpc \
     php-pear \
     && pecl install opentelemetry protobuf \
     && curl -L https://download.newrelic.com/php_agent/archive/${NEW_RELIC_AGENT_VERSION}/newrelic-php5-${NEW_RELIC_AGENT_VERSION}-linux.tar.gz | tar -C /tmp -zx \
     && NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTALL_SILENT=true /tmp/newrelic-php5-${NEW_RELIC_AGENT_VERSION}-linux/newrelic-install install \
     && rm -rf /var/lib/apt/lists/* /tmp/newrelic-php5-* /tmp/nrinstall*
 
-# Use pre-built gomplate v5.1.0 binary to avoid vulnerable indirect dependencies
+# Use pre-built gomplate v5.2.0 binary to avoid vulnerable indirect dependencies
 FROM debian:13.5-slim AS builder-go-binaries
+ARG GOMPLATE_VERSION="5.2.0"
+ARG TARGETARCH
+ARG TARGETVARIANT
 RUN apt-get update && apt-get install -y curl ca-certificates \
-    && TARGET_ARCH=$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/') \
-    && echo "Downloading gomplate v5.1.0 for architecture: $TARGET_ARCH" \
-    && curl -fsSL "https://github.com/hairyhenderson/gomplate/releases/download/v5.1.0/gomplate_linux-${TARGET_ARCH}" -o /usr/local/bin/gomplate \
+    && case "$TARGETARCH" in \
+        amd64|arm64|386|ppc64le|s390x) GOMPLATE_ARCH="$TARGETARCH" ;; \
+        arm) \
+            case "$TARGETVARIANT" in \
+                v7) GOMPLATE_ARCH="armv7" ;; \
+                v6) GOMPLATE_ARCH="armv6" ;; \
+                *) echo "Unsupported ARM variant for gomplate: ${TARGETVARIANT:-<empty>}" >&2; exit 1 ;; \
+            esac ;; \
+        *) echo "Unsupported TARGETARCH for gomplate: ${TARGETARCH:-<empty>}" >&2; exit 1 ;; \
+    esac \
+    && echo "Downloading gomplate v${GOMPLATE_VERSION} for platform: ${TARGETARCH}${TARGETVARIANT:+/${TARGETVARIANT}} (asset: ${GOMPLATE_ARCH})" \
+    && curl -fsSL "https://github.com/hairyhenderson/gomplate/releases/download/v${GOMPLATE_VERSION}/gomplate_linux-${GOMPLATE_ARCH}" -o /usr/local/bin/gomplate \
     && chmod +x /usr/local/bin/gomplate \
     && /usr/local/bin/gomplate --version
 
@@ -183,8 +196,8 @@ RUN apt-get update \
     # verify key is what we expect
     && key_fingerprints="$(gpg --show-keys --with-colons /usr/share/keyrings/nginx-archive-keyring.gpg | awk -F: '$1 == "fpr" { print $10 }' | sort | paste -s -d:)" \
     && [ "$NGINX_GPG_KEY_FINGERPRINTS" = "$key_fingerprints" ] || { \
-        echo "nginx key fingerprints do not match"; \
-        exit 1; \
+    echo "nginx key fingerprints do not match"; \
+    exit 1; \
     } \
     && printf "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] https://nginx.org/packages/debian %s nginx\n" "$(lsb_release -cs)" | tee /etc/apt/sources.list.d/nginx.list \
     && printf "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" | tee /etc/apt/preferences.d/99nginx \
@@ -200,6 +213,7 @@ RUN apt-get update \
 FROM stage1 AS stage2
 COPY --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
 COPY --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
+COPY --from=builder-php-exts /usr/lib/php/20230831/grpc.so /usr/lib/php/20230831/grpc.so
 COPY --from=builder-php-exts /usr/lib/php/20230831/newrelic.so /usr/lib/php/20230831/newrelic.so
 COPY --from=builder-php-exts /usr/bin/newrelic-daemon /usr/local/bin/newrelic-daemon
 COPY --from=ghcr.io/jqlang/jq:1.8.1 /jq /usr/local/bin/jq
@@ -246,11 +260,11 @@ ARG OPENSSL_VERSION="3.5.6-1~deb13u2"
 ARG LIBSSH2_VERSION="1.11.1-1+deb13u1"
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-       "openssl=${OPENSSL_VERSION}" \
-       "libssl3t64=${OPENSSL_VERSION}" \
-       "openssl-provider-legacy=${OPENSSL_VERSION}" \
-       "libssh2-1t64=${LIBSSH2_VERSION}" \
-       "libssh2-1-dev=${LIBSSH2_VERSION}" \
+    "openssl=${OPENSSL_VERSION}" \
+    "libssl3t64=${OPENSSL_VERSION}" \
+    "openssl-provider-legacy=${OPENSSL_VERSION}" \
+    "libssh2-1t64=${LIBSSH2_VERSION}" \
+    "libssh2-1-dev=${LIBSSH2_VERSION}" \
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/* \
     && openssl version -v \
@@ -291,11 +305,12 @@ Options = UnsafeLegacyRenegotiation/' /etc/ssl/openssl.cnf
 RUN set -e \
     # Create PHP configuration files
     && printf '; priority=20\nextension=protobuf.so' > /etc/php/8.3/mods-available/protobuf.ini \
+    && printf '; priority=20\nextension=grpc.so' > /etc/php/8.3/mods-available/grpc.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro-otel.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/newrelic.ini \
     # Enable PHP modules
-    && phpenmod protobuf deskpro deskpro-otel newrelic \
+    && phpenmod protobuf grpc deskpro deskpro-otel newrelic \
     && phpdismod phar \
     && rm -f /etc/php/8.3/fpm/pool.d/www.conf \
     # Preserve nginx configuration from official package
