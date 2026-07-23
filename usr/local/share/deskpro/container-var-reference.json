@@ -200,6 +200,12 @@
     "default": "false"
   },
   {
+    "name": "DESKPRO_ES_ENGINE",
+    "description": "Search engine type. Set to 'opensearch' when the backend is OpenSearch instead of Elasticsearch.",
+    "type": "string",
+    "example": "opensearch"
+  },
+  {
     "name": "DESKPRO_ES_INDEX_NAME",
     "description": "Name of Elasticsearch index to use.",
     "type": "string",

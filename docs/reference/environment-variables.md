@@ -58,6 +58,16 @@ docker run --rm php:latest php -r 'echo "DESKPRO_APP_KEY=".var_export(base64_enc
 | `DESKPRO_STORAGE_SETTINGS` | JSON string. Shape depends on `DESKPRO_STORAGE_TYPE`. For S3: `bucket_name`, `bucket_region`, `access_key`, `secret_key`. |
 | `DESKPRO_BLOBS_PATH` | Filesystem path for `fs` storage. Default `/srv/deskpro/INSTANCE_DATA/attachments`. Mount a persistent volume here. |
 
+## Search (Elasticsearch / OpenSearch)
+
+| Variable | Purpose |
+| --- | --- |
+| `DESKPRO_ES_URL` | Full Elasticsearch / OpenSearch URL (may include credentials). No trailing slash. |
+| `DESKPRO_ES_INDEX_NAME` | Index name. Default `deskpro`. |
+| `DESKPRO_ES_TENANT_ID` | Alias / tenant id. Defaults to the index name (suffixed `_tenant` on conflict). |
+| `DESKPRO_ES_TIKA_HOST` | Apache Tika URL for attachment indexing. Optional. |
+| `DESKPRO_ES_ENGINE` | Search engine type. Set to `opensearch` when the backend is OpenSearch. The `type` key is only emitted for `opensearch`. |
+
 ## Redis
 
 The `$CONFIG['redis']` block is only rendered when `DESKPRO_REDIS_HOST` or `DESKPRO_REDIS_URL` is set. When neither is set, no redis config is emitted (and an OPC-provided redis config is left untouched).

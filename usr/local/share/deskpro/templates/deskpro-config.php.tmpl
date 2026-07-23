@@ -76,6 +76,13 @@ $CONFIG['elastic'] = [
     {{if getenv "DESKPRO_ES_TIKA_HOST"}}
     'tika_host' => {{ (getenv "DESKPRO_ES_TIKA_HOST") | squote }},
     {{end}}
+
+    {{if eq (getenv "DESKPRO_ES_ENGINE") "opensearch"}}
+    /*
+     * The type of search engine in use
+     */
+    'type' => {{ (getenv "DESKPRO_ES_ENGINE") | squote }},
+    {{end}}
 ];
 
 #######################################################################
