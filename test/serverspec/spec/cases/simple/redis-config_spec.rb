@@ -15,33 +15,37 @@ describe "Redis config: env vars render $CONFIG['redis']" do
     ENV.delete('DESKPRO_REDIS_PREFIX')
   end
 
+  # Note: use RSpec's literal `include` matcher, not serverspec's `contain`.
+  # `contain` treats its argument as a regex, and the rendered PHP contains
+  # metacharacters ($, [, ]) that would break matching.
+
   it "renders the redis block with host and default port when DESKPRO_REDIS_HOST is set" do
     ENV['DESKPRO_REDIS_HOST'] = 'redis'
     output = `eval-tpl -f /usr/local/share/deskpro/templates/deskpro-config.php.tmpl`
-    expect(output).to contain "$CONFIG['redis'] ="
-    expect(output).to contain "'host'     => 'redis'"
-    expect(output).to contain "'port'     => '6379'"
-    expect(output).to contain "'database' => '0'"
+    expect(output).to include "$CONFIG['redis'] = ["
+    expect(output).to include "'host'     => 'redis'"
+    expect(output).to include "'port'     => '6379'"
+    expect(output).to include "'database' => '0'"
   end
 
   it "emits the prefix key only when DESKPRO_REDIS_PREFIX is set" do
     ENV['DESKPRO_REDIS_HOST'] = 'redis'
     ENV['DESKPRO_REDIS_PREFIX'] = 'dp_'
     output = `eval-tpl -f /usr/local/share/deskpro/templates/deskpro-config.php.tmpl`
-    expect(output).to contain "'prefix'   => 'dp_'"
+    expect(output).to include "'prefix'   => 'dp_'"
   end
 
   it "omits the prefix key when DESKPRO_REDIS_PREFIX is unset" do
     ENV['DESKPRO_REDIS_HOST'] = 'redis'
     ENV.delete('DESKPRO_REDIS_PREFIX')
     output = `eval-tpl -f /usr/local/share/deskpro/templates/deskpro-config.php.tmpl`
-    expect(output).not_to contain "'prefix'"
+    expect(output).not_to include "'prefix'"
   end
 
   it "does not render the redis block when no redis vars are set" do
     ENV.delete('DESKPRO_REDIS_HOST')
     ENV.delete('DESKPRO_REDIS_URL')
     output = `eval-tpl -f /usr/local/share/deskpro/templates/deskpro-config.php.tmpl`
-    expect(output).not_to contain "$CONFIG['redis'] ="
+    expect(output).not_to include "$CONFIG['redis']"
   end
 end
