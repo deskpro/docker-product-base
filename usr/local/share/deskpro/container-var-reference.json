@@ -269,6 +269,18 @@
     "type": "string"
   },
   {
+    "name": "REDIS_URLS",
+    "description": "Redis connection URL(s) for the messenger service. Passed through to the messenger process environment.",
+    "type": "string",
+    "example": "redis://user:password@host.docker.internal:6379"
+  },
+  {
+    "name": "REDIS_KEY_PREFIX",
+    "description": "Redis key prefix for the messenger service. Passed through to the messenger process environment.",
+    "type": "string",
+    "example": "dp_testinst:"
+  },
+  {
     "name": "DESKPRO_LICENSE_KEY",
     "description": "A license key. This would override any in-product license management because it is effectively hard-coded.",
     "type": "string"
