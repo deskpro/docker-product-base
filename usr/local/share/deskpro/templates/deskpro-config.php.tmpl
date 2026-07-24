@@ -76,7 +76,34 @@ $CONFIG['elastic'] = [
     {{if getenv "DESKPRO_ES_TIKA_HOST"}}
     'tika_host' => {{ (getenv "DESKPRO_ES_TIKA_HOST") | squote }},
     {{end}}
+
+    {{if eq (getenv "DESKPRO_ES_ENGINE") "opensearch"}}
+    /*
+     * The type of search engine in use
+     */
+    'type' => {{ (getenv "DESKPRO_ES_ENGINE") | squote }},
+    {{end}}
 ];
+
+#######################################################################
+# redis
+#######################################################################
+
+{{if or (getenv "DESKPRO_REDIS_HOST") (getenv "DESKPRO_REDIS_URL")}}
+$CONFIG['redis'] = [
+    'url'      => {{ (getenv "DESKPRO_REDIS_URL") | squote }},
+    'host'     => {{ (getenv "DESKPRO_REDIS_HOST") | squote }},
+    'username' => {{ (getenv "DESKPRO_REDIS_USER") | squote }},
+    'password' => <<<'__VAL__'
+{{ getenv "DESKPRO_REDIS_PASS" }}
+__VAL__,
+    'port'     => {{ (getenv "DESKPRO_REDIS_PORT" "6379") | squote }},
+    'database' => {{ (getenv "DESKPRO_REDIS_DATABASE" "0") | squote }},
+    {{if getenv "DESKPRO_REDIS_PREFIX"}}
+    'prefix'   => {{ (getenv "DESKPRO_REDIS_PREFIX") | squote }},
+    {{end}}
+];
+{{end}}
 
 #######################################################################
 # broadcaster

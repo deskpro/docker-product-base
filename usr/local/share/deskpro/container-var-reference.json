@@ -200,6 +200,12 @@
     "default": "false"
   },
   {
+    "name": "DESKPRO_ES_ENGINE",
+    "description": "Search engine type. Set to 'opensearch' when the backend is OpenSearch instead of Elasticsearch.",
+    "type": "string",
+    "example": "opensearch"
+  },
+  {
     "name": "DESKPRO_ES_INDEX_NAME",
     "description": "Name of Elasticsearch index to use.",
     "type": "string",
@@ -222,6 +228,57 @@
     "description": "Full URL to Elasticsearch server (no trailing slash).",
     "type": "string",
     "example": "https://username:password!#$?*abc@foo.com:9200"
+  },
+  {
+    "name": "DESKPRO_REDIS_URL",
+    "description": "Full redis connection URL (may include credentials). Overrides host/port when set.",
+    "type": "string",
+    "example": "redis://user:password@redis.example.com:6379/0"
+  },
+  {
+    "name": "DESKPRO_REDIS_HOST",
+    "description": "IP/Hostname of redis server.",
+    "type": "string",
+    "example": "redis"
+  },
+  {
+    "name": "DESKPRO_REDIS_USER",
+    "description": "Username to connect to redis (redis 6+ ACL).",
+    "type": "string"
+  },
+  {
+    "name": "DESKPRO_REDIS_PASS",
+    "description": "Password to connect to redis.",
+    "type": "string"
+  },
+  {
+    "name": "DESKPRO_REDIS_PORT",
+    "description": "Port of redis server.",
+    "type": "string",
+    "default": "6379"
+  },
+  {
+    "name": "DESKPRO_REDIS_DATABASE",
+    "description": "Redis database number.",
+    "type": "string",
+    "default": "0"
+  },
+  {
+    "name": "DESKPRO_REDIS_PREFIX",
+    "description": "Optional key prefix for redis.",
+    "type": "string"
+  },
+  {
+    "name": "REDIS_URLS",
+    "description": "Redis connection URL(s) for the messenger service. Passed through to the messenger process environment.",
+    "type": "string",
+    "example": "redis://user:password@host.docker.internal:6379"
+  },
+  {
+    "name": "REDIS_KEY_PREFIX",
+    "description": "Redis key prefix for the messenger service. Passed through to the messenger process environment.",
+    "type": "string",
+    "example": "dp_testinst:"
   },
   {
     "name": "DESKPRO_LICENSE_KEY",

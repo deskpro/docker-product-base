@@ -58,6 +58,30 @@ docker run --rm php:latest php -r 'echo "DESKPRO_APP_KEY=".var_export(base64_enc
 | `DESKPRO_STORAGE_SETTINGS` | JSON string. Shape depends on `DESKPRO_STORAGE_TYPE`. For S3: `bucket_name`, `bucket_region`, `access_key`, `secret_key`. |
 | `DESKPRO_BLOBS_PATH` | Filesystem path for `fs` storage. Default `/srv/deskpro/INSTANCE_DATA/attachments`. Mount a persistent volume here. |
 
+## Search (Elasticsearch / OpenSearch)
+
+| Variable | Purpose |
+| --- | --- |
+| `DESKPRO_ES_URL` | Full Elasticsearch / OpenSearch URL (may include credentials). No trailing slash. |
+| `DESKPRO_ES_INDEX_NAME` | Index name. Default `deskpro`. |
+| `DESKPRO_ES_TENANT_ID` | Alias / tenant id. Defaults to the index name (suffixed `_tenant` on conflict). |
+| `DESKPRO_ES_TIKA_HOST` | Apache Tika URL for attachment indexing. Optional. |
+| `DESKPRO_ES_ENGINE` | Search engine type. Set to `opensearch` when the backend is OpenSearch. The `type` key is only emitted for `opensearch`. |
+
+## Redis
+
+The `$CONFIG['redis']` block is only rendered when `DESKPRO_REDIS_HOST` or `DESKPRO_REDIS_URL` is set. When neither is set, no redis config is emitted (and an OPC-provided redis config is left untouched).
+
+| Variable | Purpose |
+| --- | --- |
+| `DESKPRO_REDIS_URL` | Full redis connection URL (may include credentials). Overrides host/port when set. |
+| `DESKPRO_REDIS_HOST` | Redis host. Setting this (or `DESKPRO_REDIS_URL`) enables the block. |
+| `DESKPRO_REDIS_USER` | Redis username (redis 6+ ACL). |
+| `DESKPRO_REDIS_PASS` | Redis password. |
+| `DESKPRO_REDIS_PORT` | Redis port. Default `6379`. |
+| `DESKPRO_REDIS_DATABASE` | Redis database number. Default `0`. |
+| `DESKPRO_REDIS_PREFIX` | Optional key prefix. The `prefix` key is only emitted when set. |
+
 ## Install & migrations
 
 | Variable | Purpose |
