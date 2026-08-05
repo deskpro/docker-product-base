@@ -159,12 +159,6 @@ See [reference/logging.md](./logging.md).
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `DESKPRO_ENABLE_NEWRELIC` | `false` | |
-| `DESKPRO_NR_LICENSE` | — | New Relic license key. |
-| `DESKPRO_NR_APP_NAME` | `Deskpro` | |
-| `DESKPRO_NR_DAEMON_ADDRESS` | — | External New Relic daemon address. |
-| `DESKPRO_NR_INI_OVERRIDES` | — | Extra `php.ini` for the New Relic extension. |
-| `DESKPRO_NR_INSTRUMENT_BROWSER` | `false` | |
 | `DESKPRO_ENABLE_OTEL` | `false` | OpenTelemetry. |
 | `DESKPRO_SENTRY_FRONTEND_DSN` / `_BACKEND_DSN` / `_DEPRECATED_BACKEND_DSN` | — | Sentry error tracking. |
 | `METRICS_ENABLED` | `false` | Exposes metrics on port 10001. |
@@ -217,3 +211,20 @@ See [reference/logging.md](./logging.md).
 | `DESKPRO_ENABLE_TEST_SUPPORT` | `false`. Adds test-only endpoints. |
 | `DESKPRO_TEST_RESET_DB_SCRIPT` | Custom DB-reset script for test harnesses. |
 | `DESKPRO_DISABLE_TELEMETRY` | `false`. Disables product telemetry. |
+
+## Deprecated
+
+New Relic was removed from the base image. These variables are still listed in
+[`container-var-reference.json`](../../usr/local/share/deskpro/container-var-reference.json)
+so downstream tooling and the product image don't break on an unknown name, but
+the base image ignores them entirely — no New Relic PHP extension, daemon, or
+log pipeline is shipped.
+
+| Variable | Purpose |
+| --- | --- |
+| `DESKPRO_ENABLE_NEWRELIC` | No-op. |
+| `DESKPRO_NR_LICENSE` | No-op. |
+| `DESKPRO_NR_APP_NAME` | No-op. |
+| `DESKPRO_NR_DAEMON_ADDRESS` | No-op. |
+| `DESKPRO_NR_INI_OVERRIDES` | No-op. |
+| `DESKPRO_NR_INSTRUMENT_BROWSER` | No-op. |

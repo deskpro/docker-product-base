@@ -21,7 +21,7 @@ The [`Dockerfile`](../../Dockerfile) is multi-stage:
 
 | Stage | Purpose |
 | --- | --- |
-| `builder-php-exts` | Compiles PHP PECL extensions (`protobuf`, `opentelemetry`) and installs the New Relic PHP agent. |
+| `builder-php-exts` | Compiles PHP PECL extensions (`protobuf`, `opentelemetry`). |
 | `builder-go-binaries` | Downloads a pinned [gomplate](https://docs.gomplate.ca/) binary used for config templating at runtime. |
 | `builder-security-packages` | Installs a set of commonly-CVE'd libraries (sqlite, expat, aom, zlib, tiff, webp, openjp2, curl) from Debian system repos. Kept as a stage for historical reasons and to make it easy to swap in custom-built versions later. |
 | `stage1` | Debian 13.3-slim base, system packages, PHP 8.3 from [deb.sury.org](https://packages.sury.org/php/), nginx from the official nginx repo (pinned by version + verified GPG fingerprint). |
@@ -86,7 +86,7 @@ See [configuration-flow.md](./configuration-flow.md) for the full picture.
 | `/usr/local/sbin/` | Internal scripts — entrypoint, container-ready, tasksd. |
 | `/usr/local/share/deskpro/` | Built-in templates, var reference JSON, test cert. |
 | `/usr/local/lib/deskpro/` | Shared bash helpers sourced by other scripts. |
-| `/var/log/{nginx,php,deskpro,supervisor,newrelic}/` | Log destinations. Owned by the relevant service user, group-writable for `adm` so vector can read them. |
+| `/var/log/{nginx,php,deskpro,supervisor}/` | Log destinations. Owned by the relevant service user, group-writable for `adm` so vector can read them. |
 
 ## Relation to the product image
 

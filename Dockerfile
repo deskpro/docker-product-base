@@ -1,10 +1,7 @@
 # builder stage -- builds PHP packages
 # outputs: /usr/lib/php/20230831/protobuf.so
 # outputs: /usr/lib/php/20230831/opentelemetry.so
-# outputs: /usr/lib/newrelic-php5/agent/x64/newrelic-20230831.so
-# outputs: /usr/bin/newrelic-daemon
 FROM debian:13.5-slim AS builder-php-exts
-ENV NEW_RELIC_AGENT_VERSION=12.7.0.36
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https curl lsb-release build-essential \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
@@ -19,9 +16,7 @@ RUN apt-get update \
     php8.3-grpc \
     php-pear \
     && pecl install opentelemetry protobuf \
-    && curl -L https://download.newrelic.com/php_agent/archive/${NEW_RELIC_AGENT_VERSION}/newrelic-php5-${NEW_RELIC_AGENT_VERSION}-linux.tar.gz | tar -C /tmp -zx \
-    && NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTALL_SILENT=true /tmp/newrelic-php5-${NEW_RELIC_AGENT_VERSION}-linux/newrelic-install install \
-    && rm -rf /var/lib/apt/lists/* /tmp/newrelic-php5-* /tmp/nrinstall*
+    && rm -rf /var/lib/apt/lists/*
 
 # Use pre-built gomplate v5.2.0 binary to avoid vulnerable indirect dependencies
 FROM debian:13.5-slim AS builder-go-binaries
@@ -214,8 +209,6 @@ FROM stage1 AS stage2
 COPY --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
 COPY --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
 COPY --from=builder-php-exts /usr/lib/php/20230831/grpc.so /usr/lib/php/20230831/grpc.so
-COPY --from=builder-php-exts /usr/lib/php/20230831/newrelic.so /usr/lib/php/20230831/newrelic.so
-COPY --from=builder-php-exts /usr/bin/newrelic-daemon /usr/local/bin/newrelic-daemon
 COPY --from=ghcr.io/jqlang/jq:1.8.1 /jq /usr/local/bin/jq
 # Security-patched packages already installed in stage1
 COPY --from=builder-go-binaries /usr/local/bin/gomplate /usr/local/bin/gomplate
@@ -308,9 +301,8 @@ RUN set -e \
     && printf '; priority=20\nextension=grpc.so' > /etc/php/8.3/mods-available/grpc.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro.ini \
     && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/deskpro-otel.ini \
-    && printf '; priority=90\n; placeholder' > /etc/php/8.3/mods-available/newrelic.ini \
     # Enable PHP modules
-    && phpenmod protobuf grpc deskpro deskpro-otel newrelic \
+    && phpenmod protobuf grpc deskpro deskpro-otel \
     && phpdismod phar \
     && rm -f /etc/php/8.3/fpm/pool.d/www.conf \
     # Preserve nginx configuration from official package
@@ -339,16 +331,16 @@ RUN set -e \
     && if getent group nginx >/dev/null 2>&1; then groupmod -g 1085 nginx; else addgroup --gid 1085 nginx; fi \
     && if id nginx >/dev/null 2>&1; then usermod -u 1085 -g 1085 nginx; else adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1085 --gid 1085 nginx; fi \
     # initialize dirs and owners
-    && mkdir -p /var/log/nginx /var/log/php /var/log/deskpro /var/log/supervisor /var/lib/vector /var/log/newrelic \
+    && mkdir -p /var/log/nginx /var/log/php /var/log/deskpro /var/log/supervisor /var/lib/vector \
     && mkdir -p /srv/deskpro/INSTANCE_DATA/deskpro-config.d \
     && chown root:root /usr/local/bin/vector \
     && chown vector:adm /var/lib/vector \
     && chown nginx:adm /var/log/nginx \
-    && chown dp_app:adm /var/log/php /var/log/deskpro /var/log/newrelic \
-    && chmod -R 0775 /var/log/php /var/log/deskpro /var/log/newrelic \
+    && chown dp_app:adm /var/log/php /var/log/deskpro \
+    && chmod -R 0775 /var/log/php /var/log/deskpro \
     # set group sticky bit on these dirs so
     # new logs get created with adm group (so vector can read them)
-    && chmod g+s /var/log/nginx /var/log/php /var/log/deskpro /var/log/newrelic \
+    && chmod g+s /var/log/nginx /var/log/php /var/log/deskpro \
     # extract var names from our reference list
     # (these lists are used from various helper scripts or entrypoint scripts)
     && jq -r '.[] | select(.isPrivate|not) | .name' /usr/local/share/deskpro/container-var-reference.json > /usr/local/share/deskpro/container-public-var-list \
