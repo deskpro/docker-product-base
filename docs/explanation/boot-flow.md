@@ -53,7 +53,6 @@ The entrypoint is [`usr/local/sbin/entrypoint.sh`](../../usr/local/sbin/entrypoi
 | `40-evaluate-configs.sh` | Runs `gomplate` over every `*.tmpl` under `/etc/{nginx,php,supervisor,vector}` and the Deskpro config dir. This is when env vars become config values. |
 | `41-deskpro-config.sh` | Renders `/usr/local/share/deskpro/templates/deskpro-config.php.tmpl` (or the file pointed to by `DESKPRO_CONFIG_FILE`) into `INSTANCE_DATA/` so the Deskpro app can load it. Applies `DESKPRO_CONFIG_RAW_PHP` and any `DESKPRO_CONFIG_EXTENSIONS`. |
 | `50-patches.sh` | Applies runtime patches — typically empty in the base image; the product image layers its own patches on top. |
-| `90-newrelic.sh` | If `DESKPRO_ENABLE_NEWRELIC=true`, configures the New Relic PHP agent. Otherwise leaves the extension loaded but inert. |
 
 ## The role of supervisord
 

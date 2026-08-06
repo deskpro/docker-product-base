@@ -54,13 +54,21 @@ end
   end
 end
 
-# newrelic and opentelemetry are opt-in (loaded via DESKPRO_ENABLE_NEWRELIC /
-# DESKPRO_ENABLE_OTEL). Assert the .so files are present in the image.
+# opentelemetry is opt-in (loaded via DESKPRO_ENABLE_OTEL).
+# Assert the .so file is present in the image.
 %w[
-  newrelic.so
   opentelemetry.so
 ].each do |so|
   describe file("/usr/lib/php/20230831/#{so}") do
     it { should exist }
   end
+end
+
+# New Relic was removed from the base image -- assert it stays gone.
+describe file('/usr/lib/php/20230831/newrelic.so') do
+  it { should_not exist }
+end
+
+describe file('/usr/local/bin/newrelic-daemon') do
+  it { should_not exist }
 end

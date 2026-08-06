@@ -6,8 +6,8 @@ This repo builds `deskpro/docker-product-base` — the base Docker image that th
 
 ## Running tests and linters
 
-- Tests: `earthly -P +test` (runs the full Serverspec suite in Earthly)
-- Individual test targets: `earthly -P +test-serverspec-web`, `+test-serverspec-opc`, `+test-autoinstall`, `+test-automigrations`, `+test-custom-configs`, `+test-custom-logs-group`, `+test-serverspec-simple-cases`
+- Tests: `earthly -P ./test+test` (runs the full Serverspec suite in Earthly). The test targets live in `test/Earthfile`, not the root one — from inside `test/` the shorter `earthly -P +test` works.
+- Individual test targets: `earthly -P ./test+test-serverspec-web`, `./test+test-serverspec-opc`, `./test+test-autoinstall`, `./test+test-automigrations`, `./test+test-custom-configs`, `./test+test-custom-logs-group`, `./test+test-serverspec-simple-cases`
 - Build locally (no tests): `docker build -t deskpro/docker-product-base:dev .`
 - Lint: there is no dedicated linter. The Dockerfile is hand-maintained.
 
