@@ -170,22 +170,29 @@ if err != null {
     abort
 }
 
-# php-fpm's %C (cpu_total) is the percentage of a request's wall time spent on CPU, not a duration,
-# so summing it across requests is meaningless. Multiplying by the request duration turns it into an
-# additive quantity, so the emitted _sum series means something on its own:
-#   rate(cpu_seconds_sum) -> CPU cores consumed
-# The duration-weighted mean percentage remains recoverable as
-# cpu_seconds_sum / (duration_ms_sum / 1000) * 100.
+# Two of php-fpm's per-request values cannot be summed across requests as they stand: %C (cpu_total)
+# is a percentage of the request's wall time, and %M (memory_bytes) is a peak
+# (zend_memory_peak_usage), not an amount consumed. Multiplying each by the request duration turns
+# them into additive quantities, so the emitted _sum series mean something on their own:
+#   rate(cpu_seconds_sum)         -> CPU cores consumed
+#   rate(memory_byte_seconds_sum) -> bytes held concurrently by workers
+# The duration-weighted means remain recoverable by dividing either by (duration_ms_sum / 1000).
 duration_s = (to_float(input_metrics.duration_ms) ?? 0.0) * 0.001
 derived = {}
 
-if duration_s > 0 && !is_nullish(input_metrics.cpu_total) {
-  cpu_seconds = (to_float(input_metrics.cpu_total) ?? 0.0) * 0.01 * duration_s
-  derived = merge(derived, { "cpu_seconds": cpu_seconds })
+if duration_s > 0 {
+  if !is_nullish(input_metrics.cpu_total) {
+    cpu_seconds = (to_float(input_metrics.cpu_total) ?? 0.0) * 0.01 * duration_s
+    derived = merge(derived, { "cpu_seconds": cpu_seconds })
+  }
+  if !is_nullish(input_metrics.memory_bytes) {
+    memory_byte_seconds = (to_float(input_metrics.memory_bytes) ?? 0.0) * duration_s
+    derived = merge(derived, { "memory_byte_seconds": memory_byte_seconds })
+  }
 }
 
 input_metrics = merge(
-  filter(input_metrics) -> |key, _value| { key != "cpu_total" },
+  filter(input_metrics) -> |key, _value| { key != "cpu_total" && key != "memory_bytes" },
   derived
 )
 
