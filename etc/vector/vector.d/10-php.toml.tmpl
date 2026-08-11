@@ -170,6 +170,25 @@ if err != null {
     abort
 }
 
+# php-fpm's %C (cpu_total) is the percentage of a request's wall time spent on CPU, not a duration,
+# so summing it across requests is meaningless. Multiplying by the request duration turns it into an
+# additive quantity, so the emitted _sum series means something on its own:
+#   rate(cpu_seconds_sum) -> CPU cores consumed
+# The duration-weighted mean percentage remains recoverable as
+# cpu_seconds_sum / (duration_ms_sum / 1000) * 100.
+duration_s = (to_float(input_metrics.duration_ms) ?? 0.0) * 0.001
+derived = {}
+
+if duration_s > 0 && !is_nullish(input_metrics.cpu_total) {
+  cpu_seconds = (to_float(input_metrics.cpu_total) ?? 0.0) * 0.01 * duration_s
+  derived = merge(derived, { "cpu_seconds": cpu_seconds })
+}
+
+input_metrics = merge(
+  filter(input_metrics) -> |key, _value| { key != "cpu_total" },
+  derived
+)
+
 metrics = []
 
 for_each(input_metrics) -> |key, value| {
