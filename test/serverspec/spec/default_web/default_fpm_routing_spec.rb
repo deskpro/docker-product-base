@@ -37,4 +37,13 @@ describe "Check helpcenter / assets FPM pool routing" do
   describe command('nginx -t') do
     its(:exit_status) { should eq 0 }
   end
+
+  # vector scrapes these endpoints for per-pool metrics (see etc/vector/vector.d/10-php.toml.tmpl),
+  # so they have to be in the 03-status.conf pool allowlist
+  ['dp_helpcenter', 'dp_assets'].each do |pool|
+    describe command("curl -sf 'http://127.0.0.1:10001/fpm/#{pool}/status?openmetrics'") do
+      its(:exit_status) { should eq 0 }
+      its(:stdout) { should include 'phpfpm_up 1' }
+    end
+  end
 end
