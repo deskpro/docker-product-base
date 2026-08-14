@@ -18,17 +18,19 @@ describe "Check helpcenter / assets FPM pool routing" do
     it { should be_socket }
   end
 
+  # NOTE: `contain` treats its argument as a regex, so it can't be used for these — `$` would be
+  # read as an end-of-line anchor. `include` does a plain substring match on the content.
   describe file('/etc/nginx/conf.d/01-deskpro_setup.conf') do
-    its(:content) { should contain "server unix:/run/php_fpm_dp_helpcenter.sock" }
-    its(:content) { should contain "server unix:/run/php_fpm_dp_assets.sock" }
-    its(:content) { should contain 'map $request_uri $dpv5_web_backend' }
+    its(:content) { should include 'server unix:/run/php_fpm_dp_helpcenter.sock' }
+    its(:content) { should include 'server unix:/run/php_fpm_dp_assets.sock' }
+    its(:content) { should include 'map $request_uri $dpv5_web_backend' }
 
     # /file.php/<hash>/<name> is the blob/asset low script
-    its(:content) { should contain '"~/file\.php/" "dpv5_assets"' }
+    its(:content) { should include '"~/file\.php/" "dpv5_assets"' }
   end
 
   describe file('/etc/nginx/conf.d/deskpro_server_params') do
-    its(:content) { should contain 'fastcgi_pass $dpv5_web_backend;' }
+    its(:content) { should include 'fastcgi_pass $dpv5_web_backend;' }
   end
 
   # nginx must accept the rendered config, including the variable fastcgi_pass
