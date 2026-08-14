@@ -129,7 +129,6 @@ RUN mkdir -p /etc/systemd/system \
     sudo \
     supervisor \
     tzdata \
-    python3-pip \
     cpanminus \
     libpcre2-8-0 \
     libssl3t64 \
@@ -215,18 +214,52 @@ COPY --from=builder-go-binaries /usr/local/bin/gomplate /usr/local/bin/gomplate
 # Nginx installed directly in stage1 - no COPY needed
 COPY --from=composer:2.9.7 /usr/bin/composer /usr/local/bin/composer
 COPY --from=timberio/vector:0.51.1-debian /usr/bin/vector /usr/local/bin/vector
-COPY --from=node:22.22.3-bookworm /usr/local/bin /usr/local/bin
-COPY --from=node:22.22.3-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node:22.23.2-bookworm /usr/local/bin /usr/local/bin
+COPY --from=node:22.23.2-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
 # Upgrade npm -- the npm bundled with node ships a vulnerable picomatch
 # (CVE-2026-33671); this pinned npm pulls the patched picomatch 4.0.4.
-ARG NPM_VERSION="11.16.0"
+ARG NPM_VERSION="11.19.0"
 ARG TSX_VERSION="4.22.4"
 # tsx vendors esbuild; force patched 0.28.1 (GHSA-gv7w-rqvm-qjhr, GHSA-g7r4-m6w7-qqqr)
 ARG ESBUILD_VERSION="0.28.1"
-RUN npm install --global "npm@${NPM_VERSION}" \
+# npm ships its whole dependency tree bundled, so no npm release carries patched
+# copies of these -- they can only be fixed by overwriting them in place:
+#   tar             -- CVE-2026-59871/59873/59874, GHSA-vmf3-w455-68vh,
+#                      GHSA-gvwx-54wh-qm9j, GHSA-r292-9mhp-454m
+#   ip-address      -- CVE-2026-54272, GHSA-mwp4-54f8-5fhr, GHSA-4xrf-jv44-h6hh
+#   brace-expansion -- CVE-2026-69152, CVE-2026-13149
+#   undici          -- prototype pollution (AIKIDO-2026-10385/10369); fixed only
+#                      in the 7.x line, so this is a major bump for node-gyp
+ARG NPM_TAR_VERSION="7.5.22"
+ARG NPM_IP_ADDRESS_VERSION="10.3.1"
+ARG NPM_BRACE_EXPANSION_VERSION="5.0.9"
+ARG NPM_UNDICI_VERSION="7.24.1"
+RUN set -eu \
+    && npm install --global "npm@${NPM_VERSION}" \
     && npm install --global "tsx@${TSX_VERSION}" \
     && npm install --prefix /usr/local/lib/node_modules/tsx --save-exact "esbuild@${ESBUILD_VERSION}" \
-    && /usr/local/lib/node_modules/tsx/node_modules/esbuild/bin/esbuild --version
+    && /usr/local/lib/node_modules/tsx/node_modules/esbuild/bin/esbuild --version \
+    # replace npm's bundled copies of the vulnerable packages with patched ones
+    && npm_bundle=/usr/local/lib/node_modules/npm/node_modules \
+    && tmp="$(mktemp -d)" \
+    && for spec in "tar@${NPM_TAR_VERSION}" \
+    "ip-address@${NPM_IP_ADDRESS_VERSION}" \
+    "brace-expansion@${NPM_BRACE_EXPANSION_VERSION}" \
+    "undici@${NPM_UNDICI_VERSION}"; do \
+    pkg="${spec%@*}"; \
+    [ -d "${npm_bundle}/${pkg}" ] || { echo "npm no longer bundles ${pkg} -- drop this patch"; exit 1; }; \
+    ( cd "$tmp" && npm pack --silent "$spec" >/dev/null ) \
+    && rm -rf "${npm_bundle:?}/${pkg}" \
+    && mkdir -p "${npm_bundle}/${pkg}" \
+    && tar -xzf "$tmp"/*.tgz -C "${npm_bundle}/${pkg}" --strip-components=1 \
+    && rm -f "$tmp"/*.tgz \
+    && node -p "'patched '+require('${npm_bundle}/'+'${pkg}'+'/package.json').version+' ${pkg}'"; \
+    done \
+    && rm -rf "$tmp" \
+    # smoke-test npm itself and node-gyp, the only consumer of the undici 6 -> 7 bump
+    && npm --version \
+    && node -e "require('${npm_bundle}/node-gyp/lib/download.js')" \
+    && node "${npm_bundle}/node-gyp/bin/node-gyp.js" --version
 
 # Install system packages needed for verification and runtime
 RUN apt-get update && apt-get install -y \
@@ -249,8 +282,10 @@ RUN apt-get update \
 # cache that can freeze earlier stages at a vulnerable version.
 #   openssl stack  -- CVE-2026-45447 (use-after-free, DoS/RCE)
 #   libssh2 (via libcurl) -- CVE-2026-55200 (use-after-free, PoC exists)
+#   libheif (via libgd3 <- php8.3-gd) -- CVE-2026-62289, CVE-2026-62292
 ARG OPENSSL_VERSION="3.5.6-1~deb13u2"
 ARG LIBSSH2_VERSION="1.11.1-1+deb13u1"
+ARG LIBHEIF_VERSION="1.19.8-1+deb13u1"
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     "openssl=${OPENSSL_VERSION}" \
@@ -258,10 +293,14 @@ RUN apt-get update \
     "openssl-provider-legacy=${OPENSSL_VERSION}" \
     "libssh2-1t64=${LIBSSH2_VERSION}" \
     "libssh2-1-dev=${LIBSSH2_VERSION}" \
+    "libheif1=${LIBHEIF_VERSION}" \
+    "libheif-plugin-dav1d=${LIBHEIF_VERSION}" \
+    "libheif-plugin-libde265=${LIBHEIF_VERSION}" \
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/* \
     && openssl version -v \
-    && dpkg-query -W libssh2-1t64
+    && dpkg-query -W libssh2-1t64 \
+    && dpkg-query -W libheif1 libheif-plugin-dav1d libheif-plugin-libde265
 
 # Verify installations
 RUN ldconfig \
