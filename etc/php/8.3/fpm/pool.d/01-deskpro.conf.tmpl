@@ -65,6 +65,28 @@ php_admin_value[disable_functions] = system, exec, shell_exec, passthru, phpinfo
 {{ getenv "PHP_FPM_DP_GQL_OVERRIDES" }}
 
 
+[dp_helpcenter]
+{{ template "pool_defaults" "dp_helpcenter" }}
+pm = {{ getenv "PHP_FPM_DP_HELPCENTER_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand") }}
+pm.max_children = {{ getenv "PHP_FPM_DP_HELPCENTER_MAX_CHILDREN" "100" }}
+pm.process_idle_timeout = 15s
+pm.max_requests=1000
+{{ getenv "PHP_FPM_POOL_OVERRIDES" }}
+{{ getenv "PHP_FPM_DP_HELPCENTER_OVERRIDES" }}
+
+
+[dp_assets]
+{{ template "pool_defaults" "dp_assets" }}
+pm = {{ getenv "PHP_FPM_DP_ASSETS_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand") }}
+pm.max_children = {{ getenv "PHP_FPM_DP_ASSETS_MAX_CHILDREN" "100" }}
+pm.process_idle_timeout = 15s
+pm.max_requests=1000
+php_admin_flag[file_uploads] = false
+php_admin_value[disable_functions] = system, exec, shell_exec, passthru, phpinfo, popen, proc_open, fopen_with_path, dbase_open, move_uploaded_file, posix_mkfifo
+{{ getenv "PHP_FPM_POOL_OVERRIDES" }}
+{{ getenv "PHP_FPM_DP_ASSETS_OVERRIDES" }}
+
+
 [dp_broadcaster]
 {{ template "pool_defaults" "dp_broadcaster" }}
 pm = {{ getenv "PHP_FPM_DP_BROADCASTER_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand") }}
@@ -99,5 +121,13 @@ php_admin_value[opcache.enable]=0
 
 [dp_broadcaster]
 pm = {{ getenv "PHP_FPM_DP_BROADCASTER_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand") }}
+php_admin_value[opcache.enable]=0
+
+[dp_helpcenter]
+pm = {{ getenv "PHP_FPM_DP_HELPCENTER_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand") }}
+php_admin_value[opcache.enable]=0
+
+[dp_assets]
+pm = {{ getenv "PHP_FPM_DP_ASSETS_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand") }}
 php_admin_value[opcache.enable]=0
 {{end}}

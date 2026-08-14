@@ -56,7 +56,7 @@ flowchart TB
 
 - **supervisord** is PID 1 under the entrypoint. It manages every long-lived process and kills the container if any service enters `FATAL` (unless `NO_SHUTDOWN_ON_ERROR=true`).
 - **nginx** serves HTTP/HTTPS on ports 80, 443, 9080, 9443 (the `9xxx` ports terminate HAProxy PROXY protocol) and a status page on 10001. It proxies to PHP-FPM over unix sockets.
-- **PHP-FPM** runs four pools out of the box — `dp_default`, `dp_broadcaster`, `dp_gql`, `dp_internal` — each with independently tunable process manager settings.
+- **PHP-FPM** runs six pools out of the box — `dp_default`, `dp_broadcaster`, `dp_gql`, `dp_internal`, `dp_helpcenter`, `dp_assets` — each with independently tunable process manager settings. nginx picks between `dp_default`, `dp_helpcenter` and `dp_assets` with the `$dpv5_web_backend` map in `01-deskpro_setup.conf`, so help center page requests and `/file.php/` blob/asset serving do not compete with the agent app for `dp_default` workers.
 - **tasks** is a long-lived loop (`usr/local/sbin/tasksd`) that invokes `/srv/deskpro/bin/cron` every 20s. It writes run status to `/run/deskpro-cron-status.json` and honours a `PAUSE_CRON` sentinel file.
 - **email_collect / email_process** are wrappers around the Deskpro email pipeline, with separate processes for fetching mail and processing queued messages.
 - **vector** tails files under `/var/log/` and ships them either to stdout, a mounted directory, or CloudWatch depending on `LOGS_EXPORT_TARGET`.

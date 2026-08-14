@@ -37,7 +37,7 @@ opc_main() {
   mkdir -p /run/php-fpm
   ln -sf /run/php_fpm_dp_default.sock /run/php-fpm/dp_default.sock
 
-  for pool in "dp_broadcaster" "dp_default" "dp_gql" "dp_internal"; do
+  for pool in "dp_assets" "dp_broadcaster" "dp_default" "dp_gql" "dp_helpcenter" "dp_internal"; do
     if [ -e "/deskpro/config/${pool}.conf" ]; then
       boot_log_message DEBUG "[bc_opc_2_8] Copying /deskpro/config/${pool}.conf to /etc/php/8.3/fpm/pool.d/zz_${pool}.conf"
 

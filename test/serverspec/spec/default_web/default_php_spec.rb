@@ -100,6 +100,26 @@ describe "Check default PHP and PHP-FPM configurations" do
     its(:stdout) { should contain "clear_env = no" }
   end
 
+  describe command('phpfpminfo --pool dp_helpcenter') do
+    its(:stdout) { should contain "listen = /run/php_fpm_dp_helpcenter.sock" }
+    its(:stdout) { should match /php_admin_value\[display_errors\] =\s*$/ }
+    its(:stdout) { should contain "pm = ondemand" }
+    its(:stdout) { should contain "pm.max_children = 100" }
+    its(:stdout) { should contain "request_terminate_timeout = 60s" }
+    its(:stdout) { should contain "request_terminate_timeout_track_finished = yes" }
+    its(:stdout) { should contain "clear_env = no" }
+  end
+
+  describe command('phpfpminfo --pool dp_assets') do
+    its(:stdout) { should contain "listen = /run/php_fpm_dp_assets.sock" }
+    its(:stdout) { should match /php_admin_value\[display_errors\] =\s*$/ }
+    its(:stdout) { should contain "pm = ondemand" }
+    its(:stdout) { should contain "pm.max_children = 100" }
+    its(:stdout) { should contain "request_terminate_timeout = 60s" }
+    its(:stdout) { should contain "request_terminate_timeout_track_finished = yes" }
+    its(:stdout) { should contain "clear_env = no" }
+  end
+
   describe command('phpfpminfo --pool dp_broadcaster') do
     its(:stdout) { should contain "listen = /run/php_fpm_dp_broadcaster.sock" }
     its(:stdout) { should match /php_admin_value\[display_errors\] =\s*$/ }
