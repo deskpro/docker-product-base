@@ -629,6 +629,24 @@
     "type": "string"
   },
   {
+    "name": "PHP_FPM_DP_ASSETS_MAX_CHILDREN",
+    "description": "pm.max_children setting for dp_assets PHP FPM pool.",
+    "type": "integer",
+    "default": "100"
+  },
+  {
+    "name": "PHP_FPM_DP_ASSETS_OVERRIDES",
+    "description": "PHP FPM configuration to set and/or override in the dp_assets pool configuration.",
+    "type": "string",
+    "example": "pm.max_spare_servers=5"
+  },
+  {
+    "name": "PHP_FPM_DP_ASSETS_PM_TYPE",
+    "description": "pm setting for dp_assets PHP FPM pool.",
+    "type": "string",
+    "default": "ondemand"
+  },
+  {
     "name": "PHP_FPM_DP_BROADCASTER_MAX_CHILDREN",
     "description": "pm.max_children setting for dp_broadcaster PHP FPM pool.",
     "type": "integer",
@@ -679,6 +697,24 @@
   {
     "name": "PHP_FPM_DP_GQL_PM_TYPE",
     "description": "pm setting for dp_gql PHP FPM pool.",
+    "type": "string",
+    "default": "ondemand"
+  },
+  {
+    "name": "PHP_FPM_DP_HELPCENTER_MAX_CHILDREN",
+    "description": "pm.max_children setting for dp_helpcenter PHP FPM pool.",
+    "type": "integer",
+    "default": "100"
+  },
+  {
+    "name": "PHP_FPM_DP_HELPCENTER_OVERRIDES",
+    "description": "PHP FPM configuration to set and/or override in the dp_helpcenter pool configuration.",
+    "type": "string",
+    "example": "pm.max_spare_servers=5"
+  },
+  {
+    "name": "PHP_FPM_DP_HELPCENTER_PM_TYPE",
+    "description": "pm setting for dp_helpcenter PHP FPM pool.",
     "type": "string",
     "default": "ondemand"
   },

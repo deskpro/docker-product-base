@@ -136,7 +136,9 @@ location ~ ^/deskpro-messenger/ {
 }
 
 location ~ \.php$ {
-    fastcgi_pass unix:/run/php_fpm_dp_default.sock;
+    # $dpv5_web_backend picks dp_assets / dp_helpcenter / dp_default from $request_uri
+    # (see /etc/nginx/conf.d/01-deskpro_setup.conf)
+    fastcgi_pass $dpv5_web_backend;
     include /etc/nginx/conf.d/deskpro_fastcgi_params;
     include /etc/nginx/conf.d/deskpro_fastcgi_noxaccel;
 }

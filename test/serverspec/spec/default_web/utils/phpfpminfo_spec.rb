@@ -16,6 +16,8 @@ describe "Check behaviour of phpfpminfo utility" do
     expect(output).to include("[dp_internal]")
     expect(output).to include("[dp_gql]")
     expect(output).to include("[dp_broadcaster]")
+    expect(output).to include("[dp_helpcenter]")
+    expect(output).to include("[dp_assets]")
   end
 
   it "phpfpminfo should return info for only specified pool when using --pool" do

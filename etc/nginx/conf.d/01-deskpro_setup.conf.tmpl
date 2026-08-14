@@ -6,10 +6,47 @@ upstream dpv5_api_internal {
   server unix:/run/php_fpm_dp_internal.sock max_fails=0 fail_timeout=0;
 }
 
+upstream dpv5_helpcenter {
+  server unix:/run/php_fpm_dp_helpcenter.sock max_fails=0 fail_timeout=0;
+}
+
+upstream dpv5_assets {
+  server unix:/run/php_fpm_dp_assets.sock max_fails=0 fail_timeout=0;
+}
+
 # dpv5_api_backend: Use separate fpm-pool for internal requests
 map $http_authorization $dpv5_api_backend {
     ~internal "dpv5_api_internal";
     default   "dpv5_api";
+}
+
+# dpv5_web_backend: Serve blob/asset requests and helpcenter (dpv5 "user" interface) requests from
+# their own fpm-pools, so they don't compete with the agent app for dp_default workers.
+#
+# This is matched on $request_uri rather than $uri because everything here reaches PHP through the
+# catch-all `location /`, which internally redirects to /index.php: that rewrites $uri but leaves
+# $request_uri as the URL the browser actually asked for. Matching here (rather than adding
+# `location` blocks) also keeps the CGI environment byte-identical to today's — only the socket
+# the request lands on changes.
+#
+# The path list mirrors the routes of the dpv5 PortalBundle. Anything not listed here (the agent
+# app at /app, /admin, /reports, /oauth, /scim, ...) stays on dp_default.
+map $request_uri $dpv5_web_backend {
+    default "dpv5_api";
+
+    # blob + asset serving (DpSys\LowScript\ServeFileScript), e.g.
+    # /file.php/44785515DDCHHASHHMHYBHW0/helpcenter.css and the /b/<brand>/<lang>/ prefixed form.
+    # Mirrors Boot::detectLowScriptClass(), which matches /file.php/ anywhere in the path.
+    "~/file\.php/" "dpv5_assets";
+
+    # portal root, optionally prefixed with a language code (/ , /en-US , /pt-BR/ , /?foo=1)
+    "~^(/[a-z]{2}([_-][A-Z0-9]{2})?)?/?(\?|$)" "dpv5_helpcenter";
+
+    # portal sections, optionally prefixed with a language code
+    "~^(/[a-z]{2}([_-][A-Z0-9]{2})?)?/(approvals|attachments|billing|captcha-html|change-language|chat-logs|chats|community|dismiss-lang-alert|dm|downloads|dpblob|generate-api-captcha|generate-captcha|goto|guide|guide_doc|guide_pdf|guides|impersonate|kb|login|logout|logout-confirmation|members|new-ticket|news|organizations|portal|portal-data|profile|register|saml|saved-form|search|thank-you|ticket-rate|ticket-view|tickets|topic|topics|validate)(\.[a-z0-9]+)?(/|\?|$)" "dpv5_helpcenter";
+
+    # static files served by the dpv5 "user" interface
+    "~^/(favicon\.ico|sitemap\.xml|robots\.txt|\.well-known/)" "dpv5_helpcenter";
 }
 
 # ports to use for each protocol
