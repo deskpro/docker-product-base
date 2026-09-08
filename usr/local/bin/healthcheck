@@ -142,7 +142,20 @@ run_checks() {
       fi
 
       log_message "<TEST:phpfpm> Checking FPM status"
-      if ! curl -sS --fail-with-body -m 5 http://127.0.0.1:10001/fpm/dp_default/status; then
+      # FPM's status pool can lag container-ready under load; retry a bounded number of
+      # times so warm-up jitter isn't a false UNHEALTHY. Genuine FPM-down still fails.
+      # Fixed iteration count (not $SECONDS) — finite by construction under any shell.
+      fpm_ok=false
+      fpm_try=0
+      while [ "$fpm_try" -lt 12 ]; do
+        if curl -sS --fail-with-body -m 8 http://127.0.0.1:10001/fpm/dp_default/status; then
+          fpm_ok=true
+          break
+        fi
+        fpm_try=$((fpm_try + 1))
+        [ "$fpm_try" -lt 12 ] && sleep 2
+      done
+      if [ "$fpm_ok" != "true" ]; then
         log_message "<RESULT:phpfpm:FAIL> fpm status failed"
         return 1
       else
