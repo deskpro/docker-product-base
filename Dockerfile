@@ -283,7 +283,7 @@ RUN apt-get update \
 #   openssl stack  -- CVE-2026-45447 (use-after-free, DoS/RCE)
 #   libssh2 (via libcurl) -- CVE-2026-55200 (use-after-free, PoC exists)
 #   libheif (via libgd3 <- php8.3-gd) -- CVE-2026-62289, CVE-2026-62292
-ARG OPENSSL_VERSION="3.5.6-1~deb13u2"
+ARG OPENSSL_VERSION="3.5.7-1~deb13u2"
 ARG LIBSSH2_VERSION="1.11.1-1+deb13u1"
 ARG LIBHEIF_VERSION="1.19.8-1+deb13u1"
 RUN apt-get update \
