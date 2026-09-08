@@ -1,6 +1,27 @@
 # This file is used by the mysql-primary and mysql-read helper utilities
 # that run mysql client with credentials from ~/.my-auto.cnf
 
+{{- $sslCa := "/srv/deskpro/INSTANCE_DATA/mysql-ca.crt" }}
+{{- $sslCert := "/srv/deskpro/INSTANCE_DATA/mysql-client.crt" }}
+{{- $sslKey := "/srv/deskpro/INSTANCE_DATA/mysql-client.key" }}
+{{- $hasCa := file.Exists $sslCa }}
+{{- $hasClientCert := and (file.Exists $sslCert) (file.Exists $sslKey) }}
+
+[client]
+{{- if or $hasCa $hasClientCert }}
+ssl=1
+ssl-verify-server-cert=0
+{{- if $hasCa }}
+ssl-ca={{ $sslCa }}
+{{- end }}
+{{- if $hasClientCert }}
+ssl-cert={{ $sslCert }}
+ssl-key={{ $sslKey }}
+{{- end }}
+{{- else }}
+ssl=0
+{{- end }}
+
 [mysql]
 no-auto-rehash
 

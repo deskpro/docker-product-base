@@ -7,6 +7,7 @@ certs_main() {
   custom_https_cert
   custom_ca_certs
   custom_mysql_cert
+  custom_mysql_ca
   if [ "$UPDATE_CERT_BUNDLE" = true ]; then
     boot_log_message INFO "Updating CA certificate bundle"
     update-ca-certificates
@@ -44,21 +45,43 @@ custom_ca_certs() {
   fi
 }
 
-# MySQL connection cert to use from PHP
+# MySQL client cert, for servers that authenticate with REQUIRE X509. Not
+# needed just to encrypt the connection - mounting the CA alone does that.
 custom_mysql_cert() {
   if [ -f /deskpro/ssl/mysql/client.crt ] && [ -f /deskpro/ssl/mysql/client.key ]; then
-    boot_log_message INFO "Installing custom MySQL SSL certificate"
+    boot_log_message INFO "Installing custom MySQL SSL client certificate"
 
     cp /deskpro/ssl/mysql/client.crt /srv/deskpro/INSTANCE_DATA/mysql-client.crt
     cp /deskpro/ssl/mysql/client.key /srv/deskpro/INSTANCE_DATA/mysql-client.key
 
-    # and then put the CA cert into the OS dir
-    if [ -f /deskpro/ssl/mysql/ca.pem ]; then
-      cp /deskpro/ssl/mysql/ca.pem /usr/local/share/ca-certificates/deskpro-mysql-ca.pem
-      export UPDATE_CERT_BUNDLE=true
-    fi
+    chown root:root /srv/deskpro/INSTANCE_DATA/mysql-client.crt
+    chmod 0644 /srv/deskpro/INSTANCE_DATA/mysql-client.crt
+    chown root:dp_app /srv/deskpro/INSTANCE_DATA/mysql-client.key
+    chmod 0640 /srv/deskpro/INSTANCE_DATA/mysql-client.key
   fi
 }
 
+# MySQL server CA. Independent of the client cert above - a server that only
+# does REQUIRE SSL needs the CA and no client cert at all.
+#
+# This is deliberately NOT installed into the system trust store: both PDO and
+# the mysql client read the path we hand them verbatim, so the CA never needs
+# to be in /etc/ssl/certs/ca-certificates.crt, and putting it there would
+# trust it for curl, LDAP and every other TLS consumer in the image. Mount
+# under /deskpro/ssl/ca-certificates/ if that is what you actually want.
+custom_mysql_ca() {
+  local src
+  for src in /deskpro/ssl/mysql/ca.pem /deskpro/ssl/mysql/ca.crt; do
+    if [ -f "$src" ]; then
+      boot_log_message INFO "Installing custom MySQL CA certificate from $src"
+
+      cp "$src" /srv/deskpro/INSTANCE_DATA/mysql-ca.crt
+      chown root:root /srv/deskpro/INSTANCE_DATA/mysql-ca.crt
+      chmod 0644 /srv/deskpro/INSTANCE_DATA/mysql-ca.crt
+      return
+    fi
+  done
+}
+
 certs_main
-unset certs_main custom_https_cert custom_ca_certs custom_mysql_cert
+unset certs_main custom_https_cert custom_ca_certs custom_mysql_cert custom_mysql_ca

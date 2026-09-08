@@ -10,15 +10,20 @@ $CONFIG['app_settings'] = [];
 
 $pdo_options = [];
 
-{{if
-    and
-    (file.Exists "/srv/deskpro/INSTANCE_DATA/mysql-client.crt")
-    (file.Exists "/srv/deskpro/INSTANCE_DATA/mysql-client.key")
-}}
+{{- $sslCa := "/srv/deskpro/INSTANCE_DATA/mysql-ca.crt" }}
+{{- $sslCert := "/srv/deskpro/INSTANCE_DATA/mysql-client.crt" }}
+{{- $sslKey := "/srv/deskpro/INSTANCE_DATA/mysql-client.key" }}
+{{- $hasCa := file.Exists $sslCa }}
+{{- $hasClientCert := and (file.Exists $sslCert) (file.Exists $sslKey) }}
+{{if or $hasCa $hasClientCert}}
     $pdo_options[\PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
-    $pdo_options[\PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs';
-    $pdo_options[\PDO::MYSQL_ATTR_SSL_CERT] = "/srv/deskpro/INSTANCE_DATA/mysql-client.crt";
-    $pdo_options[\PDO::MYSQL_ATTR_SSL_KEY] = "/srv/deskpro/INSTANCE_DATA/mysql-client.key";
+{{if $hasCa}}
+    $pdo_options[\PDO::MYSQL_ATTR_SSL_CA] = {{ $sslCa | squote }};
+{{end}}
+{{if $hasClientCert}}
+    $pdo_options[\PDO::MYSQL_ATTR_SSL_CERT] = {{ $sslCert | squote }};
+    $pdo_options[\PDO::MYSQL_ATTR_SSL_KEY] = {{ $sslKey | squote }};
+{{end}}
 {{end}}
 
 $CONFIG['database'] = [
