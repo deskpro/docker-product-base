@@ -25,7 +25,8 @@ Task-oriented. For someone who knows what they're trying to do.
 - [Run background tasks in dedicated containers](./how-to/run-background-tasks-separately.md) — split email services out from the generic tasks loop.
 - [Update a Deskpro deployment](./how-to/update-deskpro.md) — pull, back up, migrate, restart.
 - [Configure Deskpro behind a reverse proxy](./how-to/configure-reverse-proxy.md) — X-Forwarded-*, PROXY protocol, Cloudflare.
-- [Enable HTTPS on the built-in web server](./how-to/enable-https.md) — mounting a cert, the testing cert warning, custom CAs, MySQL TLS.
+- [Enable HTTPS on the built-in web server](./how-to/enable-https.md) — mounting a cert, the testing cert warning, custom CAs.
+- [Encrypt the database connection](./how-to/encrypt-database-connection.md) — mounting a MySQL CA, client certs, what is and isn't verified.
 - [Debug a running Deskpro container](./how-to/debug-a-running-container.md) — logs, shell, `container-var`, manual job invocation.
 
 ## Reference

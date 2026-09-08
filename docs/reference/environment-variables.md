@@ -50,6 +50,8 @@ docker run --rm php:latest php -r 'echo "DESKPRO_APP_KEY=".var_export(base64_enc
 | `DESKPRO_DB_READ_HOST` / `_PORT` / `_USER` / `_PASS` / `_NAME` | Read replica. Any unset field falls back to the primary value. |
 | `DESKPRO_DB_REPORTS_HOST` / `_PORT` / `_USER` / `_PASS` / `_NAME` | Reports / analytics DB. |
 
+TLS for database connections has no env var — it is switched on by mounting a certificate under `/deskpro/ssl/mysql/`. Without one the connection is plaintext; `mysqlnd` does not upgrade to TLS on its own. See [Encrypt the database connection](../how-to/encrypt-database-connection.md).
+
 ## Storage
 
 | Variable | Purpose |

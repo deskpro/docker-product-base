@@ -48,13 +48,7 @@ If your deployment talks to external services (SMTP, API backends) signed by a p
 
 ## MySQL TLS
 
-To connect to MySQL over TLS, mount:
-
-- `/deskpro/ssl/mysql/client.crt`
-- `/deskpro/ssl/mysql/client.key`
-- `/deskpro/ssl/mysql/ca.pem` (optional, if the server cert isn't in the system trust store)
-
-The presence of the first two enables TLS automatically — no additional env var needed.
+Outbound TLS to the database is switched on by mounting a certificate under `/deskpro/ssl/mysql/`, and is off by default. See [Encrypt the database connection](./encrypt-database-connection.md).
 
 ## Verifying
 

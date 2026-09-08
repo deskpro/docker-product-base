@@ -48,8 +48,10 @@ Include order is lexicographic, so prefix with `99-` if you want your file appli
 | `certs/deskpro-https.crt` | HTTPS certificate (PEM). Enables port 443. |
 | `private/deskpro-https.key` | HTTPS private key (unencrypted). |
 | `ca-certificates/*.crt` | Extra CA certificates, copied into the system trust store. |
-| `mysql/client.crt` + `mysql/client.key` | Enables TLS for MySQL connections. |
-| `mysql/ca.pem` | Custom CA for MySQL server verification. |
+| `mysql/ca.pem` (or `mysql/ca.crt`) | CA for the MySQL server certificate. Encrypts the DB connection (`REQUIRE SSL`). Used only for the DB connection, not added to the system trust store. |
+| `mysql/client.crt` + `mysql/client.key` | Client certificate for MySQL servers that `REQUIRE X509`. Also encrypts the connection on its own. |
+
+Either mount encrypts the connection; the server certificate itself is not verified. See [Encrypt the database connection](../how-to/encrypt-database-connection.md).
 
 ### `/deskpro/logs/`
 
