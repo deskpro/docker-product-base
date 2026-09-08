@@ -68,7 +68,7 @@ php_admin_value[disable_functions] = system, exec, shell_exec, passthru, phpinfo
 [dp_helpcenter]
 {{ template "pool_defaults" "dp_helpcenter" }}
 pm = {{ getenv "PHP_FPM_DP_HELPCENTER_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand") }}
-pm.max_children = {{ getenv "PHP_FPM_DP_HELPCENTER_MAX_CHILDREN" "100" }}
+pm.max_children = {{ getenv "PHP_FPM_DP_HELPCENTER_MAX_CHILDREN" "20" }}
 pm.process_idle_timeout = 15s
 pm.max_requests=1000
 {{ getenv "PHP_FPM_POOL_OVERRIDES" }}
@@ -78,7 +78,7 @@ pm.max_requests=1000
 [dp_assets]
 {{ template "pool_defaults" "dp_assets" }}
 pm = {{ getenv "PHP_FPM_DP_ASSETS_PM_TYPE" (getenv "PHP_FPM_PM_TYPE" "ondemand") }}
-pm.max_children = {{ getenv "PHP_FPM_DP_ASSETS_MAX_CHILDREN" "100" }}
+pm.max_children = {{ getenv "PHP_FPM_DP_ASSETS_MAX_CHILDREN" "20" }}
 pm.process_idle_timeout = 15s
 pm.max_requests=1000
 php_admin_flag[file_uploads] = false
