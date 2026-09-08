@@ -212,7 +212,7 @@ COPY --from=ghcr.io/jqlang/jq:1.8.1 /jq /usr/local/bin/jq
 # Security-patched packages already installed in stage1
 COPY --from=builder-go-binaries /usr/local/bin/gomplate /usr/local/bin/gomplate
 # Nginx installed directly in stage1 - no COPY needed
-COPY --from=composer:2.9.7 /usr/bin/composer /usr/local/bin/composer
+COPY --from=composer:2.10.3 /usr/bin/composer /usr/local/bin/composer
 COPY --from=timberio/vector:0.51.1-debian /usr/bin/vector /usr/local/bin/vector
 COPY --from=node:22.23.2-bookworm /usr/local/bin /usr/local/bin
 COPY --from=node:22.23.2-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
@@ -226,14 +226,17 @@ ARG ESBUILD_VERSION="0.28.1"
 # copies of these -- they can only be fixed by overwriting them in place:
 #   tar             -- CVE-2026-59871/59873/59874, GHSA-vmf3-w455-68vh,
 #                      GHSA-gvwx-54wh-qm9j, GHSA-r292-9mhp-454m
-#   ip-address      -- CVE-2026-54272, GHSA-mwp4-54f8-5fhr, GHSA-4xrf-jv44-h6hh
+#   ip-address      -- CVE-2026-54272, GHSA-mwp4-54f8-5fhr, GHSA-4xrf-jv44-h6hh,
+#                      GHSA-2vr4-cq9g-pvrc, GHSA-rpw4-54j3-4h4q (SSRF)
 #   brace-expansion -- CVE-2026-69152, CVE-2026-13149
-#   undici          -- prototype pollution (AIKIDO-2026-10385/10369); fixed only
-#                      in the 7.x line, so this is a major bump for node-gyp
+#   undici          -- prototype pollution (AIKIDO-2026-10385/10369), plus
+#                      CVE-2026-12151 (DoS), CVE-2026-9679 (CRLF) and an
+#                      infinite-loop DoS fixed only in undici 8, so this is a
+#                      major bump for node-gyp
 ARG NPM_TAR_VERSION="7.5.22"
-ARG NPM_IP_ADDRESS_VERSION="10.3.1"
+ARG NPM_IP_ADDRESS_VERSION="10.6.0"
 ARG NPM_BRACE_EXPANSION_VERSION="5.0.9"
-ARG NPM_UNDICI_VERSION="7.24.1"
+ARG NPM_UNDICI_VERSION="8.10.2"
 RUN set -eu \
     && npm install --global "npm@${NPM_VERSION}" \
     && npm install --global "tsx@${TSX_VERSION}" \
@@ -280,10 +283,11 @@ RUN apt-get update \
 
 # Pin patched security releases in a dedicated layer; busts stale apt-layer
 # cache that can freeze earlier stages at a vulnerable version.
-#   openssl stack  -- CVE-2026-45447 (use-after-free, DoS/RCE)
+#   openssl stack  -- CVE-2026-63072 (memory corruption, crash/RCE, PoC),
+#                     CVE-2026-63076 (NULL deref), CVE-2026-18798 (double free)
 #   libssh2 (via libcurl) -- CVE-2026-55200 (use-after-free, PoC exists)
 #   libheif (via libgd3 <- php8.3-gd) -- CVE-2026-62289, CVE-2026-62292
-ARG OPENSSL_VERSION="3.5.6-1~deb13u2"
+ARG OPENSSL_VERSION="3.5.7-1~deb13u2"
 ARG LIBSSH2_VERSION="1.11.1-1+deb13u1"
 ARG LIBHEIF_VERSION="1.19.8-1+deb13u1"
 RUN apt-get update \
@@ -301,6 +305,21 @@ RUN apt-get update \
     && openssl version -v \
     && dpkg-query -W libssh2-1t64 \
     && dpkg-query -W libheif1 libheif-plugin-dav1d libheif-plugin-libde265
+
+# util-linux stack -- CVE-2026-53612/53613/53614/53615 (low). Fixed in
+# 2.41.5-0+deb13u1. Scoped --only-upgrade (not exact pins) because bsdutils
+# carries an epoch; let apt resolve the newest deb13uN for the whole source set.
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade --no-install-recommends \
+    bsdutils \
+    util-linux \
+    liblastlog2-2 \
+    libmount1 \
+    libsmartcols1 \
+    libuuid1 \
+    && apt-get -y clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && dpkg-query -W bsdutils util-linux libmount1 libsmartcols1 libuuid1 liblastlog2-2
 
 # Verify installations
 RUN ldconfig \
