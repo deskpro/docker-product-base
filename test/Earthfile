@@ -20,6 +20,7 @@ test:
         BUILD +test-serverspec-simple-cases
         BUILD +test-custom-configs
         BUILD +test-custom-logs-group
+        BUILD +test-db-ssl-certs
     END
     WAIT
         BUILD +test-autoinstall
@@ -127,6 +128,47 @@ test-custom-configs:
             && rm /tmp/deskpro-dir/config/php.d/* \
             && docker start test \
             && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/custom_configs/02_custom_configs_removed_spec.rb'
+    END
+
+# test-db-ssl-certs checks how certs mounted under /deskpro/ssl/mysql/ are
+# installed, and the TLS options they switch on.
+test-db-ssl-certs:
+    FROM earthly/dind:alpine
+    RUN apk add --no-cache openssl
+    # A throwaway CA and a client cert signed by it. Never leaves the test.
+    RUN mkdir -p /tmp/ssl-full/mysql /tmp/ssl-ca-only/mysql \
+        && openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+            -keyout /tmp/ca.key -out /tmp/ssl-full/mysql/ca.pem \
+            -subj "/CN=deskpro-test-mysql-ca" \
+        && openssl req -newkey rsa:2048 -nodes \
+            -keyout /tmp/ssl-full/mysql/client.key -out /tmp/client.csr \
+            -subj "/CN=deskpro-test-mysql-client" \
+        && openssl x509 -req -days 1 -in /tmp/client.csr \
+            -CA /tmp/ssl-full/mysql/ca.pem -CAkey /tmp/ca.key -CAcreateserial \
+            -out /tmp/ssl-full/mysql/client.crt \
+        && cp /tmp/ssl-full/mysql/ca.pem /tmp/ssl-ca-only/mysql/ca.pem \
+        && mkdir -p /tmp/ssl-client-only/mysql \
+        && cp /tmp/ssl-full/mysql/client.crt /tmp/ssl-full/mysql/client.key /tmp/ssl-client-only/mysql/
+    WITH DOCKER --load deskpro/docker-product-base:test=+base-image
+        RUN \
+            # CA plus a client cert pair - the pre-existing mutual TLS setup
+            docker run -d --name test-full \
+                -v /tmp/ssl-full:/deskpro/ssl \
+                deskpro/docker-product-base:test web \
+            && docker exec test-full /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/db_ssl_certs/01_client_cert_spec.rb' \
+            && docker stop test-full \
+            # CA only - a server that does REQUIRE SSL but not REQUIRE X509
+            && docker run -d --name test-ca-only \
+                -v /tmp/ssl-ca-only:/deskpro/ssl \
+                deskpro/docker-product-base:test web \
+            && docker exec test-ca-only /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/db_ssl_certs/02_ca_only_spec.rb' \
+            && docker stop test-ca-only \
+            # client cert but no CA - the setup that worked in older images
+            && docker run -d --name test-client-only \
+                -v /tmp/ssl-client-only:/deskpro/ssl \
+                deskpro/docker-product-base:test web \
+            && docker exec test-client-only /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/db_ssl_certs/03_client_cert_only_spec.rb' \
+            && docker stop test-client-only
     END
 
 test-custom-logs-group:
