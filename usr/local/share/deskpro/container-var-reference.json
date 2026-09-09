@@ -158,6 +158,18 @@
     "default": "root"
   },
   {
+    "name": "DESKPRO_DB_SSL_ENABLED",
+    "description": "Set true to connect to the database over TLS without a client certificate - implied when a CA cert or client certificate is mounted under /deskpro/ssl/mysql/.",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
+    "name": "DESKPRO_DB_SSL_VERIFY_SERVER_CERT",
+    "description": "Set true to verify the database server certificate. Requires a CA cert mounted at /deskpro/ssl/mysql/ca.pem.",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
     "name": "DESKPRO_DB_USER",
     "description": "Name of user to connect to Deskpro database.",
     "type": "string",

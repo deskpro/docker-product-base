@@ -9,16 +9,28 @@ $CONFIG['app_settings'] = [];
 #######################################################################
 
 $pdo_options = [];
+{{- /*
+  TLS for the database connections. Presence of certificates determines
+  the TLS mode:
+    client cert + key -> client certificate auth (MySQL REQUIRE X509)
+    ca.pem            -> enable TLS (MySQL REQUIRE SSL)
+  DESKPRO_DB_SSL_ENABLED turns encryption on with no certs at all (REQUIRE SSL).
+*/}}
+{{- $mysql_client_crt := "/srv/deskpro/INSTANCE_DATA/mysql-client.crt" }}
+{{- $mysql_client_key := "/srv/deskpro/INSTANCE_DATA/mysql-client.key" }}
+{{- $mysql_ca := "/srv/deskpro/INSTANCE_DATA/mysql-ca.pem" }}
+{{- $has_client_cert := and (file.Exists $mysql_client_crt) (file.Exists $mysql_client_key) }}
+{{- $has_ca := file.Exists $mysql_ca }}
+{{- $ssl_enabled := or $has_client_cert $has_ca (conv.ToBool (getenv "DESKPRO_DB_SSL_ENABLED" "false")) }}
+{{- $ssl_verify := conv.ToBool (getenv "DESKPRO_DB_SSL_VERIFY_SERVER_CERT" "false") }}
 
-{{if
-    and
-    (file.Exists "/srv/deskpro/INSTANCE_DATA/mysql-client.crt")
-    (file.Exists "/srv/deskpro/INSTANCE_DATA/mysql-client.key")
-}}
-    $pdo_options[\PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
-    $pdo_options[\PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs';
-    $pdo_options[\PDO::MYSQL_ATTR_SSL_CERT] = "/srv/deskpro/INSTANCE_DATA/mysql-client.crt";
-    $pdo_options[\PDO::MYSQL_ATTR_SSL_KEY] = "/srv/deskpro/INSTANCE_DATA/mysql-client.key";
+{{if $ssl_enabled}}
+    $pdo_options[\PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = {{if $ssl_verify}}true{{else}}false{{end}};
+    $pdo_options[\PDO::MYSQL_ATTR_SSL_CA] = {{if $has_ca}}{{$mysql_ca | squote}}{{else}}'/etc/ssl/certs'{{end}};
+{{- if $has_client_cert}}
+    $pdo_options[\PDO::MYSQL_ATTR_SSL_CERT] = "{{$mysql_client_crt}}";
+    $pdo_options[\PDO::MYSQL_ATTR_SSL_KEY] = "{{$mysql_client_key}}";
+{{- end}}
 {{end}}
 
 $CONFIG['database'] = [
