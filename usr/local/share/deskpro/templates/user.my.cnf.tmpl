@@ -1,5 +1,45 @@
 # This file is used by the mysql-primary and mysql-read helper utilities
 # that run mysql client with credentials from ~/.my-auto.cnf
+{{- define "mysqlTlsOptions"}}
+{{- if .enabled}}
+ssl-mode={{if .verify}}VERIFY_IDENTITY{{else}}REQUIRED{{end}}
+{{- if .ca}}
+ssl-ca={{.ca | quote}}
+{{- end}}
+{{- if .clientCrt}}
+ssl-cert={{.clientCrt | quote}}
+ssl-key={{.clientKey | quote}}
+{{- end}}
+{{- end}}
+{{- end}}
+{{- $mysql_client_crt := "/srv/deskpro/INSTANCE_DATA/mysql-client.crt" }}
+{{- $mysql_client_key := "/srv/deskpro/INSTANCE_DATA/mysql-client.key" }}
+{{- $mysql_ca := "/srv/deskpro/INSTANCE_DATA/mysql-ca.pem" }}
+{{- $has_client_cert := and (file.Exists $mysql_client_crt) (file.Exists $mysql_client_key) }}
+{{- $has_ca := file.Exists $mysql_ca }}
+{{- $tls_primary := coll.Dict
+      "enabled" (or $has_client_cert $has_ca (conv.ToBool (getenv "DESKPRO_DB_SSL_ENABLED" "false")))
+      "verify" (conv.ToBool (getenv "DESKPRO_DB_SSL_VERIFY_SERVER_CERT" "false"))
+      "ca" (test.Ternary $mysql_ca "" $has_ca)
+      "clientCrt" (test.Ternary $mysql_client_crt "" $has_client_cert)
+      "clientKey" (test.Ternary $mysql_client_key "" $has_client_cert) }}
+{{- $read_client_crt := "/srv/deskpro/INSTANCE_DATA/mysql-read-client.crt" }}
+{{- $read_client_key := "/srv/deskpro/INSTANCE_DATA/mysql-read-client.key" }}
+{{- $read_ca := "/srv/deskpro/INSTANCE_DATA/mysql-read-ca.pem" }}
+{{- $read_own_client_cert := and (file.Exists $read_client_crt) (file.Exists $read_client_key) }}
+{{- $read_own_ca := file.Exists $read_ca }}
+{{- $read_own := or $read_own_ca (file.Exists $read_client_crt) (file.Exists $read_client_key) }}
+{{- $read_use_ca := test.Ternary (test.Ternary $read_ca "" $read_own_ca) $tls_primary.ca $read_own }}
+{{- $read_use_crt := test.Ternary (test.Ternary $read_client_crt "" $read_own_client_cert) $tls_primary.clientCrt $read_own }}
+{{- $read_use_key := test.Ternary (test.Ternary $read_client_key "" $read_own_client_cert) $tls_primary.clientKey $read_own }}
+{{- $read_enabled_env := getenv "DESKPRO_DB_READ_SSL_ENABLED" }}
+{{- $read_verify_env := getenv "DESKPRO_DB_READ_SSL_VERIFY_SERVER_CERT" }}
+{{- $tls_read := coll.Dict
+      "enabled" (or (ne $read_use_ca "") (ne $read_use_crt "") (test.Ternary (conv.ToBool $read_enabled_env) $tls_primary.enabled (ne $read_enabled_env "")))
+      "verify" (test.Ternary (conv.ToBool $read_verify_env) $tls_primary.verify (ne $read_verify_env ""))
+      "ca" $read_use_ca
+      "clientCrt" $read_use_crt
+      "clientKey" $read_use_key }}
 
 [mysql]
 no-auto-rehash
@@ -11,6 +51,7 @@ port={{ (getenv "DESKPRO_DB_READ_PORT" (getenv "DESKPRO_DB_PORT")) | default "33
 user={{ (getenv "DESKPRO_DB_READ_USER" (getenv "DESKPRO_DB_USER")) | default "root" | quote }}
 password={{ (getenv "DESKPRO_DB_READ_PASS" (getenv "DESKPRO_DB_PASS")) | default "deskpro" | quote }}
 database={{ (getenv "DESKPRO_DB_READ_NAME" (getenv "DESKPRO_DB_NAME")) | default "deskpro" | quote }}
+{{- template "mysqlTlsOptions" $tls_read}}
 
 [client_primary]
 host={{ (getenv "DESKPRO_DB_HOST" "mysql") | quote }}
@@ -18,6 +59,7 @@ port={{ (getenv "DESKPRO_DB_PORT" "3306") | quote }}
 user={{ (getenv "DESKPRO_DB_USER" "root") | quote }}
 password={{ (getenv "DESKPRO_DB_PASS" "deskpro") | quote }}
 database={{ (getenv "DESKPRO_DB_NAME" "deskpro") | quote }}
+{{- template "mysqlTlsOptions" $tls_primary}}
 
 {{else}}
 
@@ -28,6 +70,7 @@ user={{ (getenv "DESKPRO_DB_USER" "root") | quote }}
 password={{ (getenv "DESKPRO_DB_PASS" "deskpro") | quote }}
 database={{ (getenv "DESKPRO_DB_NAME" "deskpro") | quote }}
 init_command="SET SESSION TRANSACTION READ ONLY;"
+{{- template "mysqlTlsOptions" $tls_primary}}
 
 [client_primary]
 host={{ (getenv "DESKPRO_DB_HOST" "mysql") | quote }}
@@ -35,6 +78,7 @@ port={{ (getenv "DESKPRO_DB_PORT" "3306") | quote }}
 user={{ (getenv "DESKPRO_DB_USER" "root") | quote }}
 password={{ (getenv "DESKPRO_DB_PASS" "deskpro") | quote }}
 database={{ (getenv "DESKPRO_DB_NAME" "deskpro") | quote }}
+{{- template "mysqlTlsOptions" $tls_primary}}
 {{end}}
 
 [client_mysqldump]
@@ -43,3 +87,4 @@ host={{ (getenv "DESKPRO_DB_HOST" "mysql") | quote }}
 port={{ (getenv "DESKPRO_DB_PORT" "3306") | quote }}
 user={{ (getenv "DESKPRO_DB_USER" "root") | quote }}
 password={{ (getenv "DESKPRO_DB_PASS" "deskpro") | quote }}
+{{- template "mysqlTlsOptions" $tls_primary}}

@@ -138,6 +138,7 @@ test-mysql-tls:
     COPY --dir serverspec/spec/scenarios/mysql_tls/deskpro_dir_client_and_ca /tmp/dp-client-and-ca
     COPY --dir serverspec/spec/scenarios/mysql_tls/deskpro_dir_ca_only /tmp/dp-ca-only
     COPY --dir serverspec/spec/scenarios/mysql_tls/deskpro_dir_bad_pair /tmp/dp-bad-pair
+    COPY --dir serverspec/spec/scenarios/mysql_tls/deskpro_dir_per_connection /tmp/dp-per-connection
     # a dangling symlink can't be committed as a fixture, so build one here
     RUN mkdir -p /tmp/dp-dangling-ca/ssl/mysql \
         && ln -s /nope/missing.pem /tmp/dp-dangling-ca/ssl/mysql/ca.pem
@@ -162,6 +163,37 @@ test-mysql-tls:
                 deskpro/docker-product-base:test web \
             && docker exec test-ssl-only /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/mysql_tls/03_ssl_enabled_no_certs_spec.rb' \
             && docker stop test-ssl-only \
+            # a different CA (and client cert) per connection
+            && docker run -d --name test-per-connection \
+                -e DESKPRO_DB_READ_HOST=mysql-read \
+                -e DESKPRO_DB_REPORTS_HOST=mysql-reports \
+                -e DESKPRO_DB_REPORTS_SSL_VERIFY_SERVER_CERT=true \
+                -v /tmp/dp-per-connection:/deskpro \
+                deskpro/docker-product-base:test web \
+            && docker exec test-per-connection /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/mysql_tls/04_per_connection_spec.rb' \
+            && docker stop test-per-connection \
+            # remove the read mount and restart: INSTANCE_DATA outlives the
+            # container, so the stale copy has to be reaped or it keeps
+            # overriding the primary
+            && rm -rf /tmp/dp-per-connection/ssl/mysql/read \
+            && docker start test-per-connection \
+            && docker exec test-per-connection /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/mysql_tls/05_stale_certs_removed_spec.rb' \
+            && docker stop test-per-connection \
+            # verification asked for with no CA file to verify against must not
+            # boot - MYSQL_ATTR_SSL_CA cannot verify against a directory, so it
+            # would otherwise fail on the first query instead
+            && ! docker run --name test-verify-no-ca \
+                -e DESKPRO_DB_SSL_ENABLED=true \
+                -e DESKPRO_DB_SSL_VERIFY_SERVER_CERT=true \
+                deskpro/docker-product-base:test web \
+            && docker logs test-verify-no-ca 2>&1 | grep -q 'DESKPRO_DB_SSL_VERIFY_SERVER_CERT is set but no CA certificate is available' \
+            # same for a single connection, where only the replica is misconfigured
+            && ! docker run --name test-verify-no-ca-read \
+                -e DESKPRO_DB_READ_HOST=mysql-read \
+                -e DESKPRO_DB_READ_SSL_ENABLED=true \
+                -e DESKPRO_DB_READ_SSL_VERIFY_SERVER_CERT=true \
+                deskpro/docker-product-base:test web \
+            && docker logs test-verify-no-ca-read 2>&1 | grep -q 'DESKPRO_DB_READ_SSL_VERIFY_SERVER_CERT is set but no CA certificate is available' \
             # half a client cert pair must refuse to boot rather than silently
             # falling back to an unencrypted connection
             && ! docker run --name test-bad-pair \

@@ -33,8 +33,9 @@ describe "MySQL TLS: PDO SSL options in deskpro-config.php" do
   end
 
   def mysql_cert_paths
-    %w[mysql-client.crt mysql-client.key mysql-ca.pem]
-      .map { |name| "/srv/deskpro/INSTANCE_DATA/#{name}" }
+    %w[mysql mysql-read mysql-reports]
+      .product(%w[client.crt client.key ca.pem])
+      .map { |prefix, suffix| "/srv/deskpro/INSTANCE_DATA/#{prefix}-#{suffix}" }
   end
 
   # Stands in for 20-certs.sh having copied the mounts into place. Nothing
@@ -50,8 +51,12 @@ describe "MySQL TLS: PDO SSL options in deskpro-config.php" do
   end
 
   def clear_mysql_env
-    ENV.delete('DESKPRO_DB_SSL_ENABLED')
-    ENV.delete('DESKPRO_DB_SSL_VERIFY_SERVER_CERT')
+    %w[DESKPRO_DB DESKPRO_DB_READ DESKPRO_DB_REPORTS].each do |prefix|
+      ENV.delete("#{prefix}_SSL_ENABLED")
+      ENV.delete("#{prefix}_SSL_VERIFY_SERVER_CERT")
+    end
+    ENV.delete('DESKPRO_DB_READ_HOST')
+    ENV.delete('DESKPRO_DB_REPORTS_HOST')
   end
 
   context "with no certs and no env vars" do
@@ -152,14 +157,96 @@ describe "MySQL TLS: PDO SSL options in deskpro-config.php" do
     end
   end
 
-  it "shares the SSL options with the read and reports connections" do
-    install_mysql_certs('mysql-ca.pem')
-    ENV['DESKPRO_DB_READ_HOST'] = 'mysql-read'
-    ENV['DESKPRO_DB_REPORTS_HOST'] = 'mysql-reports'
-    output = render_config
-    expect(output.scan("'pdo_options' => $pdo_options ?? []").length).to eq 3
-  ensure
-    ENV.delete('DESKPRO_DB_READ_HOST')
-    ENV.delete('DESKPRO_DB_REPORTS_HOST')
+  # The read and read_reports connections can point at different servers behind
+  # different CAs, so each gets its own $pdo_options_* array.
+  #
+  # Certificates are directory-scoped: any cert of its own makes a connection
+  # self-describing and it inherits none of the primary's. The env vars cascade
+  # the other way - unset takes the primary's value, explicit wins.
+  context "with the read and reports connections configured" do
+    before(:each) do
+      ENV['DESKPRO_DB_READ_HOST'] = 'mysql-read'
+      ENV['DESKPRO_DB_REPORTS_HOST'] = 'mysql-reports'
+    end
+
+    it "gives each connection its own options array, built from nothing" do
+      output = render_config
+      expect(output).to include "$pdo_options_read = [];"
+      expect(output).to include "$pdo_options_reports = [];"
+      expect(output).to include "'pdo_options' => $pdo_options ?? [],"
+      expect(output).to include "'pdo_options' => $pdo_options_read ?? [],"
+      expect(output).to include "'pdo_options' => $pdo_options_reports ?? [],"
+    end
+
+    it "inherits the primary's certificates when a connection supplies none" do
+      install_mysql_certs('mysql-ca.pem', 'mysql-client.crt', 'mysql-client.key')
+      output = render_config
+      %w[$pdo_options $pdo_options_read $pdo_options_reports].each do |var|
+        expect(output).to include "#{var}[\\PDO::MYSQL_ATTR_SSL_CA] = '/srv/deskpro/INSTANCE_DATA/mysql-ca.pem';"
+        expect(output).to include "#{var}[\\PDO::MYSQL_ATTR_SSL_CERT] = \"/srv/deskpro/INSTANCE_DATA/mysql-client.crt\";"
+      end
+    end
+
+    # The point of directory scoping: a CA in read/ must not silently drag the
+    # primary's client certificate along with it.
+    it "takes nothing from the primary once a connection supplies any cert" do
+      install_mysql_certs('mysql-ca.pem', 'mysql-client.crt', 'mysql-client.key',
+                          'mysql-read-ca.pem')
+      output = render_config
+      expect(output).to include "$pdo_options_read[\\PDO::MYSQL_ATTR_SSL_CA] = '/srv/deskpro/INSTANCE_DATA/mysql-read-ca.pem';"
+      expect(output).not_to include "$pdo_options_read[\\PDO::MYSQL_ATTR_SSL_CERT]"
+      expect(output).not_to include "$pdo_options_read[\\PDO::MYSQL_ATTR_SSL_KEY]"
+      # the untouched connection still inherits everything
+      expect(output).to include "$pdo_options_reports[\\PDO::MYSQL_ATTR_SSL_CERT] = \"/srv/deskpro/INSTANCE_DATA/mysql-client.crt\";"
+    end
+
+    it "uses only its own client certificate, not the primary's CA" do
+      install_mysql_certs('mysql-ca.pem',
+                          'mysql-reports-client.crt', 'mysql-reports-client.key')
+      output = render_config
+      expect(output).to include "$pdo_options_reports[\\PDO::MYSQL_ATTR_SSL_CERT] = \"/srv/deskpro/INSTANCE_DATA/mysql-reports-client.crt\";"
+      expect(output).to include "$pdo_options_reports[\\PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs';"
+    end
+
+    it "enables TLS on one connection only when only it has a certificate" do
+      install_mysql_certs('mysql-read-ca.pem')
+      output = render_config
+      expect(output).not_to include "$pdo_options[\\PDO::MYSQL_ATTR_SSL"
+      expect(output).not_to include "$pdo_options_reports[\\PDO::MYSQL_ATTR_SSL"
+      expect(output).to include "$pdo_options_read[\\PDO::MYSQL_ATTR_SSL_CA] = '/srv/deskpro/INSTANCE_DATA/mysql-read-ca.pem';"
+    end
+
+    it "takes verification per connection, falling back to the primary's setting" do
+      install_mysql_certs('mysql-ca.pem')
+      ENV['DESKPRO_DB_SSL_VERIFY_SERVER_CERT'] = 'true'
+      ENV['DESKPRO_DB_READ_SSL_VERIFY_SERVER_CERT'] = 'false'
+      output = render_config
+      expect(output).to include "$pdo_options[\\PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = true;"
+      expect(output).to include "$pdo_options_read[\\PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;"
+      expect(output).to include "$pdo_options_reports[\\PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = true;"
+    end
+
+    # An explicitly set value wins, including false. A replica on a trusted LAN
+    # behind a primary reached over a WAN is a real topology, and silently
+    # discarding the operator's `false` would be the kind of surprise this
+    # whole design is trying to remove.
+    it "honours an explicit false even when the primary has TLS on" do
+      ENV['DESKPRO_DB_SSL_ENABLED'] = 'true'
+      ENV['DESKPRO_DB_READ_SSL_ENABLED'] = 'false'
+      output = render_config
+      expect(output).to include "$pdo_options[\\PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs';"
+      expect(output).to include "$pdo_options_read = [];"
+      expect(output).not_to include "$pdo_options_read[\\PDO::MYSQL_ATTR_SSL"
+      # unset, so it still cascades
+      expect(output).to include "$pdo_options_reports[\\PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs';"
+    end
+
+    it "enables TLS on one connection only from its own env var" do
+      ENV['DESKPRO_DB_REPORTS_SSL_ENABLED'] = 'true'
+      output = render_config
+      expect(output).not_to include "$pdo_options[\\PDO::MYSQL_ATTR_SSL"
+      expect(output).not_to include "$pdo_options_read[\\PDO::MYSQL_ATTR_SSL"
+      expect(output).to include "$pdo_options_reports[\\PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs';"
+    end
   end
 end
