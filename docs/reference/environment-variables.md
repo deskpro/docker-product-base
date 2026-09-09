@@ -49,6 +49,10 @@ docker run --rm php:latest php -r 'echo "DESKPRO_APP_KEY=".var_export(base64_enc
 | --- | --- |
 | `DESKPRO_DB_READ_HOST` / `_PORT` / `_USER` / `_PASS` / `_NAME` | Read replica. Any unset field falls back to the primary value. |
 | `DESKPRO_DB_REPORTS_HOST` / `_PORT` / `_USER` / `_PASS` / `_NAME` | Reports / analytics DB. |
+| `DESKPRO_DB_SSL_ENABLED` | `true` connects over TLS with no certificates, for accounts with `REQUIRE SSL`. Implied when anything is mounted under `/deskpro/ssl/mysql/`. Default `false`. |
+| `DESKPRO_DB_SSL_VERIFY_SERVER_CERT` | `true` verifies the database server certificate. Requires `/deskpro/ssl/mysql/ca.pem`. Default `false`. |
+
+TLS settings apply to all three connections above. See [Connect to MySQL over TLS](../how-to/connect-to-mysql-over-tls.md).
 
 ## Storage
 

@@ -48,7 +48,7 @@ The entrypoint is [`usr/local/sbin/entrypoint.sh`](../../usr/local/sbin/entrypoi
 | `05-opc.sh` | Sets reverse-proxy-header defaults for the OPC deployment model and extracts DB connection info from config formats when present. |
 | `10-container-config.sh` | Materialises every env var in `container-var-reference.json` to `/run/container-config/<name>`. Handles `_B64` (base64), `_ESC` (escape sequence), and `_FILE` (path-to-secret) suffixes. Reads `/run/secrets/*` for Docker Swarm / Kubernetes secrets. |
 | `15-run-mode.sh` | Reads `DOCKER_CMD` and sets `SVC_*_ENABLED=true` for the services that should start. Also auto-starts nginx + PHP-FPM if a task-style mode is going to call the localhost internal API. |
-| `20-certs.sh` | Installs HTTPS certs from `/deskpro/ssl/`, syncs custom CA certs into the system trust store, wires up MySQL client certs. |
+| `20-certs.sh` | Installs HTTPS certs from `/deskpro/ssl/`, syncs custom CA certs into the system trust store, and installs the MySQL client certificate and CA into `INSTANCE_DATA/`. Aborts the boot if a MySQL cert path is mounted but unusable, rather than falling back to an unencrypted database connection. |
 | `20-custom-configs.sh` | Copies operator-provided configs from `/deskpro/config/*.d/` into the in-image config directories, so the template step below sees them. |
 | `40-evaluate-configs.sh` | Runs `gomplate` over every `*.tmpl` under `/etc/{nginx,php,supervisor,vector}` and the Deskpro config dir. This is when env vars become config values. |
 | `41-deskpro-config.sh` | Renders `/usr/local/share/deskpro/templates/deskpro-config.php.tmpl` (or the file pointed to by `DESKPRO_CONFIG_FILE`) into `INSTANCE_DATA/` so the Deskpro app can load it. Applies `DESKPRO_CONFIG_RAW_PHP` and any `DESKPRO_CONFIG_EXTENSIONS`. |
@@ -74,6 +74,7 @@ Once supervisord starts, three things happen in parallel:
 | `nginx: [emerg] ... unknown directive` | A custom config under `/deskpro/config/nginx.d/` is broken, or a template in `/etc/nginx/` referenced a var that didn't exist. Re-run with `BOOT_LOG_LEVEL=DEBUG` to see the rendered config. |
 | Healthcheck fails but nginx looks up | PHP-FPM pool didn't start. Check `/var/log/supervisor/php_fpm-stderr.log`. Usually a bad `PHP_INI_OVERRIDES` or a pool override that won't parse. |
 | Container is "ready" but installer didn't run | `AUTO_RUN_INSTALLER` is only honoured on first boot (empty DB). If the DB has any Deskpro tables, the installer is skipped by design. |
+| Container exits with `Incomplete MySQL client certificate` or `is not a readable file` | A path under `/deskpro/ssl/mysql/` is half-mounted or isn't a readable regular file. This is deliberate — see [Connect to MySQL over TLS](../how-to/connect-to-mysql-over-tls.md#boot-failures). |
 | `email_collect` / `email_process` service flapping | These run under a timeout wrapper; a crash every `SVC_EMAIL_*_ARGS_MAX_TIME` seconds is the service restarting on purpose, not a fault. |
 
 ## Shutdown sequence

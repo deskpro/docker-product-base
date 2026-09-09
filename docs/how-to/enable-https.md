@@ -13,10 +13,10 @@ In most real deployments you should terminate TLS at a reverse proxy instead. Th
 
 ## Mount a certificate
 
-| Mount target | Required | Format |
-| --- | --- | --- |
-| `/deskpro/ssl/certs/deskpro-https.crt` | yes | PEM |
-| `/deskpro/ssl/private/deskpro-https.key` | yes | PEM, unencrypted |
+| Mount target                             | Required | Format           |
+| ---------------------------------------- | -------- | ---------------- |
+| `/deskpro/ssl/certs/deskpro-https.crt`   | yes      | PEM              |
+| `/deskpro/ssl/private/deskpro-https.key` | yes      | PEM, unencrypted |
 
 Example:
 
@@ -45,16 +45,6 @@ Never use it in production.
 ## Adding trusted CAs
 
 If your deployment talks to external services (SMTP, API backends) signed by a private CA, drop PEM files into `/deskpro/ssl/ca-certificates/*.crt`. They're rsync'd into `/usr/local/share/ca-certificates/` and `update-ca-certificates` runs at boot, so PHP, curl, and every other TLS consumer in the image trusts them.
-
-## MySQL TLS
-
-To connect to MySQL over TLS, mount:
-
-- `/deskpro/ssl/mysql/client.crt`
-- `/deskpro/ssl/mysql/client.key`
-- `/deskpro/ssl/mysql/ca.pem` (optional, if the server cert isn't in the system trust store)
-
-The presence of the first two enables TLS automatically — no additional env var needed.
 
 ## Verifying
 
