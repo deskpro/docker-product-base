@@ -15,7 +15,7 @@ The repo-root [`Earthfile`](../../../Earthfile) only builds the production image
 
 | Target | What it does |
 | --- | --- |
-| `+test` | Runs every test target. Uses `WAIT` blocks to parallelise where safe: serverspec, opc, simple-cases, custom-configs, and custom-logs-group in one wave; autoinstall next; automigrations last. |
+| `+test` | Runs every test target. Uses `WAIT` blocks to parallelise where safe: serverspec, opc, simple-cases, custom-configs, custom-logs-group, and mysql-tls in one wave; autoinstall next; automigrations last. |
 | `+save-base-image` | Builds the test-flavoured image (`+base-image`) and tags it `deskpro/docker-product-base:test` locally. Use this to poke at the test image interactively with `docker run -it deskpro/docker-product-base:test bash`. |
 | `+base-image` | Internal. Builds the production image and layers Ruby + serverspec + the mock app on top. Every other target inherits from it. |
 
@@ -34,6 +34,7 @@ The repo-root [`Earthfile`](../../../Earthfile) only builds the production image
 | `+test-autoinstall` | `spec/scenarios/autoinstall/01_installer_spec.rb`, `02_post_installer_spec.rb` | Creates `/tmp/sim/needs-installer` sentinel, mounts it at `/run/sim`. Runs with `AUTO_RUN_INSTALLER=true`. First run: installer ran. After restart: it didn't re-run. |
 | `+test-automigrations` | `spec/scenarios/automigrations/01_migrations_spec.rb`, `02_post_migrations_spec.rb` | Creates `/tmp/sim/needs-migrations` sentinel. Runs with `AUTO_RUN_MIGRATIONS=true`. First run: migrations ran. After restart: they didn't re-run. |
 | `+test-custom-configs` | `spec/scenarios/custom_configs/01_custom_configs_spec.rb`, `02_custom_configs_removed_spec.rb` | Mounts `spec/scenarios/custom_configs/deskpro_dir` as `/deskpro`. First run: mounted configs (`99-custom.ini` and `99-custom_tmpl.ini.tmpl`) took effect. After removing them and restarting: their effects are gone. |
+| `+test-mysql-tls` | `spec/scenarios/mysql_tls/01_client_and_ca_spec.rb`, `02_ca_only_verify_spec.rb`, `03_ssl_enabled_no_certs_spec.rb` | Three containers, one per TLS shape: client cert pair plus custom CA; custom CA alone with `DESKPRO_DB_SSL_VERIFY_SERVER_CERT=true`; no certs at all with `DESKPRO_DB_SSL_ENABLED=true`. Fixtures are the `deskpro_dir_*` dirs next to the specs. Then two boots that must *fail*: half a client cert pair, and a `ca.pem` that is a dangling symlink - each asserted on exit code plus the error in the boot log. |
 | `+test-custom-logs-group` | `spec/scenarios/custom_log_group/01_custom_log_group_spec.rb` | Creates a `logs_group` GID 1988 on the host, mounts `/tmp/deskpro-logs` as `/deskpro/logs` with that group, sets `LOGS_GID=1988`. Triggers a PHP error to generate log output, stops the container, verifies host-side ownership. |
 
 ## Running locally
