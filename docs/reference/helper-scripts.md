@@ -80,6 +80,8 @@ mysqldump-primary --hex-blob --single-transaction deskpro > dump.sql
 
 Any extra argument is passed through to the underlying tool. The wrappers write a `~/.my-auto.cnf` on first use and invoke the real client with `--defaults-group-suffix=_primary` or `_read`.
 
+They pick up TLS from the same place the application does - the certificates under `/deskpro/ssl/mysql/` and the `DESKPRO_DB_*_SSL_*` vars - so an account with `REQUIRE SSL` or `REQUIRE X509` works from the CLI too. `mysql-read` uses the read connection's settings; the other two use the primary's. See [Connect to MySQL over TLS](../how-to/connect-to-mysql-over-tls.md).
+
 Prefer `mysql-read` for read queries; it will use the read replica if one is configured, and otherwise puts the session into read-only mode.
 
 ## `phpinfo`

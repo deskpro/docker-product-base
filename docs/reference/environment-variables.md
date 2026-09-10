@@ -49,6 +49,12 @@ docker run --rm php:latest php -r 'echo "DESKPRO_APP_KEY=".var_export(base64_enc
 | --- | --- |
 | `DESKPRO_DB_READ_HOST` / `_PORT` / `_USER` / `_PASS` / `_NAME` | Read replica. Any unset field falls back to the primary value. |
 | `DESKPRO_DB_REPORTS_HOST` / `_PORT` / `_USER` / `_PASS` / `_NAME` | Reports / analytics DB. |
+| `DESKPRO_DB_SSL_ENABLED` | `true` connects over TLS with no certificates, for accounts with `REQUIRE SSL`. Implied when anything is mounted under `/deskpro/ssl/mysql/`. Default `false`. |
+| `DESKPRO_DB_SSL_VERIFY_SERVER_CERT` | `true` verifies the database server certificate. Requires `/deskpro/ssl/mysql/ca.pem`. Default `false`. |
+| `DESKPRO_DB_READ_SSL_ENABLED` / `DESKPRO_DB_READ_SSL_VERIFY_SERVER_CERT` | Same two switches for the read replica. Unset means "whatever the primary resolves to". |
+| `DESKPRO_DB_REPORTS_SSL_ENABLED` / `DESKPRO_DB_REPORTS_SSL_VERIFY_SERVER_CERT` | Same two switches for the reports connection. |
+
+Unset means "use the primary's value"; an explicit value wins, including `false`, which leaves that one connection unencrypted. Certificates behave the opposite way — mounting any into `/deskpro/ssl/mysql/read/` or `reports/` makes that directory authoritative and nothing is inherited. A connection set to verify with no CA file refuses to boot. See [Connect to MySQL over TLS](../how-to/connect-to-mysql-over-tls.md).
 
 ## Storage
 

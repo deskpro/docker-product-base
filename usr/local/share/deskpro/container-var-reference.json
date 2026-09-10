@@ -123,6 +123,18 @@
     "default": "3306"
   },
   {
+    "name": "DESKPRO_DB_READ_SSL_ENABLED",
+    "description": "Set true to connect to the read-only database server over TLS without a client certificate. Defaults to whatever the primary connection resolves to.",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
+    "name": "DESKPRO_DB_READ_SSL_VERIFY_SERVER_CERT",
+    "description": "Set true to verify the read-only database server certificate. Requires a CA cert mounted at /deskpro/ssl/mysql/read/ca.pem or /deskpro/ssl/mysql/ca.pem. Defaults to DESKPRO_DB_SSL_VERIFY_SERVER_CERT.",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
     "name": "DESKPRO_DB_READ_USER",
     "description": "Name of user to connect to read-only Deskpro database.",
     "type": "string",
@@ -152,10 +164,34 @@
     "default": "3306"
   },
   {
+    "name": "DESKPRO_DB_REPORTS_SSL_ENABLED",
+    "description": "Set true to connect to the reporting read-only database server over TLS without a client certificate. Defaults to whatever the primary connection resolves to.",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
+    "name": "DESKPRO_DB_REPORTS_SSL_VERIFY_SERVER_CERT",
+    "description": "Set true to verify the reporting read-only database server certificate. Requires a CA cert mounted at /deskpro/ssl/mysql/reports/ca.pem or /deskpro/ssl/mysql/ca.pem. Defaults to DESKPRO_DB_SSL_VERIFY_SERVER_CERT.",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
     "name": "DESKPRO_DB_REPORTS_USER",
     "description": "Name of user to connect to reporting read-only Deskpro database.",
     "type": "string",
     "default": "root"
+  },
+  {
+    "name": "DESKPRO_DB_SSL_ENABLED",
+    "description": "Set true to connect to the database over TLS without a client certificate - implied when a CA cert or client certificate is mounted under /deskpro/ssl/mysql/.",
+    "type": "boolean",
+    "default": "false"
+  },
+  {
+    "name": "DESKPRO_DB_SSL_VERIFY_SERVER_CERT",
+    "description": "Set true to verify the database server certificate. Requires a CA cert mounted at /deskpro/ssl/mysql/ca.pem.",
+    "type": "boolean",
+    "default": "false"
   },
   {
     "name": "DESKPRO_DB_USER",

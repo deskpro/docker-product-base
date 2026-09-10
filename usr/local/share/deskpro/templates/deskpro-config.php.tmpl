@@ -9,17 +9,40 @@ $CONFIG['app_settings'] = [];
 #######################################################################
 
 $pdo_options = [];
+{{- /*
+  TLS for the database connections. Presence of certificates determines
+  the TLS mode:
+    client cert + key      -> client certificate auth (MySQL REQUIRE X509)
+    ca.pem                 -> enable TLS (MySQL REQUIRE SSL)
+    DESKPRO_DB_SSL_ENABLED -> encryption with no certs at all (REQUIRE SSL)
 
-{{if
-    and
-    (file.Exists "/srv/deskpro/INSTANCE_DATA/mysql-client.crt")
-    (file.Exists "/srv/deskpro/INSTANCE_DATA/mysql-client.key")
-}}
-    $pdo_options[\PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
-    $pdo_options[\PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs';
-    $pdo_options[\PDO::MYSQL_ATTR_SSL_CERT] = "/srv/deskpro/INSTANCE_DATA/mysql-client.crt";
-    $pdo_options[\PDO::MYSQL_ATTR_SSL_KEY] = "/srv/deskpro/INSTANCE_DATA/mysql-client.key";
+  The read and read_reports connections can be different servers behind
+  different CAs, so each resolves its own settings if certificates are present.
+*/}}
+{{- define "pdoSslOptions"}}
+{{- if .enabled}}
+    {{.var}}[\PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = {{if .verify}}true{{else}}false{{end}};
+    {{.var}}[\PDO::MYSQL_ATTR_SSL_CA] = {{if .ca}}{{.ca | squote}}{{else}}'/etc/ssl/certs'{{end}};
+{{- if .clientCrt}}
+    {{.var}}[\PDO::MYSQL_ATTR_SSL_CERT] = "{{.clientCrt}}";
+    {{.var}}[\PDO::MYSQL_ATTR_SSL_KEY] = "{{.clientKey}}";
+{{- end}}
 {{end}}
+{{- end}}
+{{- $mysql_client_crt := "/srv/deskpro/INSTANCE_DATA/mysql-client.crt" }}
+{{- $mysql_client_key := "/srv/deskpro/INSTANCE_DATA/mysql-client.key" }}
+{{- $mysql_ca := "/srv/deskpro/INSTANCE_DATA/mysql-ca.pem" }}
+{{- $has_client_cert := and (file.Exists $mysql_client_crt) (file.Exists $mysql_client_key) }}
+{{- $has_ca := file.Exists $mysql_ca }}
+{{- $ssl_primary := coll.Dict
+      "var" "$pdo_options"
+      "enabled" (or $has_client_cert $has_ca (conv.ToBool (getenv "DESKPRO_DB_SSL_ENABLED" "false")))
+      "verify" (conv.ToBool (getenv "DESKPRO_DB_SSL_VERIFY_SERVER_CERT" "false"))
+      "ca" (test.Ternary $mysql_ca "" $has_ca)
+      "clientCrt" (test.Ternary $mysql_client_crt "" $has_client_cert)
+      "clientKey" (test.Ternary $mysql_client_key "" $has_client_cert) }}
+
+{{template "pdoSslOptions" $ssl_primary}}
 
 $CONFIG['database'] = [
     'host'        => {{ (getenv "DESKPRO_DB_HOST" "mysql") | squote }},
@@ -33,8 +56,29 @@ __VAL__,
 ];
 
 $CONFIG['database_advanced'] = [];
+{{- $read_client_crt := "/srv/deskpro/INSTANCE_DATA/mysql-read-client.crt" }}
+{{- $read_client_key := "/srv/deskpro/INSTANCE_DATA/mysql-read-client.key" }}
+{{- $read_ca := "/srv/deskpro/INSTANCE_DATA/mysql-read-ca.pem" }}
+{{- $read_own_client_cert := and (file.Exists $read_client_crt) (file.Exists $read_client_key) }}
+{{- $read_own_ca := file.Exists $read_ca }}
+{{- /* any certificate of its own makes this connection's directory authoritative */}}
+{{- $read_own := or $read_own_ca (file.Exists $read_client_crt) (file.Exists $read_client_key) }}
+{{- $read_use_ca := test.Ternary (test.Ternary $read_ca "" $read_own_ca) $ssl_primary.ca $read_own }}
+{{- $read_use_crt := test.Ternary (test.Ternary $read_client_crt "" $read_own_client_cert) $ssl_primary.clientCrt $read_own }}
+{{- $read_use_key := test.Ternary (test.Ternary $read_client_key "" $read_own_client_cert) $ssl_primary.clientKey $read_own }}
+{{- $read_enabled_env := getenv "DESKPRO_DB_READ_SSL_ENABLED" }}
+{{- $read_verify_env := getenv "DESKPRO_DB_READ_SSL_VERIFY_SERVER_CERT" }}
+{{- $ssl_read := coll.Dict
+      "var" "$pdo_options_read"
+      "enabled" (or (ne $read_use_ca "") (ne $read_use_crt "") (test.Ternary (conv.ToBool $read_enabled_env) $ssl_primary.enabled (ne $read_enabled_env "")))
+      "verify" (test.Ternary (conv.ToBool $read_verify_env) $ssl_primary.verify (ne $read_verify_env ""))
+      "ca" $read_use_ca
+      "clientCrt" $read_use_crt
+      "clientKey" $read_use_key }}
 
 {{if getenv "DESKPRO_DB_READ_HOST" }}
+$pdo_options_read = [];
+{{- template "pdoSslOptions" $ssl_read}}
 $CONFIG['database_advanced']['read'] = [
   'host'        => {{ getenv "DESKPRO_DB_READ_HOST" | squote }},
   'port'        => {{ (getenv "DESKPRO_DB_READ_PORT" (getenv "DESKPRO_DB_PORT")) | default "3306" | squote }},
@@ -43,10 +87,31 @@ $CONFIG['database_advanced']['read'] = [
 {{ (getenv "DESKPRO_DB_READ_PASS" (getenv "DESKPRO_DB_PASS")) | default "deskpro" }}
 __VAL__,
   'dbname'      => {{ (getenv "DESKPRO_DB_READ_NAME" (getenv "DESKPRO_DB_NAME")) | default "deskpro" | squote }},
-  'pdo_options' => $pdo_options ?? [],
+  'pdo_options' => $pdo_options_read ?? [],
 ];
 {{end}}
+{{- $reports_client_crt := "/srv/deskpro/INSTANCE_DATA/mysql-reports-client.crt" }}
+{{- $reports_client_key := "/srv/deskpro/INSTANCE_DATA/mysql-reports-client.key" }}
+{{- $reports_ca := "/srv/deskpro/INSTANCE_DATA/mysql-reports-ca.pem" }}
+{{- $reports_own_client_cert := and (file.Exists $reports_client_crt) (file.Exists $reports_client_key) }}
+{{- $reports_own_ca := file.Exists $reports_ca }}
+{{- /* any certificate of its own makes this connection's directory authoritative */}}
+{{- $reports_own := or $reports_own_ca (file.Exists $reports_client_crt) (file.Exists $reports_client_key) }}
+{{- $reports_use_ca := test.Ternary (test.Ternary $reports_ca "" $reports_own_ca) $ssl_primary.ca $reports_own }}
+{{- $reports_use_crt := test.Ternary (test.Ternary $reports_client_crt "" $reports_own_client_cert) $ssl_primary.clientCrt $reports_own }}
+{{- $reports_use_key := test.Ternary (test.Ternary $reports_client_key "" $reports_own_client_cert) $ssl_primary.clientKey $reports_own }}
+{{- $reports_enabled_env := getenv "DESKPRO_DB_REPORTS_SSL_ENABLED" }}
+{{- $reports_verify_env := getenv "DESKPRO_DB_REPORTS_SSL_VERIFY_SERVER_CERT" }}
+{{- $ssl_reports := coll.Dict
+      "var" "$pdo_options_reports"
+      "enabled" (or (ne $reports_use_ca "") (ne $reports_use_crt "") (test.Ternary (conv.ToBool $reports_enabled_env) $ssl_primary.enabled (ne $reports_enabled_env "")))
+      "verify" (test.Ternary (conv.ToBool $reports_verify_env) $ssl_primary.verify (ne $reports_verify_env ""))
+      "ca" $reports_use_ca
+      "clientCrt" $reports_use_crt
+      "clientKey" $reports_use_key }}
 {{if getenv "DESKPRO_DB_REPORTS_HOST" }}
+$pdo_options_reports = [];
+{{- template "pdoSslOptions" $ssl_reports}}
 $CONFIG['database_advanced']['read_reports'] = [
   'host'        => {{ (getenv "DESKPRO_DB_REPORTS_HOST") | squote }},
   'port'        => {{ (getenv "DESKPRO_DB_REPORTS_PORT" (getenv "DESKPRO_DB_PORT")) | default "3306" | squote }},
@@ -55,7 +120,7 @@ $CONFIG['database_advanced']['read_reports'] = [
 {{ (getenv "DESKPRO_DB_REPORTS_PASS" (getenv "DESKPRO_DB_PASS")) | default "deskpro" }}
 __VAL__,
   'dbname'      => {{ (getenv "DESKPRO_DB_REPORTS_NAME" (getenv "DESKPRO_DB_NAME")) | default "deskpro" | squote }},
-  'pdo_options' => $pdo_options ?? [],
+  'pdo_options' => $pdo_options_reports ?? [],
 ];
 {{end}}
 

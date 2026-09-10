@@ -15,7 +15,7 @@ status: current
 
 Learning-oriented. For someone new to this.
 
-*No tutorials yet.*
+_No tutorials yet._
 
 ## How-to guides
 
@@ -24,8 +24,9 @@ Task-oriented. For someone who knows what they're trying to do.
 - [Run Deskpro with Docker Compose](./how-to/run-with-docker-compose.md) — stand up the full stack locally.
 - [Run background tasks in dedicated containers](./how-to/run-background-tasks-separately.md) — split email services out from the generic tasks loop.
 - [Update a Deskpro deployment](./how-to/update-deskpro.md) — pull, back up, migrate, restart.
-- [Configure Deskpro behind a reverse proxy](./how-to/configure-reverse-proxy.md) — X-Forwarded-*, PROXY protocol, Cloudflare.
-- [Enable HTTPS on the built-in web server](./how-to/enable-https.md) — mounting a cert, the testing cert warning, custom CAs, MySQL TLS.
+- [Configure Deskpro behind a reverse proxy](./how-to/configure-reverse-proxy.md) — X-Forwarded-\*, PROXY protocol, Cloudflare.
+- [Enable HTTPS on the built-in web server](./how-to/enable-https.md) — mounting a cert, the testing cert warning, custom CAs.
+- [Connect to MySQL over TLS](./how-to/connect-to-mysql-over-tls.md) — encryption only, server cert verification, client certificates.
 - [Debug a running Deskpro container](./how-to/debug-a-running-container.md) — logs, shell, `container-var`, manual job invocation.
 
 ## Reference
@@ -54,10 +55,10 @@ Sub-directories of this repo that have their own docs:
 
 ## Decisions
 
-*No ADRs yet.* Add architecture decision records under [`decisions/`](./decisions/) when you make a choice that future contributors will need to understand.
+_No ADRs yet._ Add architecture decision records under [`decisions/`](./decisions/) when you make a choice that future contributors will need to understand.
 
 ## External resources
 
 - [Public release notes](https://github.com/deskpro/docker-product-base/releases) — what changed in each container version.
-- [Customer-facing deployment guides](https://support.deskpro.com/en-US/guides/deskpro-private-controller) — install, configure, operate. Aimed at users of the *product* image, not maintainers of *this* repo.
+- [Customer-facing deployment guides](https://support.deskpro.com/en-US/guides/deskpro-private-controller) — install, configure, operate. Aimed at users of the _product_ image, not maintainers of _this_ repo.
 - [`deskpro/docker-compose-example`](https://github.com/deskpro/docker-compose-example) — reference Compose stack.
