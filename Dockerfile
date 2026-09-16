@@ -306,7 +306,7 @@ RUN apt-get update \
 #   libssh2 (via libcurl) -- CVE-2026-55200 (use-after-free, PoC exists)
 #   libheif (via libgd3 <- php8.3-gd) -- CVE-2026-62289, CVE-2026-62292
 ARG OPENSSL_VERSION="3.5.7-1~deb13u2"
-ARG LIBSSH2_VERSION="1.11.1-1+deb13u1"
+ARG LIBSSH2_VERSION="1.11.1-1+deb13u2"
 ARG LIBHEIF_VERSION="1.19.8-1+deb13u1"
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
