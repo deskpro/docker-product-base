@@ -20,6 +20,7 @@ test:
         BUILD +test-serverspec-simple-cases
         BUILD +test-custom-configs
         BUILD +test-custom-logs-group
+        BUILD +test-smokescreen
     END
     WAIT
         BUILD +test-autoinstall
@@ -148,6 +149,39 @@ test-custom-logs-group:
             && docker stop test
     END
     RUN echo "/tmp/deskpro-logs/logtest-php-error.log should be owned by logs_group" && stat /tmp/deskpro-logs/logtest-php-error.log | grep 1988
+
+# test-smokescreen checks the smokescreen egress proxy: the
+# DISABLE_DESKPRO_PROXY_SERVICE opt-out (daemon + env vars both off), and the operator
+# config-file override (mounted via /deskpro/config/smokescreen.d/).
+test-smokescreen:
+    FROM earthly/dind:alpine
+    COPY --dir serverspec/spec/scenarios/smokescreen/deskpro_dir /tmp/deskpro-dir
+    WITH DOCKER --load deskpro/docker-product-base:test=+base-image
+        RUN \
+            docker run -d --name test-disabled \
+                -e DISABLE_DESKPRO_PROXY_SERVICE=true \
+                deskpro/docker-product-base:test web \
+            && docker exec test-disabled /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/01_smokescreen_disabled_spec.rb' \
+            && docker stop test-disabled \
+            && docker run -d --name test-override \
+                -e SMOKESCREEN_CONFIG_FILE=/etc/smokescreen/custom.yaml \
+                -v /tmp/deskpro-dir:/deskpro \
+                deskpro/docker-product-base:test web \
+            && docker exec test-override /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/02_smokescreen_override_spec.rb' \
+            && docker stop test-override \
+            && docker run -d --name test-no-proxy \
+                -e DESKPRO_DB_HOST=dbhost.internal \
+                -e NO_PROXY=operator-extra.internal \
+                deskpro/docker-product-base:test web \
+            && docker exec test-no-proxy /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/03_smokescreen_no_proxy_derivation_spec.rb' \
+            && docker stop test-no-proxy \
+            && docker run -d --name test-no-proxy-urls \
+                -e DESKPRO_ES_URL=https://es.internal:9200 \
+                -e DESKPRO_ES_TIKA_HOST=http://tika.internal:9998 \
+                deskpro/docker-product-base:test web \
+            && docker exec test-no-proxy-urls /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/04_smokescreen_no_proxy_url_hosts_spec.rb' \
+            && docker stop test-no-proxy-urls
+    END
 
 # Built on top of the product base image, this just adds test sources
 # and simulation sources used when testing various container features.
