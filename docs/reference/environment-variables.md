@@ -206,6 +206,22 @@ See [reference/logging.md](./logging.md).
 | `DESKPRO_API_BASE_URL_PRIVATE` | Internal API URL. Default `http://127.0.0.1:80`. When localhost, triggers nginx+FPM auto-start in task modes. |
 | `CUSTOM_MOUNT_BASEDIR` | Operator mount root. Default `/deskpro`. |
 
+## Egress proxy
+
+By default, product-code egress (PHP-FPM, tasks, email workers) routes outbound HTTP(S) traffic through [smokescreen](https://github.com/stripe/smokescreen), a forward proxy bundled in the base image, for every run mode that executes that code. It blocks requests to private/loopback/link-local/CGNAT destinations (this covers cloud metadata endpoints like `169.254.169.254`) without any product-code changes. See [boot-flow.md](../explanation/boot-flow.md) for where this fits in boot.
+
+Vector is intentionally exempt — it's not product code, and its AWS SDK needs direct access to the metadata/ECS credential endpoints that the proxy blocks.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `DISABLE_DESKPRO_PROXY_SERVICE` | `false` | Set `true` to turn the whole feature off: the smokescreen daemon doesn't start and none of the proxy vars below are exported. Outbound traffic then goes direct, without this proxy's range blocking. |
+| `HTTP_PROXY` / `http_proxy` | `http://127.0.0.1:3128` | Set automatically when the proxy is enabled. Not meant to be set directly. |
+| `HTTPS_PROXY` / `https_proxy` | `http://127.0.0.1:3128` | As above, for HTTPS. |
+| `ALL_PROXY` / `all_proxy` | `http://127.0.0.1:3128` | As above, for tools that only read the generic form. |
+| `NO_PROXY` / `no_proxy` | `localhost,127.0.0.1,::1` + internal backend hosts | Hosts that bypass the proxy. The default is derived and additive: loopback plus the host portion of whichever of `DESKPRO_DB_HOST`, `DESKPRO_DB_READ_HOST`, `DESKPRO_DB_REPORTS_HOST`, `DESKPRO_REDIS_HOST`, `DESKPRO_ES_URL`, `DESKPRO_ES_TIKA_HOST` are set. If you set `NO_PROXY` yourself, your entries are appended to that list, not a replacement for it. |
+| `SMOKESCREEN_CONFIG_FILE` | — | Path to a smokescreen top-level config file (`--config-file`; schema is `deny_ranges`/`allow_ranges`/`acl_file`/etc, not the ACL-only schema used by `--egress-acl-file`). Empty by default — no flag passed, just smokescreen's built-in range blocking. Mount a file under `CUSTOM_MOUNT_BASEDIR/config/smokescreen.d/` (copied to `/etc/smokescreen/`) and point this at it to add restrictions on top of the defaults. |
+| `SVC_SMOKESCREEN_ENABLED` | `false` | Set in `15-run-mode.sh`; determines whether the smokescreen supervisor program autostarts. `isPrivate: true`, same as the other `SVC_*_ENABLED` vars. |
+
 ## Control
 
 | Variable | Default | Purpose |

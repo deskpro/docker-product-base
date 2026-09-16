@@ -41,6 +41,23 @@ RUN apt-get update && apt-get install -y curl ca-certificates \
 
 
 
+# Builds the smokescreen egress forward proxy from source.
+# Stripe does not publish binary releases or an official image for
+# smokescreen, so instead of a downloaded+checksummed binary (the pattern
+# used for gomplate below) we pin an exact upstream commit via Go module
+# pseudo-version + go.sum and let `go mod download` verify it against both
+# go.sum and the public sum.golang.org checksum database.
+#   Pinned commit: 82f05bfded5885914108d3f6eb9bf91ebd871728 (v0.0.5-0.20260909080646-82f05bfded58)
+#   Verified: GPG-signed by GitHub on the upstream commit (gauthamw-stripe, 2026-09-09)
+#   Checksum: see smokescreen/go.sum -- "github.com/stripe/smokescreen v0.0.5-..." h1: line
+FROM docker.io/library/golang:1.26.8 AS builder-smokescreen
+WORKDIR /src
+COPY smokescreen/go.mod smokescreen/go.sum ./
+RUN go mod download
+COPY smokescreen/main.go ./
+RUN CGO_ENABLED=0 go build -trimpath -o /out/smokescreen . \
+    && /out/smokescreen --help
+
 # builder stage -- builds essential security-patched packages from source
 # SIMPLIFIED: Use system packages from debian:13.5-slim instead of source builds
 FROM debian:13.5-slim AS builder-security-packages
@@ -214,6 +231,7 @@ COPY --from=builder-go-binaries /usr/local/bin/gomplate /usr/local/bin/gomplate
 # Nginx installed directly in stage1 - no COPY needed
 COPY --from=composer:2.10.3 /usr/bin/composer /usr/local/bin/composer
 COPY --from=timberio/vector:0.51.1-debian /usr/bin/vector /usr/local/bin/vector
+COPY --from=builder-smokescreen /out/smokescreen /usr/local/bin/smokescreen
 COPY --from=node:22.23.2-bookworm /usr/local/bin /usr/local/bin
 COPY --from=node:22.23.2-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
 # Upgrade npm -- the npm bundled with node ships a vulnerable picomatch
@@ -388,10 +406,14 @@ RUN set -e \
     # a distro-default UID/GID, so force it to our fixed UID 1085 if it exists.
     && if getent group nginx >/dev/null 2>&1; then groupmod -g 1085 nginx; else addgroup --gid 1085 nginx; fi \
     && if id nginx >/dev/null 2>&1; then usermod -u 1085 -g 1085 nginx; else adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1085 --gid 1085 nginx; fi \
+    # smokescreen runs as its own unprivileged user -- it never needs root
+    && addgroup --gid 1086 smokescreen \
+    && adduser --system --shell /bin/false --no-create-home --disabled-password --uid 1086 --gid 1086 smokescreen \
     # initialize dirs and owners
     && mkdir -p /var/log/nginx /var/log/php /var/log/deskpro /var/log/supervisor /var/lib/vector \
     && mkdir -p /srv/deskpro/INSTANCE_DATA/deskpro-config.d \
-    && chown root:root /usr/local/bin/vector \
+    && mkdir -p /etc/smokescreen && chmod 0755 /etc/smokescreen \
+    && chown root:root /usr/local/bin/vector /usr/local/bin/smokescreen \
     && chown vector:adm /var/lib/vector \
     && chown nginx:adm /var/log/nginx \
     && chown dp_app:adm /var/log/php /var/log/deskpro \

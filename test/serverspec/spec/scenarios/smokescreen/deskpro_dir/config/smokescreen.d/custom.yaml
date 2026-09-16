@@ -1,0 +1,9 @@
+# Top-level smokescreen config schema (pkg/smokescreen/config_loader.go),
+# not the egress-ACL schema (that's a separate file via this config's own
+# acl_file: key, or --egress-acl-file directly).
+#
+# Denies an example/documentation range (RFC 5737 TEST-NET-3) that isn't
+# covered by smokescreen's built-in defaults, so the test can prove this
+# file's content -- not just its presence -- took effect.
+deny_ranges:
+  - "203.0.113.0/24"
