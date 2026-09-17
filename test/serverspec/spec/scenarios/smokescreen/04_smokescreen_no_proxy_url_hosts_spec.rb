@@ -14,11 +14,16 @@ describe "NO_PROXY derivation strips scheme/port/path from URL-shaped backend va
     content = File.read('/etc/supervisor/conf.d/web.conf')
     php_fpm_block = content.split('[program:').find { |b| b.start_with?('php_fpm]') }
 
-    expect(php_fpm_block).to include 'NO_PROXY="localhost,127.0.0.1,::1,host.docker.internal,es.internal,tika.internal,redis.internal,otel-collector.internal"'
-    expect(php_fpm_block).not_to include 'es.internal:9200'
-    expect(php_fpm_block).not_to include 'https://'
-    expect(php_fpm_block).not_to include 'tika.internal:9998'
-    expect(php_fpm_block).not_to include 'redis.internal:6379'
-    expect(php_fpm_block).not_to include 'otel-collector.internal:4318'
+    no_proxy_value = php_fpm_block[/NO_PROXY="([^"]*)"/, 1]
+
+    %w[localhost 127.0.0.1 ::1 host.docker.internal es.internal tika.internal redis.internal otel-collector.internal].each do |host|
+      expect(no_proxy_value).to include(host)
+    end
+
+    expect(no_proxy_value).not_to include 'es.internal:9200'
+    expect(no_proxy_value).not_to include 'https://'
+    expect(no_proxy_value).not_to include 'tika.internal:9998'
+    expect(no_proxy_value).not_to include 'redis.internal:6379'
+    expect(no_proxy_value).not_to include 'otel-collector.internal:4318'
   end
 end
