@@ -1,0 +1,4 @@
+#!/bin/bash
+# Stub dump-cfg that fails.
+echo "error: no config found" >&2
+exit 1

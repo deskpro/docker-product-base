@@ -33,7 +33,11 @@ describe "smokescreen egress proxy: on by default" do
     php_fpm_block = content.split('[program:').find { |b| b.start_with?('php_fpm]') }
     expect(php_fpm_block).to include 'HTTP_PROXY="http://127.0.0.1:3128"'
     expect(php_fpm_block).to include 'HTTPS_PROXY="http://127.0.0.1:3128"'
-    expect(php_fpm_block).to include 'NO_PROXY="localhost,127.0.0.1,::1"'
+    expect(php_fpm_block).to include 'NO_PROXY="localhost,127.0.0.1,::1,host.docker.internal"'
+  end
+
+  it "no-ops the config.php merge stub when dump-cfg isn't present (base image never ships it)" do
+    expect(File.exist?('/srv/deskpro/serve/bin/dump-cfg')).to be false
   end
 
   describe "egress classification" do

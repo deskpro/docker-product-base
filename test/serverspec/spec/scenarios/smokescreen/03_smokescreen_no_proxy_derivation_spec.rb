@@ -13,7 +13,7 @@ describe "NO_PROXY default is derived and additive" do
     content = File.read('/etc/supervisor/conf.d/web.conf')
     php_fpm_block = content.split('[program:').find { |b| b.start_with?('php_fpm]') }
 
-    expect(php_fpm_block).to include 'NO_PROXY="localhost,127.0.0.1,::1,dbhost.internal,operator-extra.internal"'
+    expect(php_fpm_block).to include 'NO_PROXY="localhost,127.0.0.1,::1,host.docker.internal,dbhost.internal,operator-extra.internal"'
     # No doubled/empty commas from the unset backend vars.
     expect(php_fpm_block).not_to include ',,'
   end
