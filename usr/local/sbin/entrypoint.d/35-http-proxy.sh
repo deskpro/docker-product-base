@@ -135,7 +135,7 @@ merge_config_php_hosts() {
       .elastic.host, .elastic.tika_host,
       .redis.host, .redis.url,
       .otel.endpoint
-    ] | .[] | select(. != null)
+    ] | .[] | (. // empty)
   ' <<< "$json" 2>/dev/null)
 
   if [ "${#config_values[@]}" -eq 0 ]; then

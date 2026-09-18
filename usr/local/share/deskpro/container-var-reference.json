@@ -667,7 +667,8 @@
     "description": "Standard OpenTelemetry SDK var (not Deskpro-prefixed) pointing at an OTLP collector endpoint. Read (not set) by this image only to derive the NO_PROXY default -- see 35-http-proxy.sh -- so a local/internal collector isn't routed through the egress proxy.",
     "type": "string",
     "default": "",
-    "isPrivate": false
+    "isPrivate": false,
+    "setEnv": false
   },
   {
     "name": "PANGEA_SVC_ENABLED",
