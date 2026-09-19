@@ -74,7 +74,7 @@ The run-mode script sets these variables:
 
 These are all read in the supervisord config templates (`etc/supervisor/conf.d/*.conf.tmpl`) to set `autostart`. They are `isPrivate: true` in the var reference — you can override them, but doing so bypasses the run-mode logic and generally isn't necessary.
 
-`SVC_SMOKESCREEN_ENABLED` is set for every mode that executes product code (i.e. anything that isn't `none`) — web, tasks, and email modes all make outbound calls, so it's enabled broadly rather than mode-by-mode. `DISABLE_DESKPRO_PROXY_SERVICE=true` forces it off regardless of run mode. See [environment-variables.md](./environment-variables.md#egress-proxy).
+`SVC_SMOKESCREEN_ENABLED` is set for every mode that executes product code (i.e. anything that isn't `none`) — web, tasks, and email modes all make outbound calls, so it's enabled broadly rather than mode-by-mode. `DISABLE_DESKPRO_PROXY_SERVICE=true` forces it off regardless of run mode, unless `SVC_SMOKESCREEN_ENABLED` is set explicitly — an explicit value wins for the daemon. See [environment-variables.md](./environment-variables.md#egress-proxy).
 
 ## Picking a deployment topology
 

@@ -442,7 +442,7 @@
   },
   {
     "name": "DISABLE_DESKPRO_PROXY_SERVICE",
-    "description": "Operator-facing master switch: set true to disable the smokescreen egress proxy entirely -- the daemon does not start and HTTP_PROXY/HTTPS_PROXY/ALL_PROXY/NO_PROXY (and their lowercase forms) are not exported. Outbound traffic then goes direct, without this proxy's range blocking. This is the only var meant to be set directly; it overrides SVC_SMOKESCREEN_ENABLED regardless of run mode.",
+    "description": "Operator-facing switch: set true to stop exporting HTTP_PROXY/HTTPS_PROXY/ALL_PROXY/NO_PROXY (and their lowercase forms) -- outbound traffic then goes direct, without this proxy's range blocking. It also stops the daemon, UNLESS SVC_SMOKESCREEN_ENABLED is set explicitly, in which case that value wins for the daemon (e.g. keep the daemon running as a boundary while turning off blanket env-based proxying).",
     "type": "boolean",
     "default": "false",
     "isPrivate": false,
@@ -999,7 +999,7 @@
   },
   {
     "name": "SVC_SMOKESCREEN_ENABLED",
-    "description": "Internal per-run-mode gate, not an operator switch: set in 15-run-mode.sh and read by the supervisor config to decide autostart. On by default for any run mode that executes product code, off for \"none\" mode. DISABLE_DESKPRO_PROXY_SERVICE=true always forces this off regardless of run mode -- set that instead of this one.",
+    "description": "Per-run-mode gate read by the supervisor config to decide daemon autostart. Normally derived in 15-run-mode.sh (on for any run mode that executes product code, off for \"none\" mode, off if DISABLE_DESKPRO_PROXY_SERVICE=true) -- but it is operator-overridable: set it explicitly to pin the daemon on or off regardless of that derivation, including regardless of DISABLE_DESKPRO_PROXY_SERVICE. DISABLE_DESKPRO_PROXY_SERVICE otherwise only controls the *_PROXY env export, not the daemon.",
     "type": "boolean",
     "default": "false",
     "isPrivate": true,

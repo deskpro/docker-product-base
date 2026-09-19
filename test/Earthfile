@@ -200,7 +200,23 @@ test-smokescreen:
                 -v /tmp/dump-cfg-fixtures/dump-cfg-malformed:/srv/deskpro/serve/bin/dump-cfg \
                 deskpro/docker-product-base:test web \
             && docker exec test-dump-cfg-malformed /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/07_smokescreen_config_php_malformed_fallback_spec.rb' \
-            && docker stop test-dump-cfg-malformed
+            && docker stop test-dump-cfg-malformed \
+            && docker run -d --name test-disable-false \
+                -e DISABLE_DESKPRO_PROXY_SERVICE=false \
+                deskpro/docker-product-base:test web \
+            && docker exec test-disable-false /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/08_smokescreen_disable_false_spec.rb' \
+            && docker stop test-disable-false \
+            && docker run -d --name test-svc-override-under-disable \
+                -e DISABLE_DESKPRO_PROXY_SERVICE=true \
+                -e SVC_SMOKESCREEN_ENABLED=true \
+                deskpro/docker-product-base:test web \
+            && docker exec test-svc-override-under-disable /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/09_smokescreen_svc_override_under_disable_spec.rb' \
+            && docker stop test-svc-override-under-disable \
+            && docker run -d --name test-svc-override-disabled \
+                -e SVC_SMOKESCREEN_ENABLED=false \
+                deskpro/docker-product-base:test web \
+            && docker exec test-svc-override-disabled /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/10_smokescreen_svc_override_disabled_spec.rb' \
+            && docker stop test-svc-override-disabled
     END
 
 # Built on top of the product base image, this just adds test sources
