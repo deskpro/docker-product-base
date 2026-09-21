@@ -1,0 +1,20 @@
+#!/bin/bash
+# Stub dump-cfg exercising the full documented shape (one value per key).
+cat <<'JSON'
+{
+  "database": {
+    "primary": {"host": "db-primary.internal"},
+    "read": {"host": "db-read.internal"},
+    "reports": {"host": "db-reports.internal"}
+  },
+  "services": {
+    "apiv2": {"url": "http://apiv2.internal:8080"},
+    "apiv1": {"url": "http://apiv1.internal"},
+    "channels": {"url": "http://channels.internal"},
+    "blobs": {"url": "http://blobs.internal"}
+  },
+  "elastic": {"host": "es-cfg.internal", "tika_host": "http://tika-cfg.internal:9998"},
+  "redis": {"host": "redis-cfg.internal", "url": "redis://redis-url-cfg.internal:6379/0"},
+  "otel": {"endpoint": "http://otel-cfg.internal:4318"}
+}
+JSON

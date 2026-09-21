@@ -38,6 +38,7 @@ install_custom_config_dirs() {
   copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/php-fpm.d" "/etc/php/8.3/fpm/pool.d"
   copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/php.d" "/etc/php/8.3/fpm/conf.d"
   copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/php.d" "/etc/php/8.3/cli/conf.d"
+  copy_custom_config_dir "$CUSTOM_MOUNT_BASEDIR/config/smokescreen.d" "/etc/smokescreen"
 }
 
 # Install the "base" deskpro config file.

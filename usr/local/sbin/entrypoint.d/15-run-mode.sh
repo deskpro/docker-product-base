@@ -123,9 +123,30 @@ function run_mode_main() {
     export HTTP_INTERNAL_MODE="true"
   fi
 
+  # smokescreen is the egress proxy. It's on by default for every run mode
+  # that executes product code -- i.e. any mode that starts a service or
+  # execs/bashes into the container, since either could make outbound HTTP
+  # calls. "none" mode (housekeeping only) doesn't need it.
+  #
+  # SVC_SMOKESCREEN_ENABLED is operator-overridable: an explicit value wins
+  # for daemon autostart; DISABLE_DESKPRO_PROXY_SERVICE controls only the
+  # *_PROXY env export. -v detects an operator-set value (this var is not
+  # pre-populated before this script).
+  if [ -v SVC_SMOKESCREEN_ENABLED ]; then
+    boot_log_message INFO "SVC_SMOKESCREEN_ENABLED explicitly set - honoring operator value ($SVC_SMOKESCREEN_ENABLED)"
+  elif [ "${DISABLE_DESKPRO_PROXY_SERVICE:-false}" == "true" ]; then
+    export SVC_SMOKESCREEN_ENABLED=false
+    boot_log_message INFO "DISABLE_DESKPRO_PROXY_SERVICE=true - smokescreen egress proxy will not start"
+  elif [ "$uses_internal_api" == "true" ]; then
+    export SVC_SMOKESCREEN_ENABLED=true
+    boot_log_message INFO "Enabling services: smokescreen"
+  else
+    export SVC_SMOKESCREEN_ENABLED=false
+  fi
+
   # copy these as container vars so we can use them later if we need to
   # inspect container state (e.g. healthcheck)
-  for varname in "SVC_NGINX_ENABLED" "SVC_PHP_FPM_ENABLED" "SVC_TASKS_ENABLED" "SVC_EMAIL_COLLECT_ENABLED" "SVC_EMAIL_PROCESS_ENABLED"; do
+  for varname in "SVC_NGINX_ENABLED" "SVC_PHP_FPM_ENABLED" "SVC_TASKS_ENABLED" "SVC_EMAIL_COLLECT_ENABLED" "SVC_EMAIL_PROCESS_ENABLED" "SVC_SMOKESCREEN_ENABLED"; do
     if [ -v "$varname" ]; then
       printf '%s' "${!varname}" > "/run/container-config/$varname"
     fi

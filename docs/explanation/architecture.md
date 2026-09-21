@@ -23,6 +23,7 @@ The [`Dockerfile`](../../Dockerfile) is multi-stage:
 | --- | --- |
 | `builder-php-exts` | Compiles PHP PECL extensions (`protobuf`, `opentelemetry`). |
 | `builder-go-binaries` | Downloads a pinned [gomplate](https://docs.gomplate.ca/) binary used for config templating at runtime. |
+| `builder-smokescreen` | Builds [smokescreen](https://github.com/stripe/smokescreen) (an egress forward proxy) from source, pinned to an exact upstream commit via `smokescreen/go.mod` + `go.sum` (no binary releases exist to pin against instead). |
 | `builder-security-packages` | Installs a set of commonly-CVE'd libraries (sqlite, expat, aom, zlib, tiff, webp, openjp2, curl) from Debian system repos. Kept as a stage for historical reasons and to make it easy to swap in custom-built versions later. |
 | `stage1` | Debian 13.3-slim base, system packages, PHP 8.3 from [deb.sury.org](https://packages.sury.org/php/), nginx from the official nginx repo (pinned by version + verified GPG fingerprint). |
 | `stage2` | Copies the PHP extensions and gomplate from the builder stages, plus `jq`, `composer`, `vector`, `node`, and `tsx` from their official images. |
@@ -45,14 +46,22 @@ flowchart TB
         tasks[tasks<br/>SVC_TASKS_ENABLED]
         ec[email_collect<br/>SVC_EMAIL_COLLECT_ENABLED]
         ep[email_process<br/>SVC_EMAIL_PROCESS_ENABLED]
+        msg[svc_messenger_api<br/>SVC_PHP_FPM_ENABLED]
+        smoke[smokescreen<br/>SVC_SMOKESCREEN_ENABLED]
     end
 
     fpm -.->|FastCGI unix socket| nginx_svc
     tasks -.->|HTTP to 127.0.0.1:80| nginx_svc
+    fpm -.->|HTTP_PROXY=127.0.0.1:3128| smoke
+    tasks -.->|HTTP_PROXY=127.0.0.1:3128| smoke
+    msg -.->|HTTP_PROXY=127.0.0.1:3128| smoke
     vector_svc -.->|reads| logs[("/var/log/*")]
     nginx_svc -->|writes| logs
     fpm -->|writes| logs
+    smoke -->|writes| logs
 ```
+
+- **smokescreen** is the default egress proxy — a forward proxy on loopback `127.0.0.1:3128` that blocks private/loopback/link-local/CGNAT and cloud metadata destination ranges by default. PHP-FPM and the tasks/email workers get `HTTP_PROXY`/`HTTPS_PROXY` pointed at it by default (`35-http-proxy.sh`). `DISABLE_DESKPRO_PROXY_SERVICE=true` turns off both the daemon and the env vars, and outbound traffic then goes direct, unless `SVC_SMOKESCREEN_ENABLED` is set explicitly, in which case that value wins for the daemon.
 
 - **supervisord** is PID 1 under the entrypoint. It manages every long-lived process and kills the container if any service enters `FATAL` (unless `NO_SHUTDOWN_ON_ERROR=true`).
 - **nginx** serves HTTP/HTTPS on ports 80, 443, 9080, 9443 (the `9xxx` ports terminate HAProxy PROXY protocol) and a status page on 10001. It proxies to PHP-FPM over unix sockets.

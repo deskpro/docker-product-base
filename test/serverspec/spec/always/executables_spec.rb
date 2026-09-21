@@ -3,6 +3,7 @@ require 'spec_helper'
 executables = [
   "/usr/local/bin/composer",
   "/usr/local/bin/gomplate",
+  "/usr/local/bin/smokescreen",
   "/usr/local/bin/vector",
   "/usr/bin/php",
   "/usr/sbin/php-fpm8.3",

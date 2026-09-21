@@ -71,3 +71,36 @@ if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKE
 .chan = "process"
 .lvl = "INFO"
 '''
+
+# smokescreen egress proxy decision log -- JSON lines (logrus), one per
+# proxied/denied request.
+[sources.smokescreen_raw]
+type = "file"
+include = [
+  "/var/log/supervisor/smokescreen.log",
+  "/var/log/supervisor/smokescreen.log.1",
+]
+ignore_not_found = true
+
+[transforms.process_smokescreen]
+type = "remap"
+inputs = ["smokescreen_raw"]
+source = '''
+if is_string(.message) && contains(string!(.message), get_env_var!("VECTOR_MARKER")) {
+  abort
+}
+
+.log_group = "supervisor-procs"
+.app = "smokescreen"
+.chan = "process"
+.lvl = "INFO"
+
+json = parse_json(.message) ?? null
+if !is_nullish(object(json) ?? null) {
+  .lvl = upcase(string(json.level) ?? "info")
+  if !is_nullish(string(json.time) ?? null) {
+    .ts = parse_timestamp(string(json.time) ?? null, "%+") ?? null
+  }
+  .parsed = json
+}
+'''

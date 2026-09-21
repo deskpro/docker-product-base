@@ -20,6 +20,7 @@ test:
         BUILD +test-serverspec-simple-cases
         BUILD +test-custom-configs
         BUILD +test-custom-logs-group
+        BUILD +test-smokescreen
     END
     WAIT
         BUILD +test-autoinstall
@@ -148,6 +149,75 @@ test-custom-logs-group:
             && docker stop test
     END
     RUN echo "/tmp/deskpro-logs/logtest-php-error.log should be owned by logs_group" && stat /tmp/deskpro-logs/logtest-php-error.log | grep 1988
+
+# test-smokescreen checks the smokescreen egress proxy: the
+# DISABLE_DESKPRO_PROXY_SERVICE opt-out (daemon + env vars both off), and the operator
+# config-file override (mounted via /deskpro/config/smokescreen.d/).
+test-smokescreen:
+    FROM earthly/dind:alpine
+    COPY --dir serverspec/spec/scenarios/smokescreen/deskpro_dir /tmp/deskpro-dir
+    COPY --dir serverspec/spec/scenarios/smokescreen/dump_cfg_fixtures /tmp/dump-cfg-fixtures
+    WITH DOCKER --load deskpro/docker-product-base:test=+base-image
+        RUN \
+            docker run -d --name test-disabled \
+                -e DISABLE_DESKPRO_PROXY_SERVICE=true \
+                deskpro/docker-product-base:test web \
+            && docker exec test-disabled /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/01_smokescreen_disabled_spec.rb' \
+            && docker stop test-disabled \
+            && docker run -d --name test-override \
+                -e SMOKESCREEN_CONFIG_FILE=/etc/smokescreen/custom.yaml \
+                -v /tmp/deskpro-dir:/deskpro \
+                deskpro/docker-product-base:test web \
+            && docker exec test-override /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/02_smokescreen_override_spec.rb' \
+            && docker stop test-override \
+            && docker run -d --name test-no-proxy \
+                -e DESKPRO_DB_HOST=dbhost.internal \
+                -e NO_PROXY=operator-extra.internal \
+                deskpro/docker-product-base:test web \
+            && docker exec test-no-proxy /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/03_smokescreen_no_proxy_derivation_spec.rb' \
+            && docker stop test-no-proxy \
+            && docker run -d --name test-no-proxy-urls \
+                -e DESKPRO_ES_URL=https://es.internal:9200 \
+                -e DESKPRO_ES_TIKA_HOST=http://tika.internal:9998 \
+                -e DESKPRO_REDIS_URL=redis://redis.internal:6379/0 \
+                -e OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.internal:4318 \
+                deskpro/docker-product-base:test web \
+            && docker exec test-no-proxy-urls /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/04_smokescreen_no_proxy_url_hosts_spec.rb' \
+            && docker stop test-no-proxy-urls \
+            && docker run -d --name test-dump-cfg-full \
+                -v /tmp/dump-cfg-fixtures/dump-cfg-full:/srv/deskpro/serve/bin/dump-cfg \
+                deskpro/docker-product-base:test web \
+            && docker exec test-dump-cfg-full /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/05_smokescreen_config_php_merge_spec.rb' \
+            && docker stop test-dump-cfg-full \
+            && docker run -d --name test-dump-cfg-nonzero \
+                -e DESKPRO_DB_HOST=dbhost.internal \
+                -v /tmp/dump-cfg-fixtures/dump-cfg-nonzero:/srv/deskpro/serve/bin/dump-cfg \
+                deskpro/docker-product-base:test web \
+            && docker exec test-dump-cfg-nonzero /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/06_smokescreen_config_php_nonzero_fallback_spec.rb' \
+            && docker stop test-dump-cfg-nonzero \
+            && docker run -d --name test-dump-cfg-malformed \
+                -e DESKPRO_DB_HOST=dbhost.internal \
+                -v /tmp/dump-cfg-fixtures/dump-cfg-malformed:/srv/deskpro/serve/bin/dump-cfg \
+                deskpro/docker-product-base:test web \
+            && docker exec test-dump-cfg-malformed /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/07_smokescreen_config_php_malformed_fallback_spec.rb' \
+            && docker stop test-dump-cfg-malformed \
+            && docker run -d --name test-disable-false \
+                -e DISABLE_DESKPRO_PROXY_SERVICE=false \
+                deskpro/docker-product-base:test web \
+            && docker exec test-disable-false /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/08_smokescreen_disable_false_spec.rb' \
+            && docker stop test-disable-false \
+            && docker run -d --name test-svc-override-under-disable \
+                -e DISABLE_DESKPRO_PROXY_SERVICE=true \
+                -e SVC_SMOKESCREEN_ENABLED=true \
+                deskpro/docker-product-base:test web \
+            && docker exec test-svc-override-under-disable /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/09_smokescreen_svc_override_under_disable_spec.rb' \
+            && docker stop test-svc-override-under-disable \
+            && docker run -d --name test-svc-override-disabled \
+                -e SVC_SMOKESCREEN_ENABLED=false \
+                deskpro/docker-product-base:test web \
+            && docker exec test-svc-override-disabled /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/10_smokescreen_svc_override_disabled_spec.rb' \
+            && docker stop test-svc-override-disabled
+    END
 
 # Built on top of the product base image, this just adds test sources
 # and simulation sources used when testing various container features.

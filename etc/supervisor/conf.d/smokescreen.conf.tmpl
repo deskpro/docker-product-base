@@ -1,0 +1,32 @@
+{{/*
+smokescreen is the default egress proxy: a forward proxy that the app
+reaches via HTTP_PROXY/HTTPS_PROXY (see 35-http-proxy.sh). It ships with
+no egress ACL by default (anonymous/unrestricted callers), relying on its
+own built-in blocking of private/loopback/link-local/CGNAT destinations
+-- that covers both cloud metadata endpoints (169.254.169.254,
+169.254.170.2) and RFC1918 addresses without us hand-maintaining an IP
+list.
+
+SMOKESCREEN_CONFIG_FILE is empty by default (no --config-file flag passed,
+just the built-in defaults). Operators wanting extra restrictions mount a
+file under CUSTOM_MOUNT_BASEDIR/config/smokescreen.d/ (copied to
+/etc/smokescreen/ by 20-custom-configs.sh) and point SMOKESCREEN_CONFIG_FILE
+at it. This is smokescreen's own top-level config schema
+(pkg/smokescreen/config_loader.go: deny_ranges, allow_ranges, acl_file, ...)
+-- not the version/services ACL-only schema used by --egress-acl-file.
+*/}}
+[program:smokescreen]
+command=/usr/local/bin/smokescreen --listen-ip=127.0.0.1 --listen-port=3128{{ $cf := getenv "SMOKESCREEN_CONFIG_FILE" "" }}{{if $cf}} --config-file='{{ $cf }}'{{end}}
+autostart={{ getenv "SVC_SMOKESCREEN_ENABLED" "false" | ternary "true" "false" }}
+autorestart=true
+exitcodes=0
+user=smokescreen
+group=smokescreen
+startsecs=1
+startretries=3
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/smokescreen.log
+stdout_logfile_maxbytes=0 {{/* Our rotate-logs task will handle rotation */}}
+stdout_logfile_backups=0
+stopsignal=TERM
+stopwaitsecs={{ getenv "FAST_SHUTDOWN" "false" | ternary "0" "10" }}

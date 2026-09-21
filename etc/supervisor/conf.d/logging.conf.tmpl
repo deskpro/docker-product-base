@@ -21,6 +21,9 @@ stopwaitsecs={{ getenv "FAST_SHUTDOWN" "false" | ternary "0" "8" }}
 # makes vector start first and shut down last so it
 # will read logs from other processes during shutdown
 priority=0
+# vector is intentionally not routed through the egress proxy: its AWS SDK
+# needs direct access to the metadata/ECS credential endpoints the proxy
+# blocks.
 environment=VECTOR_MARKER="{{ getenv "VECTOR_MARKER" "" }}",VECTOR_COLOR=never
 
 [eventlistener:rotate_logs]

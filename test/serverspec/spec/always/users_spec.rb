@@ -20,3 +20,10 @@ describe user('nginx') do
   it { should have_uid 1085 }
   it { should belong_to_primary_group 'nginx' }
 end
+
+describe user('smokescreen') do
+  it { should exist }
+  it { should have_uid 1086 }
+  it { should belong_to_primary_group 'smokescreen' }
+  it { should have_login_shell '/bin/false' }
+end

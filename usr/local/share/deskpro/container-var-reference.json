@@ -1,5 +1,21 @@
 [
   {
+    "name": "ALL_PROXY",
+    "description": "Set by 35-http-proxy.sh so all outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase all_proxy for tools that only honour the lowercase form. Not meant to be set directly -- use DISABLE_DESKPRO_PROXY_SERVICE to turn proxying off.",
+    "type": "string",
+    "default": "http://127.0.0.1:3128",
+    "isPrivate": false,
+    "setEnv": true
+  },
+  {
+    "name": "all_proxy",
+    "description": "Lowercase mirror of ALL_PROXY, set alongside it by 35-http-proxy.sh for tools that only honour the lowercase form.",
+    "type": "string",
+    "default": "http://127.0.0.1:3128",
+    "isPrivate": false,
+    "setEnv": true
+  },
+  {
     "name": "AUTO_RUN_INSTALLER",
     "description": "Automatically run the installer when the container starts for the first time and the database is empty. You may also want to set: INSTALL_ADMIN_EMAIL, INSTALL_ADMIN_PASSWORD, INSTALL_URL.",
     "type": "boolean",
@@ -425,6 +441,14 @@
     "type": "string"
   },
   {
+    "name": "DISABLE_DESKPRO_PROXY_SERVICE",
+    "description": "Operator-facing switch: set true to stop exporting HTTP_PROXY/HTTPS_PROXY/ALL_PROXY/NO_PROXY (and their lowercase forms) -- outbound traffic then goes direct, without this proxy's range blocking. It also stops the daemon, UNLESS SVC_SMOKESCREEN_ENABLED is set explicitly, in which case that value wins for the daemon (e.g. keep the daemon running as a boundary while turning off blanket env-based proxying).",
+    "type": "boolean",
+    "default": "false",
+    "isPrivate": false,
+    "setEnv": false
+  },
+  {
     "name": "HEALTHCHECK_TEST_DB_CONNECTION",
     "description": "Enable checking the database connection with the healthcheck. This confirms that the container can connect to the configured database.",
     "type": "boolean"
@@ -433,6 +457,38 @@
     "name": "HEALTHCHECK_TEST_DISCOVER",
     "description": "Enable checking the discover endpoint with the healthcheck. This confirms that the container can connect to the database and serve a web request which can be a good indicator of health.",
     "type": "boolean"
+  },
+  {
+    "name": "HTTP_PROXY",
+    "description": "Set by 35-http-proxy.sh so plain-HTTP outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase http_proxy. Not meant to be set directly -- use DISABLE_DESKPRO_PROXY_SERVICE to turn proxying off.",
+    "type": "string",
+    "default": "http://127.0.0.1:3128",
+    "isPrivate": false,
+    "setEnv": true
+  },
+  {
+    "name": "http_proxy",
+    "description": "Lowercase mirror of HTTP_PROXY, set alongside it by 35-http-proxy.sh for tools that only honour the lowercase form.",
+    "type": "string",
+    "default": "http://127.0.0.1:3128",
+    "isPrivate": false,
+    "setEnv": true
+  },
+  {
+    "name": "HTTPS_PROXY",
+    "description": "Set by 35-http-proxy.sh so HTTPS outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase https_proxy. Not meant to be set directly -- use DISABLE_DESKPRO_PROXY_SERVICE to turn proxying off.",
+    "type": "string",
+    "default": "http://127.0.0.1:3128",
+    "isPrivate": false,
+    "setEnv": true
+  },
+  {
+    "name": "https_proxy",
+    "description": "Lowercase mirror of HTTPS_PROXY, set alongside it by 35-http-proxy.sh for tools that only honour the lowercase form.",
+    "type": "string",
+    "default": "http://127.0.0.1:3128",
+    "isPrivate": false,
+    "setEnv": true
   },
   {
     "name": "HTTP_SERVE_HOST",
@@ -585,10 +641,34 @@
     "default": "auto"
   },
   {
+    "name": "NO_PROXY",
+    "description": "Comma-separated hosts that bypass the smokescreen egress proxy. The exported default is additive: loopback (localhost,127.0.0.1,::1,host.docker.internal), the host portion of any internal backend var that's set (DESKPRO_DB_HOST, DESKPRO_DB_READ_HOST, DESKPRO_DB_REPORTS_HOST, DESKPRO_REDIS_HOST, DESKPRO_REDIS_URL, DESKPRO_ES_URL, DESKPRO_ES_TIKA_HOST, OTEL_EXPORTER_OTLP_ENDPOINT), plus any hosts resolved from config.php (see 35-http-proxy.sh), plus whatever you set NO_PROXY to yourself -- your entries are appended, not a replacement.",
+    "type": "string",
+    "default": "localhost,127.0.0.1,::1 (+ internal backend hosts, additive)",
+    "isPrivate": false,
+    "setEnv": true
+  },
+  {
+    "name": "no_proxy",
+    "description": "Lowercase mirror of NO_PROXY, set alongside it by 35-http-proxy.sh for tools that only honour the lowercase form.",
+    "type": "string",
+    "default": "localhost,127.0.0.1,::1",
+    "isPrivate": false,
+    "setEnv": true
+  },
+  {
     "name": "NO_SHUTDOWN_ON_ERROR",
     "description": "By default, the container will shutdown if any of the services fail. Set this to true to stop this behaviour. This can help debugging/troubleshooting.",
     "type": "boolean",
     "default": "false"
+  },
+  {
+    "name": "OTEL_EXPORTER_OTLP_ENDPOINT",
+    "description": "Standard OpenTelemetry SDK var (not Deskpro-prefixed) pointing at an OTLP collector endpoint. Read (not set) by this image only to derive the NO_PROXY default -- see 35-http-proxy.sh -- so a local/internal collector isn't routed through the egress proxy.",
+    "type": "string",
+    "default": "",
+    "isPrivate": false,
+    "setEnv": false
   },
   {
     "name": "PANGEA_SVC_ENABLED",
@@ -800,6 +880,14 @@
     "default": "On"
   },
   {
+    "name": "SMOKESCREEN_CONFIG_FILE",
+    "description": "Path to a smokescreen top-level config file (deny_ranges, allow_ranges, acl_file, etc -- see pkg/smokescreen/config_loader.go upstream), passed as --config-file. Empty by default (no --config-file flag, just smokescreen's built-in blocking of private/loopback/link-local/CGNAT ranges). Mount a custom file under CUSTOM_MOUNT_BASEDIR/config/smokescreen.d/ (copied to /etc/smokescreen/) and point this at the copied path to add operator-defined restrictions on top of the defaults.",
+    "type": "string",
+    "default": "",
+    "isPrivate": true,
+    "setEnv": false
+  },
+  {
     "name": "SVC_EMAIL_COLLECT_ARGS_ACCOUNT_REST",
     "description": "Number of seconds to rest between connections on any specific account.",
     "type": "integer",
@@ -908,6 +996,14 @@
     "type": "boolean",
     "default": "false",
     "isPrivate": true
+  },
+  {
+    "name": "SVC_SMOKESCREEN_ENABLED",
+    "description": "Per-run-mode gate read by the supervisor config to decide daemon autostart. Normally derived in 15-run-mode.sh (on for any run mode that executes product code, off for \"none\" mode, off if DISABLE_DESKPRO_PROXY_SERVICE=true) -- but it is operator-overridable: set it explicitly to pin the daemon on or off regardless of that derivation, including regardless of DISABLE_DESKPRO_PROXY_SERVICE. DISABLE_DESKPRO_PROXY_SERVICE otherwise only controls the *_PROXY env export, not the daemon.",
+    "type": "boolean",
+    "default": "false",
+    "isPrivate": true,
+    "setEnv": true
   },
   {
     "name": "SVC_TASKS_ENABLED",

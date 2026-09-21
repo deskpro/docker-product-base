@@ -1,0 +1,4 @@
+#!/bin/bash
+# Stub dump-cfg that exits 0 with non-JSON stdout.
+echo "this is not json"
+exit 0
