@@ -181,6 +181,7 @@ test-smokescreen:
                 -e DESKPRO_ES_TIKA_HOST=http://tika.internal:9998 \
                 -e DESKPRO_REDIS_URL=redis://redis.internal:6379/0 \
                 -e OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.internal:4318 \
+                -e DESKPRO_API_BASE_URL_PRIVATE=http://deskpro_example_web:80 \
                 deskpro/docker-product-base:test web \
             && docker exec test-no-proxy-urls /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/04_smokescreen_no_proxy_url_hosts_spec.rb' \
             && docker stop test-no-proxy-urls \

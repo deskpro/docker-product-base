@@ -66,6 +66,7 @@ build_no_proxy_default() {
     DESKPRO_ES_URL
     DESKPRO_ES_TIKA_HOST
     OTEL_EXPORTER_OTLP_ENDPOINT
+    DESKPRO_API_BASE_URL_PRIVATE
   )
   local varname value host
   for varname in "${backend_vars[@]}"; do

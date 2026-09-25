@@ -1,8 +1,9 @@
 require 'spec_helper'
 
 # Container is run with DESKPRO_ES_URL, DESKPRO_ES_TIKA_HOST, DESKPRO_REDIS_URL,
-# and OTEL_EXPORTER_OTLP_ENDPOINT all set to full URLs (see Earthfile
-# test-smokescreen target) -- all URL-shaped despite some being named "_HOST".
+# OTEL_EXPORTER_OTLP_ENDPOINT, and DESKPRO_API_BASE_URL_PRIVATE all set to
+# full URLs (see Earthfile test-smokescreen target) -- all URL-shaped
+# despite some being named "_HOST".
 # Guards against a silent regression in extract_host's URL parsing
 # (scheme/credentials/port/path stripping).
 describe "NO_PROXY derivation strips scheme/port/path from URL-shaped backend vars" do
@@ -16,7 +17,7 @@ describe "NO_PROXY derivation strips scheme/port/path from URL-shaped backend va
 
     no_proxy_value = php_fpm_block[/NO_PROXY="([^"]*)"/, 1]
 
-    %w[localhost 127.0.0.1 ::1 host.docker.internal es.internal tika.internal redis.internal otel-collector.internal].each do |host|
+    %w[localhost 127.0.0.1 ::1 host.docker.internal es.internal tika.internal redis.internal otel-collector.internal deskpro_example_web].each do |host|
       expect(no_proxy_value).to include(host)
     end
 
@@ -25,5 +26,6 @@ describe "NO_PROXY derivation strips scheme/port/path from URL-shaped backend va
     expect(no_proxy_value).not_to include 'tika.internal:9998'
     expect(no_proxy_value).not_to include 'redis.internal:6379'
     expect(no_proxy_value).not_to include 'otel-collector.internal:4318'
+    expect(no_proxy_value).not_to include 'deskpro_example_web:80'
   end
 end

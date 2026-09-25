@@ -642,7 +642,7 @@
   },
   {
     "name": "NO_PROXY",
-    "description": "Comma-separated hosts that bypass the smokescreen egress proxy. The exported default is additive: loopback (localhost,127.0.0.1,::1,host.docker.internal), the host portion of any internal backend var that's set (DESKPRO_DB_HOST, DESKPRO_DB_READ_HOST, DESKPRO_DB_REPORTS_HOST, DESKPRO_REDIS_HOST, DESKPRO_REDIS_URL, DESKPRO_ES_URL, DESKPRO_ES_TIKA_HOST, OTEL_EXPORTER_OTLP_ENDPOINT), plus any hosts resolved from config.php (see 35-http-proxy.sh), plus whatever you set NO_PROXY to yourself -- your entries are appended, not a replacement.",
+    "description": "Comma-separated hosts that bypass the smokescreen egress proxy. The exported default is additive: loopback (localhost,127.0.0.1,::1,host.docker.internal), the host portion of any internal backend var that's set (DESKPRO_DB_HOST, DESKPRO_DB_READ_HOST, DESKPRO_DB_REPORTS_HOST, DESKPRO_REDIS_HOST, DESKPRO_REDIS_URL, DESKPRO_ES_URL, DESKPRO_ES_TIKA_HOST, OTEL_EXPORTER_OTLP_ENDPOINT, DESKPRO_API_BASE_URL_PRIVATE), plus any hosts resolved from config.php (see 35-http-proxy.sh), plus whatever you set NO_PROXY to yourself -- your entries are appended, not a replacement.",
     "type": "string",
     "default": "localhost,127.0.0.1,::1 (+ internal backend hosts, additive)",
     "isPrivate": false,
