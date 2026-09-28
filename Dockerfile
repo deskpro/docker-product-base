@@ -252,8 +252,8 @@ ARG ESBUILD_VERSION="0.28.1"
 #                      infinite-loop DoS fixed only in undici 8, so this is a
 #                      major bump for node-gyp
 ARG NPM_TAR_VERSION="7.5.22"
-ARG NPM_IP_ADDRESS_VERSION="10.6.0"
-ARG NPM_BRACE_EXPANSION_VERSION="5.0.9"
+ARG NPM_IP_ADDRESS_VERSION="10.7.1"
+ARG NPM_BRACE_EXPANSION_VERSION="5.0.12"
 ARG NPM_UNDICI_VERSION="8.10.2"
 RUN set -eu \
     && npm install --global "npm@${NPM_VERSION}" \
