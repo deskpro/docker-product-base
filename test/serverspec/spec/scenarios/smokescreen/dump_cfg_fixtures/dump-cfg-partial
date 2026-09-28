@@ -1,0 +1,12 @@
+#!/bin/bash
+# Stub dump-cfg missing the newer keys (services/api/internalHosts), simulating
+# a product image built before those were added to the config dump.
+cat <<'JSON'
+{
+  "database": {
+    "primary": {"host": "db-primary.internal"}
+  },
+  "elastic": {"host": "es-cfg.internal"},
+  "redis": {"host": "redis-cfg.internal"}
+}
+JSON
