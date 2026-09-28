@@ -216,7 +216,12 @@ test-smokescreen:
                 -e SVC_SMOKESCREEN_ENABLED=false \
                 deskpro/docker-product-base:test web \
             && docker exec test-svc-override-disabled /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/10_smokescreen_svc_override_disabled_spec.rb' \
-            && docker stop test-svc-override-disabled
+            && docker stop test-svc-override-disabled \
+            && docker run -d --name test-dump-cfg-partial \
+                -v /tmp/dump-cfg-fixtures/dump-cfg-partial:/srv/deskpro/serve/bin/dump-cfg \
+                deskpro/docker-product-base:test web \
+            && docker exec test-dump-cfg-partial /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/11_smokescreen_config_php_absent_keys_spec.rb' \
+            && docker stop test-dump-cfg-partial
     END
 
 # Built on top of the product base image, this just adds test sources

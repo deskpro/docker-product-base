@@ -11,10 +11,13 @@ cat <<'JSON'
     "apiv2": {"url": "http://apiv2.internal:8080"},
     "apiv1": {"url": "http://apiv1.internal"},
     "channels": {"url": "http://channels.internal"},
-    "blobs": {"url": "http://blobs.internal"}
+    "blobs": {"url": "http://blobs.internal"},
+    "widgets": {"url": "http://widgets.internal:9090"}
   },
   "elastic": {"host": "es-cfg.internal", "tika_host": "http://tika-cfg.internal:9998"},
   "redis": {"host": "redis-cfg.internal", "url": "redis://redis-url-cfg.internal:6379/0"},
-  "otel": {"endpoint": "http://otel-cfg.internal:4318"}
+  "otel": {"endpoint": "http://otel-cfg.internal:4318"},
+  "api": {"base_url": "http://api-private.internal:8443"},
+  "internalHosts": ["extra-internal-a.internal", "extra-internal-b.internal"]
 }
 JSON

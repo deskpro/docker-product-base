@@ -131,10 +131,12 @@ merge_config_php_hosts() {
   done < <(jq -r '
     [
       .database.primary.host, .database.read.host, .database.reports.host,
-      .services.apiv2.url, .services.apiv1.url, .services.channels.url, .services.blobs.url,
       .elastic.host, .elastic.tika_host,
       .redis.host, .redis.url,
-      .otel.endpoint
+      .otel.endpoint,
+      (.services // {} | .[]?.url),
+      .api.base_url,
+      (.internalHosts // [])[]
     ] | .[] | (. // empty)
   ' <<< "$json" 2>/dev/null)
 

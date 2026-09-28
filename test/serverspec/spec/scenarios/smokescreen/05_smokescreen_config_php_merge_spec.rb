@@ -13,10 +13,12 @@ describe "NO_PROXY merges hosts read from dump-cfg (config.php)" do
 
     %w[
       db-primary.internal db-read.internal db-reports.internal
-      apiv2.internal apiv1.internal channels.internal blobs.internal
+      apiv2.internal apiv1.internal channels.internal blobs.internal widgets.internal
       es-cfg.internal tika-cfg.internal
       redis-cfg.internal redis-url-cfg.internal
       otel-cfg.internal
+      api-private.internal
+      extra-internal-a.internal extra-internal-b.internal
     ].each do |host|
       expect(no_proxy_value).to include(host)
     end
@@ -27,5 +29,7 @@ describe "NO_PROXY merges hosts read from dump-cfg (config.php)" do
     expect(no_proxy_value).not_to include ':9998'
     expect(no_proxy_value).not_to include ':6379'
     expect(no_proxy_value).not_to include ':4318'
+    expect(no_proxy_value).not_to include ':8443'
+    expect(no_proxy_value).not_to include ':9090'
   end
 end
