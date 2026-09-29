@@ -8,12 +8,15 @@
 function evaluate_configs_main() {
 
   # gomplate --input-dir is recursive so we only want to specify base dirs here
+  # /etc/supervisor is intentionally NOT rendered here: its templates
+  # embed NO_PROXY (getenv), which isn't final until config.php is
+  # assembled at 41-deskpro-config.sh. 42-http-proxy.sh renders it
+  # after that, once the real value is known.
   declare -a tplDirs=(
     "/srv/deskpro/INSTANCE_DATA"
     "/etc/php/8.3"
     "/etc/vector/vector.d"
     "/etc/nginx"
-    "/etc/supervisor"
     "/etc/vector"
   )
 

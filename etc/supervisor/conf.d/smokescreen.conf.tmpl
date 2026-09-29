@@ -1,6 +1,6 @@
 {{/*
 smokescreen is the default egress proxy: a forward proxy that the app
-reaches via HTTP_PROXY/HTTPS_PROXY (see 35-http-proxy.sh). It ships with
+reaches via HTTP_PROXY/HTTPS_PROXY (see 42-http-proxy.sh). It ships with
 no egress ACL by default (anonymous/unrestricted callers), relying on its
 own built-in blocking of private/loopback/link-local/CGNAT destinations
 -- that covers both cloud metadata endpoints (169.254.169.254,

@@ -2,13 +2,28 @@
 #######################################################################
 # Exports HTTP_PROXY/HTTPS_PROXY/ALL_PROXY/NO_PROXY (+lowercase) so
 # services route egress through the local proxy. No-op when
-# DISABLE_DESKPRO_PROXY_SERVICE=true. Runs before 40-evaluate-configs.sh
-# so templates can read them.
+# DISABLE_DESKPRO_PROXY_SERVICE=true.
+#
+# Runs AFTER 41-deskpro-config.sh (not before 40-evaluate-configs.sh,
+# as this used to) because NO_PROXY's config.php-derived hosts
+# (internalHosts/services/api.base_url, read via dump-cfg) require
+# config.php to already be assembled -- dump-cfg boots the Deskpro
+# kernel, which requires config.php. Before 41 runs, config.php does
+# not exist yet, so dump-cfg would fail and those hosts would be
+# silently dropped from NO_PROXY.
+#
+# Because of that, /etc/supervisor is deliberately excluded from
+# 40-evaluate-configs.sh's template dirs: its templates bake NO_PROXY
+# in via gomplate's getenv, so they can't be rendered correctly until
+# the real value is known. This script renders /etc/supervisor itself,
+# after exporting the final NO_PROXY, using the same gomplate pattern
+# 40-evaluate-configs.sh uses for the other template dirs.
 #######################################################################
 
 http_proxy_main() {
   if [ "${DISABLE_DESKPRO_PROXY_SERVICE:-false}" == "true" ]; then
     boot_log_message INFO "DISABLE_DESKPRO_PROXY_SERVICE=true - egress proxy env vars will not be set"
+    render_supervisor_configs
     return 0
   fi
 
@@ -31,6 +46,37 @@ http_proxy_main() {
   export no_proxy="$no_proxy_value"
 
   boot_log_message TRACE "Egress proxy vars set: HTTP_PROXY=$proxy_url NO_PROXY=$no_proxy_value"
+
+  render_supervisor_configs
+}
+
+#######################################################################
+# Renders /etc/supervisor's .tmpl files now that NO_PROXY (and friends)
+# are set. Same gomplate invocation/retry pattern as
+# 40-evaluate-configs.sh uses for its template dirs.
+#######################################################################
+render_supervisor_configs() {
+  local i
+  i="$(realpath /etc/supervisor)"
+
+  set +o errexit
+
+  if [ -d "$i" ]; then
+    /usr/local/bin/gomplate --include="*.tmpl" --input-dir="$i" --output-map="$i/{{ .in | strings.ReplaceAll \".tmpl\" \"\" }}"
+
+    # if it failed then try again
+    if [ $? -ne 0 ]; then
+      /usr/local/bin/gomplate --include="*.tmpl" --input-dir="$i" --output-map="$i/{{ .in | strings.ReplaceAll \".tmpl\" \"\" }}"
+
+      # if it still failed then raise error
+      if [ $? -ne 0 ]; then
+        boot_log_message ERROR "[render_supervisor_configs] Failed to evaluate templates in $i"
+        exit 1
+      fi
+    fi
+  fi
+
+  set -o errexit
 }
 
 #######################################################################
@@ -171,4 +217,4 @@ merge_config_php_hosts() {
 }
 
 http_proxy_main
-unset http_proxy_main extract_host build_no_proxy_default merge_config_php_hosts
+unset http_proxy_main render_supervisor_configs extract_host build_no_proxy_default merge_config_php_hosts

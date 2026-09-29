@@ -1,0 +1,19 @@
+#!/bin/bash
+# Boot-order guard stub: the REAL dump-cfg boots the Deskpro kernel and
+# requires config.php to exist, unlike the other fixtures in this
+# directory (which are static and would "succeed" even before config.php
+# is assembled, masking the 35-http-proxy.sh boot-order bug). This one
+# only emits its walk-only sentinel hosts once config.php is present, so
+# a passing spec proves the whole boot path (jq parsing + dump-cfg
+# invocation timing + NO_PROXY export + template render ordering) ran
+# correctly end to end -- not just that the JSON, if read, parses.
+if [ ! -f /srv/deskpro/INSTANCE_DATA/config.php ]; then
+  exit 1
+fi
+cat <<'JSON'
+{
+  "internalHosts": ["noproxy-wiring-probe.invalid"],
+  "api": {"base_url": "http://api-wiring-probe.invalid"},
+  "services": {"probe": {"url": "http://services-wiring-probe.invalid"}}
+}
+JSON
