@@ -50,9 +50,9 @@ The entrypoint is [`usr/local/sbin/entrypoint.sh`](../../usr/local/sbin/entrypoi
 | `15-run-mode.sh` | Reads `DOCKER_CMD` and sets `SVC_*_ENABLED=true` for the services that should start. Also auto-starts nginx + PHP-FPM if a task-style mode is going to call the localhost internal API. |
 | `20-certs.sh` | Installs HTTPS certs from `/deskpro/ssl/`, syncs custom CA certs into the system trust store, wires up MySQL client certs. |
 | `20-custom-configs.sh` | Copies operator-provided configs from `/deskpro/config/*.d/` into the in-image config directories, so the template step below sees them. |
-| `35-http-proxy.sh` | Sets `HTTP_PROXY`/`HTTPS_PROXY`/`ALL_PROXY`/`NO_PROXY` (and lowercase forms) so product code routes egress through the smokescreen proxy. Skipped entirely when `DISABLE_DESKPRO_PROXY_SERVICE=true`. Runs before template evaluation so gomplate can embed these values into supervisor/php-fpm configs. |
-| `40-evaluate-configs.sh` | Runs `gomplate` over every `*.tmpl` under `/etc/{nginx,php,supervisor,vector}` and the Deskpro config dir. This is when env vars become config values. |
+| `40-evaluate-configs.sh` | Runs `gomplate` over every `*.tmpl` under `/etc/{nginx,php,vector}` and the Deskpro config dir. This is when env vars become config values. `/etc/supervisor` is deliberately excluded here — see `42-http-proxy.sh`. |
 | `41-deskpro-config.sh` | Renders `/usr/local/share/deskpro/templates/deskpro-config.php.tmpl` (or the file pointed to by `DESKPRO_CONFIG_FILE`) into `INSTANCE_DATA/` so the Deskpro app can load it. Applies `DESKPRO_CONFIG_RAW_PHP` and any `DESKPRO_CONFIG_EXTENSIONS`. |
+| `42-http-proxy.sh` | Sets `HTTP_PROXY`/`HTTPS_PROXY`/`ALL_PROXY`/`NO_PROXY` (and lowercase forms) so product code routes egress through the smokescreen proxy. Skipped entirely when `DISABLE_DESKPRO_PROXY_SERVICE=true`. Runs after `config.php` is assembled so `dump-cfg` (which requires it) can contribute internal hosts to `NO_PROXY`; then renders `/etc/supervisor`'s `*.tmpl` files itself, since they embed `NO_PROXY` via gomplate's `getenv`. |
 | `50-patches.sh` | Applies runtime patches — typically empty in the base image; the product image layers its own patches on top. |
 
 ## The role of supervisord

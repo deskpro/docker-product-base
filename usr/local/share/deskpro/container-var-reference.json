@@ -1,7 +1,7 @@
 [
   {
     "name": "ALL_PROXY",
-    "description": "Set by 35-http-proxy.sh so all outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase all_proxy for tools that only honour the lowercase form. Not meant to be set directly -- use DISABLE_DESKPRO_PROXY_SERVICE to turn proxying off.",
+    "description": "Set by 42-http-proxy.sh so all outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase all_proxy for tools that only honour the lowercase form. Not meant to be set directly -- use DISABLE_DESKPRO_PROXY_SERVICE to turn proxying off.",
     "type": "string",
     "default": "http://127.0.0.1:3128",
     "isPrivate": false,
@@ -9,7 +9,7 @@
   },
   {
     "name": "all_proxy",
-    "description": "Lowercase mirror of ALL_PROXY, set alongside it by 35-http-proxy.sh for tools that only honour the lowercase form.",
+    "description": "Lowercase mirror of ALL_PROXY, set alongside it by 42-http-proxy.sh for tools that only honour the lowercase form.",
     "type": "string",
     "default": "http://127.0.0.1:3128",
     "isPrivate": false,
@@ -460,7 +460,7 @@
   },
   {
     "name": "HTTP_PROXY",
-    "description": "Set by 35-http-proxy.sh so plain-HTTP outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase http_proxy. Not meant to be set directly -- use DISABLE_DESKPRO_PROXY_SERVICE to turn proxying off.",
+    "description": "Set by 42-http-proxy.sh so plain-HTTP outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase http_proxy. Not meant to be set directly -- use DISABLE_DESKPRO_PROXY_SERVICE to turn proxying off.",
     "type": "string",
     "default": "http://127.0.0.1:3128",
     "isPrivate": false,
@@ -468,7 +468,7 @@
   },
   {
     "name": "http_proxy",
-    "description": "Lowercase mirror of HTTP_PROXY, set alongside it by 35-http-proxy.sh for tools that only honour the lowercase form.",
+    "description": "Lowercase mirror of HTTP_PROXY, set alongside it by 42-http-proxy.sh for tools that only honour the lowercase form.",
     "type": "string",
     "default": "http://127.0.0.1:3128",
     "isPrivate": false,
@@ -476,7 +476,7 @@
   },
   {
     "name": "HTTPS_PROXY",
-    "description": "Set by 35-http-proxy.sh so HTTPS outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase https_proxy. Not meant to be set directly -- use DISABLE_DESKPRO_PROXY_SERVICE to turn proxying off.",
+    "description": "Set by 42-http-proxy.sh so HTTPS outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase https_proxy. Not meant to be set directly -- use DISABLE_DESKPRO_PROXY_SERVICE to turn proxying off.",
     "type": "string",
     "default": "http://127.0.0.1:3128",
     "isPrivate": false,
@@ -484,7 +484,7 @@
   },
   {
     "name": "https_proxy",
-    "description": "Lowercase mirror of HTTPS_PROXY, set alongside it by 35-http-proxy.sh for tools that only honour the lowercase form.",
+    "description": "Lowercase mirror of HTTPS_PROXY, set alongside it by 42-http-proxy.sh for tools that only honour the lowercase form.",
     "type": "string",
     "default": "http://127.0.0.1:3128",
     "isPrivate": false,
@@ -642,7 +642,7 @@
   },
   {
     "name": "NO_PROXY",
-    "description": "Comma-separated hosts that bypass the smokescreen egress proxy. The exported default is additive: loopback (localhost,127.0.0.1,::1,host.docker.internal), the host portion of any internal backend var that's set (DESKPRO_DB_HOST, DESKPRO_DB_READ_HOST, DESKPRO_DB_REPORTS_HOST, DESKPRO_REDIS_HOST, DESKPRO_REDIS_URL, DESKPRO_ES_URL, DESKPRO_ES_TIKA_HOST, OTEL_EXPORTER_OTLP_ENDPOINT), plus any hosts resolved from config.php (see 35-http-proxy.sh), plus whatever you set NO_PROXY to yourself -- your entries are appended, not a replacement.",
+    "description": "Comma-separated hosts that bypass the smokescreen egress proxy. The exported default is additive: loopback (localhost,127.0.0.1,::1,host.docker.internal), the host portion of any internal backend var that's set (DESKPRO_DB_HOST, DESKPRO_DB_READ_HOST, DESKPRO_DB_REPORTS_HOST, DESKPRO_REDIS_HOST, DESKPRO_REDIS_URL, DESKPRO_ES_URL, DESKPRO_ES_TIKA_HOST, OTEL_EXPORTER_OTLP_ENDPOINT), plus any hosts resolved from config.php (see 42-http-proxy.sh), plus whatever you set NO_PROXY to yourself -- your entries are appended, not a replacement.",
     "type": "string",
     "default": "localhost,127.0.0.1,::1 (+ internal backend hosts, additive)",
     "isPrivate": false,
@@ -650,7 +650,7 @@
   },
   {
     "name": "no_proxy",
-    "description": "Lowercase mirror of NO_PROXY, set alongside it by 35-http-proxy.sh for tools that only honour the lowercase form.",
+    "description": "Lowercase mirror of NO_PROXY, set alongside it by 42-http-proxy.sh for tools that only honour the lowercase form.",
     "type": "string",
     "default": "localhost,127.0.0.1,::1",
     "isPrivate": false,
@@ -664,7 +664,7 @@
   },
   {
     "name": "OTEL_EXPORTER_OTLP_ENDPOINT",
-    "description": "Standard OpenTelemetry SDK var (not Deskpro-prefixed) pointing at an OTLP collector endpoint. Read (not set) by this image only to derive the NO_PROXY default -- see 35-http-proxy.sh -- so a local/internal collector isn't routed through the egress proxy.",
+    "description": "Standard OpenTelemetry SDK var (not Deskpro-prefixed) pointing at an OTLP collector endpoint. Read (not set) by this image only to derive the NO_PROXY default -- see 42-http-proxy.sh -- so a local/internal collector isn't routed through the egress proxy.",
     "type": "string",
     "default": "",
     "isPrivate": false,

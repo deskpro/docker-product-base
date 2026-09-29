@@ -221,7 +221,12 @@ test-smokescreen:
                 -v /tmp/dump-cfg-fixtures/dump-cfg-partial:/srv/deskpro/serve/bin/dump-cfg \
                 deskpro/docker-product-base:test web \
             && docker exec test-dump-cfg-partial /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/11_smokescreen_config_php_absent_keys_spec.rb' \
-            && docker stop test-dump-cfg-partial
+            && docker stop test-dump-cfg-partial \
+            && docker run -d --name test-noproxy-boot-order \
+                -v /tmp/dump-cfg-fixtures/dump-cfg-noproxy-wiring-probe:/srv/deskpro/serve/bin/dump-cfg \
+                deskpro/docker-product-base:test web \
+            && docker exec test-noproxy-boot-order /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/12_smokescreen_no_proxy_boot_order_spec.rb' \
+            && docker stop test-noproxy-boot-order
     END
 
 # Built on top of the product base image, this just adds test sources
