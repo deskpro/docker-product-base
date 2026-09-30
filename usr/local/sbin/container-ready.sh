@@ -19,6 +19,12 @@ main() {
     (/usr/local/bin/healthcheck --wait --only --test-http 2>&1) | while IFS= read -r line; do log_message TRACE "[healthcheck:http] $line"; done
   fi
 
+  # Flag that post-boot tasks are pending *before* the container is marked ready.
+  # auto_run_tools spends a while (DB wait, migrations:status) before it decides whether
+  # to write the installer/migrations sentinels; without this marker, is-ready --check-tasks
+  # could see "ready" and "no task running" in that window and report success too early.
+  save_sentinel_runfile auto-run-tools
+
   log_message INFO "Container ready"
   date -u +"%Y-%m-%dT%H:%M:%SZ" > /run/container-ready
   chmod 0644 /run/container-ready
@@ -28,6 +34,7 @@ main() {
   # (see usr/loca/bin/healtcheck)
   # This is to avoid the container being marked as unhealthy and being killed.
   auto_run_tools
+  remove_sentinel_runfile auto-run-tools
 
   log_message TRACE "container-ready.sh tasks done"
 }

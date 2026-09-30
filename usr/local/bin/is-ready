@@ -66,6 +66,14 @@ check_ready() {
   fi
 
   if [ "$check_tasks" = "1" ]; then
+    # Set by container-ready.sh before /run/container-ready is written and cleared once
+    # auto_run_tools has finished. Covers the gap between the container becoming ready and
+    # the installer/migrations sentinels being written (DB wait + migrations:status).
+    if [ -f "/run/container-running-auto-run-tools" ]; then
+      output "Post-boot tasks are running"
+      return 1
+    fi
+
     if [ -f "/run/container-running-installer" ]; then
       output "Installer is running"
       return 1
