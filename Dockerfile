@@ -305,7 +305,9 @@ RUN apt-get update \
 #                     CVE-2026-63076 (NULL deref), CVE-2026-18798 (double free)
 #   libssh2 (via libcurl) -- CVE-2026-55200 (use-after-free, PoC exists)
 #   libheif (via libgd3 <- php8.3-gd) -- CVE-2026-62289, CVE-2026-62292
-ARG OPENSSL_VERSION="3.5.7-1~deb13u2"
+# Keep OPENSSL_VERSION in step with the libssl-dev version in trixie-security:
+# libssh2-1-dev pulls in libssl-dev, which requires a matching libssl3t64.
+ARG OPENSSL_VERSION="3.5.7-1~deb13u3"
 ARG LIBSSH2_VERSION="1.11.1-1+deb13u2"
 ARG LIBHEIF_VERSION="1.23.4-1~deb13u1"
 RUN apt-get update \
