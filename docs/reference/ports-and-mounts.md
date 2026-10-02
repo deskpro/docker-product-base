@@ -71,6 +71,7 @@ Under `/run/` the entrypoint creates several files you can probe for state:
 | --- | --- |
 | `/run/container-booted` | Timestamp when supervisord started. |
 | `/run/container-ready` | Installer and migrations finished. `is-ready` returns 0. |
+| `/run/container-running-auto-run-tools` | Post-boot tasks (DB wait, installer/migrations decision) are pending or running. `is-ready --check-tasks` waits on this. |
 | `/run/container-running-installer` | Installer is executing. |
 | `/run/container-running-migrations` | Migrations are executing. |
 | `/run/deskpro-cron-status.json` | Last cron iteration timings. |
