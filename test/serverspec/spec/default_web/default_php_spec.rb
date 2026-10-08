@@ -47,6 +47,26 @@ describe "Check default PHP and PHP-FPM configurations" do
     its(:value) { should eq '1G' }
   end
 
+  # opcache sizing defaults (env-tunable via PHP_OPCACHE_*; see
+  # scenarios/opcache_override for the override case)
+  describe file('/etc/php/8.3/mods-available/deskpro.ini') do
+    its(:content) { should match /^opcache\.max_accelerated_files = "?65536"?$/ }
+    its(:content) { should match /^opcache\.memory_consumption = "?512"?$/ }
+    its(:content) { should match /^opcache\.interned_strings_buffer = "?32"?$/ }
+  end
+
+  describe php_config('opcache.max_accelerated_files') do
+    its(:value) { should eq 65536 }
+  end
+
+  describe php_config('opcache.memory_consumption') do
+    its(:value) { should eq 512 }
+  end
+
+  describe php_config('opcache.interned_strings_buffer') do
+    its(:value) { should eq 32 }
+  end
+
   describe php_config('expose_php') do
     its(:value) { should be_empty }
   end

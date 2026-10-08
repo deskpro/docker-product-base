@@ -862,16 +862,32 @@
     "default": "1"
   },
   {
+    "name": "PHP_OPCACHE_INTERNED_STRINGS_BUFFER",
+    "description": "Size in MB of the opcache interned strings buffer (opcache.interned_strings_buffer).",
+    "type": "integer",
+    "default": "32",
+    "isPrivate": false,
+    "setEnv": false
+  },
+  {
     "name": "PHP_OPCACHE_JIT_BUFFER_SIZE",
     "description": "The amount of shared memory to reserve for compiled JIT code.",
     "type": "integer",
     "default": "0"
   },
   {
+    "name": "PHP_OPCACHE_MAX_ACCELERATED_FILES",
+    "description": "Maximum number of PHP scripts opcache can cache (opcache.max_accelerated_files). Raise for applications with many PHP files.",
+    "type": "integer",
+    "default": "65536",
+    "isPrivate": false,
+    "setEnv": false
+  },
+  {
     "name": "PHP_OPCACHE_MEMORY_CONSUMPTION",
     "description": "Memory dedicated to opcache.",
     "type": "integer",
-    "default": "128"
+    "default": "512"
   },
   {
     "name": "PHP_OPCACHE_VALIDATE_TIMESTAMPS",
