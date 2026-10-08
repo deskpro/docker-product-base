@@ -61,7 +61,7 @@ flowchart TB
     smoke -->|writes| logs
 ```
 
-- **smokescreen** is the default egress proxy — a forward proxy on loopback `127.0.0.1:3128` that blocks private/loopback/link-local/CGNAT and cloud metadata destination ranges by default. PHP-FPM and the tasks/email workers get `HTTP_PROXY`/`HTTPS_PROXY` pointed at it by default (`42-http-proxy.sh`). `DISABLE_DESKPRO_PROXY_SERVICE=true` turns off both the daemon and the env vars, and outbound traffic then goes direct, unless `SVC_SMOKESCREEN_ENABLED` is set explicitly, in which case that value wins for the daemon.
+- **smokescreen** is the optional egress proxy, off by default — a forward proxy on loopback `127.0.0.1:3128` that blocks private/loopback/link-local/CGNAT and cloud metadata destination ranges by default. By default (`DISABLE_DESKPRO_PROXY_SERVICE=true`) the daemon does not start, no proxy env vars are set, and outbound traffic goes direct. Setting `DISABLE_DESKPRO_PROXY_SERVICE=false` enables it: the daemon starts and PHP-FPM and the tasks/email workers get `HTTP_PROXY`/`HTTPS_PROXY` pointed at it (`42-http-proxy.sh`). An explicit `SVC_SMOKESCREEN_ENABLED` wins for the daemon.
 
 - **supervisord** is PID 1 under the entrypoint. It manages every long-lived process and kills the container if any service enters `FATAL` (unless `NO_SHUTDOWN_ON_ERROR=true`).
 - **nginx** serves HTTP/HTTPS on ports 80, 443, 9080, 9443 (the `9xxx` ports terminate HAProxy PROXY protocol) and a status page on 10001. It proxies to PHP-FPM over unix sockets.

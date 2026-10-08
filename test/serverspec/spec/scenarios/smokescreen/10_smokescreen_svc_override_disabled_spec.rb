@@ -1,10 +1,10 @@
 require 'spec_helper'
 
 # Container is run in web mode with SVC_SMOKESCREEN_ENABLED=false (explicit
-# operator override) and DISABLE_DESKPRO_PROXY_SERVICE unset (see Earthfile
+# operator override) and DISABLE_DESKPRO_PROXY_SERVICE=false (see Earthfile
 # test-smokescreen target). The explicit SVC_SMOKESCREEN_ENABLED wins for the
 # daemon even though the run mode would otherwise derive it on -- but since
-# DISABLE_DESKPRO_PROXY_SERVICE is unset, the proxy env vars are still
+# DISABLE_DESKPRO_PROXY_SERVICE=false, the proxy env vars are still
 # exported (DISABLE is the only thing that controls them).
 describe "explicit SVC_SMOKESCREEN_ENABLED=false stops the daemon without touching the proxy env vars" do
   before(:all) do

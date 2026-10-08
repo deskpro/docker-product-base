@@ -1,7 +1,7 @@
 [
   {
     "name": "ALL_PROXY",
-    "description": "Set by 42-http-proxy.sh so all outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase all_proxy for tools that only honour the lowercase form. Not meant to be set directly -- use DISABLE_DESKPRO_PROXY_SERVICE to turn proxying off.",
+    "description": "Set by 42-http-proxy.sh so all outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase all_proxy for tools that only honour the lowercase form. Not meant to be set directly -- only exported when DISABLE_DESKPRO_PROXY_SERVICE=false.",
     "type": "string",
     "default": "http://127.0.0.1:3128",
     "isPrivate": false,
@@ -442,9 +442,9 @@
   },
   {
     "name": "DISABLE_DESKPRO_PROXY_SERVICE",
-    "description": "Operator-facing switch: set true to stop exporting HTTP_PROXY/HTTPS_PROXY/ALL_PROXY/NO_PROXY (and their lowercase forms) -- outbound traffic then goes direct, without this proxy's range blocking. It also stops the daemon, UNLESS SVC_SMOKESCREEN_ENABLED is set explicitly, in which case that value wins for the daemon (e.g. keep the daemon running as a boundary while turning off blanket env-based proxying).",
+    "description": "Operator-facing switch for the smokescreen egress proxy. Defaults to true, so the proxy is off by default: the daemon is not started, HTTP_PROXY/HTTPS_PROXY/ALL_PROXY/NO_PROXY (and their lowercase forms) are not exported, and outbound traffic goes direct. Set false to enable the proxy (daemon plus env vars). While true, the daemon can still be started by setting SVC_SMOKESCREEN_ENABLED explicitly, in which case that value wins for the daemon.",
     "type": "boolean",
-    "default": "false",
+    "default": "true",
     "isPrivate": false,
     "setEnv": false
   },
@@ -460,7 +460,7 @@
   },
   {
     "name": "HTTP_PROXY",
-    "description": "Set by 42-http-proxy.sh so plain-HTTP outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase http_proxy. Not meant to be set directly -- use DISABLE_DESKPRO_PROXY_SERVICE to turn proxying off.",
+    "description": "Set by 42-http-proxy.sh so plain-HTTP outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase http_proxy. Not meant to be set directly -- only exported when DISABLE_DESKPRO_PROXY_SERVICE=false.",
     "type": "string",
     "default": "http://127.0.0.1:3128",
     "isPrivate": false,
@@ -476,7 +476,7 @@
   },
   {
     "name": "HTTPS_PROXY",
-    "description": "Set by 42-http-proxy.sh so HTTPS outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase https_proxy. Not meant to be set directly -- use DISABLE_DESKPRO_PROXY_SERVICE to turn proxying off.",
+    "description": "Set by 42-http-proxy.sh so HTTPS outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase https_proxy. Not meant to be set directly -- only exported when DISABLE_DESKPRO_PROXY_SERVICE=false.",
     "type": "string",
     "default": "http://127.0.0.1:3128",
     "isPrivate": false,
@@ -999,7 +999,7 @@
   },
   {
     "name": "SVC_SMOKESCREEN_ENABLED",
-    "description": "Per-run-mode gate read by the supervisor config to decide daemon autostart. Normally derived in 15-run-mode.sh (on for any run mode that executes product code, off for \"none\" mode, off if DISABLE_DESKPRO_PROXY_SERVICE=true) -- but it is operator-overridable: set it explicitly to pin the daemon on or off regardless of that derivation, including regardless of DISABLE_DESKPRO_PROXY_SERVICE. DISABLE_DESKPRO_PROXY_SERVICE otherwise only controls the *_PROXY env export, not the daemon.",
+    "description": "Per-run-mode gate read by the supervisor config to decide daemon autostart. Normally derived in 15-run-mode.sh (on, when DISABLE_DESKPRO_PROXY_SERVICE=false, for any run mode that executes product code, off for \"none\" mode, off unless DISABLE_DESKPRO_PROXY_SERVICE=false) -- but it is operator-overridable: set it explicitly to pin the daemon on or off regardless of that derivation, including regardless of DISABLE_DESKPRO_PROXY_SERVICE. DISABLE_DESKPRO_PROXY_SERVICE otherwise only controls the *_PROXY env export, not the daemon.",
     "type": "boolean",
     "default": "false",
     "isPrivate": true,
