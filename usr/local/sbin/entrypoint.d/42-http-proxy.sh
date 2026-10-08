@@ -1,8 +1,8 @@
 #!/bin/bash
 #######################################################################
 # Exports HTTP_PROXY/HTTPS_PROXY/ALL_PROXY/NO_PROXY (+lowercase) so
-# services route egress through the local proxy. No-op when
-# DISABLE_DESKPRO_PROXY_SERVICE=true.
+# services route egress through the local proxy. No-op by default; only
+# active when DISABLE_DESKPRO_PROXY_SERVICE=false.
 #
 # Runs AFTER 41-deskpro-config.sh (not before 40-evaluate-configs.sh,
 # as this used to) because NO_PROXY's config.php-derived hosts
@@ -21,8 +21,8 @@
 #######################################################################
 
 http_proxy_main() {
-  if [ "${DISABLE_DESKPRO_PROXY_SERVICE:-false}" == "true" ]; then
-    boot_log_message INFO "DISABLE_DESKPRO_PROXY_SERVICE=true - egress proxy env vars will not be set"
+  if [ "${DISABLE_DESKPRO_PROXY_SERVICE:-true}" == "true" ]; then
+    boot_log_message INFO "Egress proxy off (default) - *_PROXY env vars will not be set; set DISABLE_DESKPRO_PROXY_SERVICE=false to enable"
     render_supervisor_configs
     return 0
   fi

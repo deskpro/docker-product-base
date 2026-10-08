@@ -134,9 +134,9 @@ function run_mode_main() {
   # pre-populated before this script).
   if [ -v SVC_SMOKESCREEN_ENABLED ]; then
     boot_log_message INFO "SVC_SMOKESCREEN_ENABLED explicitly set - honoring operator value ($SVC_SMOKESCREEN_ENABLED)"
-  elif [ "${DISABLE_DESKPRO_PROXY_SERVICE:-false}" == "true" ]; then
+  elif [ "${DISABLE_DESKPRO_PROXY_SERVICE:-true}" == "true" ]; then
     export SVC_SMOKESCREEN_ENABLED=false
-    boot_log_message INFO "DISABLE_DESKPRO_PROXY_SERVICE=true - smokescreen egress proxy will not start"
+    boot_log_message INFO "Egress proxy off (default) - smokescreen will not start; set DISABLE_DESKPRO_PROXY_SERVICE=false to enable"
   elif [ "$uses_internal_api" == "true" ]; then
     export SVC_SMOKESCREEN_ENABLED=true
     boot_log_message INFO "Enabling services: smokescreen"
