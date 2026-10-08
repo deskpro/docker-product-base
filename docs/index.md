@@ -35,7 +35,7 @@ Information-oriented. For looking things up.
 - [Environment variable reference](./reference/environment-variables.md) — curated index over `container-var-reference.json`.
 - [Run modes](./reference/run-modes.md) — `web`, `tasks`, `email_collect`, `email_process`, `combined`, `svc`, `none`, `bash`, `exec`.
 - [Ports and mount conventions](./reference/ports-and-mounts.md) — EXPOSE'd ports, `/deskpro/` layout, sentinel files.
-- [Helper CLIs bundled in the image](./reference/helper-scripts.md) — `container-var`, `healthcheck`, `is-ready`, `mysql-*`, `phpinfo`, `phpfpminfo`.
+- [Helper CLIs bundled in the image](./reference/helper-scripts.md) — `container-var`, `healthcheck`, `is-ready`, `mysql-*`, `opensearch-primary`, `phpinfo`, `phpfpminfo`.
 - [Logging reference](./reference/logging.md) — vector, logfmt/JSON, boot log, custom sinks.
 
 ## Explanation

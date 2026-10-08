@@ -1,7 +1,7 @@
 ---
 title: Helper CLIs bundled in the image
 type: reference
-last_reviewed: 2026-04-17
+last_reviewed: 2026-10-08
 status: current
 ---
 
@@ -81,6 +81,35 @@ mysqldump-primary --hex-blob --single-transaction deskpro > dump.sql
 Any extra argument is passed through to the underlying tool. The wrappers write a `~/.my-auto.cnf` on first use and invoke the real client with `--defaults-group-suffix=_primary` or `_read`.
 
 Prefer `mysql-read` for read queries; it will use the read replica if one is configured, and otherwise puts the session into read-only mode.
+
+## `opensearch-primary`
+
+Thin `curl` wrapper for the OpenSearch / Elasticsearch cluster Deskpro uses. It reads the URL, credentials, TLS settings, index and alias names from `/srv/deskpro/serve/bin/dump-cfg`, so you don't have to pass any of them, and it works the same on cloud and on-prem.
+
+```bash
+opensearch-primary GET _count                        # Relative to this instance's tenant alias
+opensearch-primary GET _search -d '{"query":{"match_all":{}}}'
+echo '{"query":{"match_all":{}}}' | opensearch-primary GET _search -d @-
+opensearch-primary POST _bulk --data-binary @docs.ndjson
+opensearch-primary DELETE _doc/abc123
+opensearch-primary --index GET _mapping              # Physical index, shared by every tenant
+opensearch-primary --cluster GET _cat/indices?v      # Cluster root, no index prefix
+```
+
+The arguments are `[--index | --cluster] [--] METHOD PATH [curl args...]`:
+
+- By default `PATH` is relative to the tenant alias (`tenant_id`). The alias filters and routes to this instance's documents, and it is what Deskpro itself queries. Single-document requests (`_doc/...`) only route correctly through the alias.
+- The alias only scopes document and search APIs. Index-level APIs called through it (`_settings`, `_mapping`, `_close`, `_forcemerge`, ...) act on the physical index behind it, which every tenant on the cluster shares.
+- `--index` makes `PATH` relative to the physical index (`index_name`).
+- `--cluster` drops the prefix for cluster-level APIs. Whether these work depends on the cluster's permissions.
+- `METHOD` is required and must be one of `GET`, `HEAD`, `POST`, `PUT` or `DELETE`.
+- `PATH` is required and must start with an endpoint or document path. `.` and `..` segments are rejected, so a request can never target the index itself or escape its prefix.
+- `PATH` is sent exactly as given (no URL globbing or path normalisation), so URL-encode anything that isn't URL-safe, such as spaces.
+- Everything after `PATH` is passed through to `curl`.
+- `Content-Type` defaults to JSON, or NDJSON for `_bulk` and `_msearch`. A `-H 'Content-Type: ...'` or `-H 'Authorization: ...'` you pass replaces the script's own.
+- Credentials are passed to `curl` through a config pipe, so they never show up in the process list.
+- TLS follows Deskpro's `verify_ssl` and `ca_bundle` settings.
+- HTTP errors give a non-zero exit status, and the response body is still printed.
 
 ## `phpinfo`
 

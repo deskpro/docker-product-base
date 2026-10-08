@@ -18,6 +18,7 @@ executables = [
   "/usr/local/bin/mysql-primary",
   "/usr/local/bin/mysql-read",
   "/usr/local/bin/mysqldump-primary",
+  "/usr/local/bin/opensearch-primary",
   "/usr/local/bin/phpfpminfo",
   "/usr/local/bin/phpinfo",
   "/usr/local/bin/print-container-vars",
