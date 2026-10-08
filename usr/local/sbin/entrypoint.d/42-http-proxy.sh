@@ -4,6 +4,12 @@
 # services route egress through the local proxy. No-op by default; only
 # active when DISABLE_DESKPRO_PROXY_SERVICE=false.
 #
+# External proxy path: when DISABLE_DESKPRO_PROXY_SERVICE=true and any
+# of DESKPRO_HTTP_PROXY/DESKPRO_HTTPS_PROXY/DESKPRO_ALL_PROXY is set,
+# only NO_PROXY is derived and exported here; the DESKPRO_* values are
+# mapped onto the app services' *_PROXY env by the supervisor templates
+# (DESKPRO_* wins over the smokescreen value when both are set).
+#
 # Runs AFTER 41-deskpro-config.sh (not before 40-evaluate-configs.sh,
 # as this used to) because NO_PROXY's config.php-derived hosts
 # (internalHosts/services/api.base_url, read via dump-cfg) require
@@ -22,7 +28,21 @@
 
 http_proxy_main() {
   if [ "${DISABLE_DESKPRO_PROXY_SERVICE:-true}" == "true" ]; then
-    boot_log_message INFO "Egress proxy off (default) - *_PROXY env vars will not be set; set DISABLE_DESKPRO_PROXY_SERVICE=false to enable"
+    if [ -n "${DESKPRO_HTTP_PROXY:-}" ] || [ -n "${DESKPRO_HTTPS_PROXY:-}" ] || [ -n "${DESKPRO_ALL_PROXY:-}" ]; then
+      # External egress proxy: the DESKPRO_*_PROXY values reach the app
+      # services through the supervisor templates (they take precedence
+      # over HTTP_PROXY etc.). Only NO_PROXY is derived here, so internal
+      # hosts bypass the external proxy. The smokescreen 127.0.0.1:3128
+      # values are deliberately not set -- smokescreen is off.
+      local ext_no_proxy
+      ext_no_proxy="$(build_no_proxy_default)"
+      ext_no_proxy="$(merge_config_php_hosts "$ext_no_proxy")"
+      export NO_PROXY="$ext_no_proxy"
+      export no_proxy="$ext_no_proxy"
+      boot_log_message INFO "External egress proxy (DESKPRO_*_PROXY) active; smokescreen off; NO_PROXY derived: $ext_no_proxy"
+    else
+      boot_log_message INFO "Egress proxy off (default) - *_PROXY env vars will not be set; set DISABLE_DESKPRO_PROXY_SERVICE=false to enable the in-container proxy, or DESKPRO_HTTP_PROXY/DESKPRO_HTTPS_PROXY/DESKPRO_ALL_PROXY to use an external one"
+    fi
     render_supervisor_configs
     return 0
   fi
