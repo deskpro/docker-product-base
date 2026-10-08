@@ -1,0 +1,196 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+usage() {
+  echo "Usage: $0 [options] [--] METHOD PATH [curl args...]"
+  echo
+  echo "Send a request to the OpenSearch/Elasticsearch cluster Deskpro uses."
+  echo
+  echo "By default PATH is relative to this instance's tenant alias, which is what Deskpro queries."
+  echo "Index-level APIs (_settings, _mapping, _close, ...) still act on the physical index behind"
+  echo "the alias, which is shared by every tenant on the cluster."
+  echo
+  echo "METHOD is one of GET, HEAD, POST, PUT or DELETE."
+  echo "Anything after PATH is passed to curl unchanged (e.g. -d, --data-binary, -H, -v)."
+  echo
+  echo "Options:"
+  echo "  --index     PATH is relative to the physical index, shared by every tenant on the cluster"
+  echo "  --cluster   PATH is relative to the cluster root (no index prefix)"
+  echo "  --help      Show this help message"
+  echo
+  echo "Examples:"
+  echo "  $0 GET _count"
+  echo "  $0 GET _search -d '{\"query\":{\"match_all\":{}}}'"
+  echo "  $0 POST _bulk --data-binary @docs.ndjson"
+  echo "  $0 DELETE _doc/abc123"
+  echo "  $0 --index GET _mapping"
+  echo "  $0 --cluster GET _cat/indices?v"
+}
+
+mode="alias"
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -h|--help)
+      usage
+      exit
+      ;;
+    --index|--cluster)
+      if [[ $mode != alias ]]; then
+        echo "--index and --cluster are mutually exclusive" >&2
+        exit 1
+      fi
+      mode="${1#--}"
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "Unknown option $1" >&2
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if [[ $# -lt 2 ]]; then
+  usage >&2
+  exit 1
+fi
+
+method="${1^^}"
+case $method in
+  GET|HEAD|POST|PUT|DELETE) ;;
+  *)
+    echo "Unsupported method $1" >&2
+    exit 1
+    ;;
+esac
+
+path="${2#/}"
+shift 2
+
+# An empty PATH targets the index itself (a DELETE drops it for every tenant); `..` escapes the prefix
+path_only="${path%%[?#]*}"
+IFS=/ read -ra segments <<< "$path_only"
+if [[ ${#segments[@]} -eq 0 || -z ${segments[0]} ]]; then
+  echo "PATH must start with an endpoint or document path, got '$path'" >&2
+  exit 1
+fi
+for segment in "${segments[@]}"; do
+  if [[ $segment == . || $segment == .. ]]; then
+    echo "PATH must not contain '.' or '..' segments, got '$path'" >&2
+    exit 1
+  fi
+done
+
+json_config="$(/srv/deskpro/serve/bin/dump-cfg)"
+
+if ! jq -e '.elastic' >/dev/null <<< "$json_config"; then
+  echo "OpenSearch is not configured for this instance" >&2
+  exit 1
+fi
+
+# NUL-separated so values containing newlines survive
+mapfile -d '' -t fields < <(jq -j '
+  .elastic
+  | (.url, .username, .password, .api_key, .index_name, .tenant_id, .verify_ssl, .ca_bundle)
+  | (if . == null then "" else tostring end) + "\u0000"
+' <<< "$json_config")
+url="${fields[0]}"
+username="${fields[1]}"
+password="${fields[2]}"
+api_key="${fields[3]}"
+index_name="${fields[4]}"
+tenant_id="${fields[5]}"
+verify_ssl="${fields[6]}"
+ca_bundle="${fields[7]}"
+
+case $mode in
+  alias) prefix="$tenant_id" ;;
+  index) prefix="$index_name" ;;
+  cluster) prefix= ;;
+esac
+
+if [[ $mode != cluster && -z $prefix ]]; then
+  echo "No OpenSearch $mode name is configured for this instance" >&2
+  exit 1
+fi
+
+request_url="$url"
+[[ -n $prefix ]] && request_url+="/$prefix"
+request_url+="/$path"
+
+case "${path_only%/}" in
+  _bulk|*/_bulk|_msearch|*/_msearch|_msearch/template|*/_msearch/template) content_type=application/x-ndjson ;;
+  *) content_type=application/json ;;
+esac
+
+# curl sends duplicate headers instead of overriding, and OpenSearch rejects a duplicate Content-Type
+user_content_type=0
+user_authorization=0
+args=("$@")
+for i in "${!args[@]}"; do
+  header=
+  case ${args[i]} in
+    -H|--header) header="${args[i+1]:-}" ;;
+    -H*) header="${args[i]#-H}" ;;
+  esac
+  case ${header,,} in
+    content-type:*) user_content_type=1 ;;
+    authorization:*) user_authorization=1 ;;
+  esac
+done
+
+header_args=()
+[[ $user_content_type -eq 0 ]] && header_args+=(--header "Content-Type: $content_type")
+
+tls_args=()
+if [[ $verify_ssl == false ]]; then
+  tls_args+=(--insecure)
+elif [[ -n $ca_bundle ]]; then
+  tls_args+=(--cacert "$ca_bundle")
+fi
+
+# curl waits for a response body after `--request HEAD`
+if [[ $method == HEAD ]]; then
+  method_args=(--head)
+else
+  method_args=(--request "$method")
+fi
+
+curl_config_quote() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  value="${value//$'\n'/\\n}"
+  printf '"%s"' "$value"
+}
+
+# Credentials go through a curl config on a pipe so they never appear in argv
+auth_config=
+if [[ $user_authorization -eq 0 && -n $username ]]; then
+  auth_config="user = $(curl_config_quote "$username:$password")"
+elif [[ $user_authorization -eq 0 && -n $api_key ]]; then
+  auth_config="header = $(curl_config_quote "Authorization: Bearer $api_key")"
+fi
+
+exec curl \
+  --silent --show-error \
+  --fail-with-body \
+  --write-out '\n' \
+  --globoff \
+  --path-as-is \
+  --config <(printf '%s\n' "$auth_config") \
+  "${tls_args[@]}" \
+  "${method_args[@]}" \
+  "${header_args[@]}" \
+  "$request_url" \
+  "$@"
