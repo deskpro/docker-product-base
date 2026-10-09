@@ -21,6 +21,7 @@ test:
         BUILD +test-custom-configs
         BUILD +test-custom-logs-group
         BUILD +test-smokescreen
+        BUILD +test-opcache-override
     END
     WAIT
         BUILD +test-autoinstall
@@ -149,6 +150,21 @@ test-custom-logs-group:
             && docker stop test
     END
     RUN echo "/tmp/deskpro-logs/logtest-php-error.log should be owned by logs_group" && stat /tmp/deskpro-logs/logtest-php-error.log | grep 1988
+
+# test-opcache-override checks that the PHP_OPCACHE_* sizing env vars are
+# applied to the rendered php ini.
+test-opcache-override:
+    FROM earthly/dind:alpine
+    WITH DOCKER --load deskpro/docker-product-base:test=+base-image
+        RUN \
+            docker run -d --name test \
+                -e PHP_OPCACHE_MAX_ACCELERATED_FILES=12345 \
+                -e PHP_OPCACHE_MEMORY_CONSUMPTION=256 \
+                -e PHP_OPCACHE_INTERNED_STRINGS_BUFFER=48 \
+                deskpro/docker-product-base:test web \
+            && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/opcache_override' \
+            && docker stop test
+    END
 
 # test-smokescreen checks the smokescreen egress proxy: the
 # DISABLE_DESKPRO_PROXY_SERVICE switch (default true: daemon + env vars off; false: both on), and the operator

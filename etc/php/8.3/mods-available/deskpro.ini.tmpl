@@ -4,9 +4,9 @@ memory_limit = {{ getenv "PHP_MEMORY_LIMIT" "1G" | quote }}
 
 opcache.enable = {{ getenv "PHP_OPCACHE_ENABLED" "1" | quote }}
 opcache.enable_cli = 0
-opcache.memory_consumption = {{ getenv "PHP_OPCACHE_MEMORY_CONSUMPTION" "128" | quote }}
-opcache.interned_strings_buffer = 16
-opcache.max_accelerated_files = 10000
+opcache.memory_consumption = {{ getenv "PHP_OPCACHE_MEMORY_CONSUMPTION" "512" | quote }}
+opcache.interned_strings_buffer = {{ getenv "PHP_OPCACHE_INTERNED_STRINGS_BUFFER" "32" | quote }}
+opcache.max_accelerated_files = {{ getenv "PHP_OPCACHE_MAX_ACCELERATED_FILES" "65536" | quote }}
 opcache.validate_timestamps = On
 opcache.validate_timestamps = {{ getenv "PHP_OPCACHE_VALIDATE_TIMESTAMPS" "On" }}
 opcache.revalidate_freq = 5
