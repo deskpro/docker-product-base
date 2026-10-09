@@ -240,7 +240,20 @@ test-smokescreen:
                 -e DISABLE_DESKPRO_PROXY_SERVICE=false \
                 deskpro/docker-product-base:test web \
             && docker exec test-enabled /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/13_smokescreen_enabled_spec.rb' \
-            && docker stop test-enabled
+            && docker stop test-enabled \
+            && docker run -d --name test-external-proxy \
+                -e DISABLE_DESKPRO_PROXY_SERVICE=true \
+                -e DESKPRO_HTTPS_PROXY=http://egress.example:3128 \
+                -e DESKPRO_DB_HOST=dbhost.internal \
+                deskpro/docker-product-base:test web \
+            && docker exec test-external-proxy /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/14_smokescreen_external_proxy_spec.rb' \
+            && docker stop test-external-proxy \
+            && docker run -d --name test-external-proxy-precedence \
+                -e DISABLE_DESKPRO_PROXY_SERVICE=false \
+                -e DESKPRO_HTTPS_PROXY=http://egress.example:3128 \
+                deskpro/docker-product-base:test web \
+            && docker exec test-external-proxy-precedence /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/smokescreen/15_smokescreen_external_proxy_precedence_spec.rb' \
+            && docker stop test-external-proxy-precedence
     END
 
 # Built on top of the product base image, this just adds test sources

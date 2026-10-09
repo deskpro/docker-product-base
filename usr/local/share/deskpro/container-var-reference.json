@@ -449,6 +449,30 @@
     "setEnv": false
   },
   {
+    "name": "DESKPRO_HTTP_PROXY",
+    "description": "External egress proxy URL for plain-HTTP traffic; mapped onto HTTP_PROXY (and lowercase http_proxy) for the app service processes (php-fpm, tasks, email, messenger). Empty (default) disables the feature. Takes precedence over the in-container smokescreen value when both are set. Independent of the in-container smokescreen / DISABLE_DESKPRO_PROXY_SERVICE. When any DESKPRO_*_PROXY is set, NO_PROXY is derived from the internal backend hosts so they bypass the external proxy.",
+    "type": "string",
+    "default": "",
+    "isPrivate": false,
+    "setEnv": false
+  },
+  {
+    "name": "DESKPRO_HTTPS_PROXY",
+    "description": "External egress proxy URL for HTTPS traffic; mapped onto HTTPS_PROXY (and lowercase https_proxy) for the app service processes (php-fpm, tasks, email, messenger). Empty (default) disables the feature. Takes precedence over the in-container smokescreen value when both are set. Independent of the in-container smokescreen / DISABLE_DESKPRO_PROXY_SERVICE. When any DESKPRO_*_PROXY is set, NO_PROXY is derived from the internal backend hosts so they bypass the external proxy.",
+    "type": "string",
+    "default": "",
+    "isPrivate": false,
+    "setEnv": false
+  },
+  {
+    "name": "DESKPRO_ALL_PROXY",
+    "description": "External egress proxy URL for all traffic; mapped onto ALL_PROXY (and lowercase all_proxy) for the app service processes (php-fpm, tasks, email, messenger). Empty (default) disables the feature. Takes precedence over the in-container smokescreen value when both are set. Independent of the in-container smokescreen / DISABLE_DESKPRO_PROXY_SERVICE. When any DESKPRO_*_PROXY is set, NO_PROXY is derived from the internal backend hosts so they bypass the external proxy.",
+    "type": "string",
+    "default": "",
+    "isPrivate": false,
+    "setEnv": false
+  },
+  {
     "name": "HEALTHCHECK_TEST_DB_CONNECTION",
     "description": "Enable checking the database connection with the healthcheck. This confirms that the container can connect to the configured database.",
     "type": "boolean"

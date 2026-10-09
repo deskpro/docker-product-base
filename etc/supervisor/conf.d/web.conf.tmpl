@@ -29,7 +29,7 @@ stdout_logfile=/var/log/supervisor/php_fpm.log
 stdout_logfile_maxbytes=0 {{/* Our rotate-logs task will handle rotation */}}
 stdout_logfile_backups=0
 {{/* clear_env=no in the pool config means workers inherit this environment as-is */}}
-environment=HTTP_PROXY="{{ getenv "HTTP_PROXY" "" }}",http_proxy="{{ getenv "http_proxy" "" }}",HTTPS_PROXY="{{ getenv "HTTPS_PROXY" "" }}",https_proxy="{{ getenv "https_proxy" "" }}",ALL_PROXY="{{ getenv "ALL_PROXY" "" }}",all_proxy="{{ getenv "all_proxy" "" }}",NO_PROXY="{{ getenv "NO_PROXY" "" }}",no_proxy="{{ getenv "no_proxy" "" }}"
+environment=HTTP_PROXY="{{ or (getenv "DESKPRO_HTTP_PROXY") (getenv "HTTP_PROXY") }}",http_proxy="{{ or (getenv "DESKPRO_HTTP_PROXY") (getenv "http_proxy") }}",HTTPS_PROXY="{{ or (getenv "DESKPRO_HTTPS_PROXY") (getenv "HTTPS_PROXY") }}",https_proxy="{{ or (getenv "DESKPRO_HTTPS_PROXY") (getenv "https_proxy") }}",ALL_PROXY="{{ or (getenv "DESKPRO_ALL_PROXY") (getenv "ALL_PROXY") }}",all_proxy="{{ or (getenv "DESKPRO_ALL_PROXY") (getenv "all_proxy") }}",NO_PROXY="{{ getenv "NO_PROXY" "" }}",no_proxy="{{ getenv "no_proxy" "" }}"
 {{if conv.ToBool (getenv "HTTP_INTERNAL_MODE") }}
 stopsignal=TERM
 stopwaitsecs=0
