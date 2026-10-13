@@ -216,15 +216,28 @@ Vector is intentionally exempt — it's not product code, and its AWS SDK needs 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `DISABLE_DESKPRO_PROXY_SERVICE` | `true` | **Operator switch; the egress proxy is off by default.** While `true`, the daemon is not started, the proxy vars below are not exported, and outbound traffic goes direct. Set `false` to enable the proxy (daemon plus env vars). While `true`, the daemon can still be started by setting `SVC_SMOKESCREEN_ENABLED` explicitly, in which case that value wins for the daemon. |
-| `HTTP_PROXY` / `http_proxy` | `http://127.0.0.1:3128` | Set automatically when the proxy is enabled. Not meant to be set directly. |
+| `HTTP_PROXY` / `http_proxy` | `http://127.0.0.1:3128` | Set automatically when the proxy is enabled. If you (or the host) already set it, it isn't lost: it becomes smokescreen's upstream proxy — see [Upstream proxy](#upstream-proxy). |
 | `HTTPS_PROXY` / `https_proxy` | `http://127.0.0.1:3128` | As above, for HTTPS. |
 | `ALL_PROXY` / `all_proxy` | `http://127.0.0.1:3128` | As above, for tools that only read the generic form. |
 | `NO_PROXY` / `no_proxy` | `localhost,127.0.0.1,::1,host.docker.internal` + internal backend hosts | Hosts that bypass the proxy. The default is derived and additive: loopback (+ `host.docker.internal`), the host portion of whichever of `DESKPRO_DB_HOST`, `DESKPRO_DB_READ_HOST`, `DESKPRO_DB_REPORTS_HOST`, `DESKPRO_REDIS_HOST`, `DESKPRO_REDIS_URL`, `DESKPRO_ES_URL`, `DESKPRO_ES_TIKA_HOST`, `OTEL_EXPORTER_OTLP_ENDPOINT` are set, plus any hosts resolved from `config.php` (see `42-http-proxy.sh`). If you set `NO_PROXY` yourself, your entries are appended to that list, not a replacement for it. |
+| `SMOKESCREEN_UPSTREAM_HTTP_PROXY` / `SMOKESCREEN_UPSTREAM_HTTPS_PROXY` | — | Internal, derived by `42-http-proxy.sh` — don't set them. See [Upstream proxy](#upstream-proxy). |
 | `SMOKESCREEN_CONFIG_FILE` | — | Path to a smokescreen top-level config file (`--config-file`; schema is `deny_ranges`/`allow_ranges`/`acl_file`/etc, not the ACL-only schema used by `--egress-acl-file`). Empty by default — no flag passed, just smokescreen's built-in range blocking. Mount a file under `CUSTOM_MOUNT_BASEDIR/config/smokescreen.d/` (copied to `/etc/smokescreen/`) and point this at it to add restrictions on top of the defaults. |
 | `DESKPRO_HTTP_PROXY` | _(empty)_ | External egress proxy URL for plain-HTTP traffic. Mapped onto `HTTP_PROXY`/`http_proxy` for the app service processes (PHP-FPM, tasks, email workers, messenger). Empty disables the feature. Takes precedence over the smokescreen value when both are set. Independent of the in-container smokescreen. When any `DESKPRO_*_PROXY` is set and `DISABLE_DESKPRO_PROXY_SERVICE=true`, `NO_PROXY` is derived as described above so internal hosts bypass the external proxy. |
 | `DESKPRO_HTTPS_PROXY` | _(empty)_ | As above, mapped onto `HTTPS_PROXY`/`https_proxy`. |
 | `DESKPRO_ALL_PROXY` | _(empty)_ | As above, mapped onto `ALL_PROXY`/`all_proxy`. |
 | `SVC_SMOKESCREEN_ENABLED` | `false` | **Per-run-mode gate, operator-overridable** — normally derived in `15-run-mode.sh` (on for any run mode that executes product code when `DISABLE_DESKPRO_PROXY_SERVICE=false`, otherwise off); set it explicitly to pin the daemon on or off regardless of that derivation, including regardless of `DISABLE_DESKPRO_PROXY_SERVICE`. `isPrivate: true`, same as the other `SVC_*_ENABLED` vars. |
+
+### Upstream proxy
+
+If the host already sets a corporate proxy through the standard `HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY` vars (either case) and smokescreen is enabled (`DISABLE_DESKPRO_PROXY_SERVICE=false`), `42-http-proxy.sh` captures those values before pointing the app at `127.0.0.1:3128`, and smokescreen forwards to them. Egress becomes app → smokescreen → your proxy, so smokescreen's filtering still applies.
+
+- Uppercase wins over lowercase. If both are set and differ, a `WARNING` is logged.
+- `ALL_PROXY` / `all_proxy` fills whichever of HTTP / HTTPS is still empty. There's no cross-fill between HTTP and HTTPS.
+- SOCKS upstreams aren't supported and are ignored.
+- The upstream's IP(s) are allow-listed in smokescreen (`smokescreen/main.go`); without this its private-range blocking would deny the connection to an upstream on e.g. `192.168.x.x`. Hostnames are resolved when smokescreen starts.
+- The upstream URL (which may carry credentials) reaches only the smokescreen program, through its supervisor environment rather than a CLI flag, so it isn't visible in `ps`; the rendered `/etc/supervisor/conf.d/smokescreen.conf` is mode `0600`. The configured upstream and allow-list are logged (credentials masked) in `/var/log/supervisor/smokescreen.log`.
+
+`DESKPRO_*_PROXY` is unaffected: when set, it still bypasses smokescreen for the variable it covers.
 
 ## Control
 

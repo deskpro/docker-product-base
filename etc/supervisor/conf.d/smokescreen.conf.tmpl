@@ -14,9 +14,13 @@ file under CUSTOM_MOUNT_BASEDIR/config/smokescreen.d/ (copied to
 at it. This is smokescreen's own top-level config schema
 (pkg/smokescreen/config_loader.go: deny_ranges, allow_ranges, acl_file, ...)
 -- not the version/services ACL-only schema used by --egress-acl-file.
+
+SMOKESCREEN_UPSTREAM_HTTP(S)_PROXY: upstream proxy derived by
+42-http-proxy.sh, applied (and allow-listed) by smokescreen/main.go.
 */}}
 [program:smokescreen]
 command=/usr/local/bin/smokescreen --listen-ip=127.0.0.1 --listen-port=3128{{ $cf := getenv "SMOKESCREEN_CONFIG_FILE" "" }}{{if $cf}} --config-file='{{ $cf }}'{{end}}
+environment=SMOKESCREEN_UPSTREAM_HTTP_PROXY="{{ getenv "SMOKESCREEN_UPSTREAM_HTTP_PROXY" "" | strings.ReplaceAll "%" "%%" }}",SMOKESCREEN_UPSTREAM_HTTPS_PROXY="{{ getenv "SMOKESCREEN_UPSTREAM_HTTPS_PROXY" "" | strings.ReplaceAll "%" "%%" }}"
 autostart={{ getenv "SVC_SMOKESCREEN_ENABLED" "false" | ternary "true" "false" }}
 autorestart=true
 exitcodes=0

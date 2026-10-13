@@ -56,6 +56,13 @@ http_proxy_main() {
   no_proxy_value="$(build_no_proxy_default)"
   no_proxy_value="$(merge_config_php_hosts "$no_proxy_value")"
 
+  # Any operator-set proxy becomes smokescreen's upstream rather than
+  # being lost to the overwrite below. ALL_PROXY fills either gap.
+  local all_up up_http up_https
+  all_up="$(pick_proxy_var ALL_PROXY all_proxy)"
+  up_http="$(pick_proxy_var HTTP_PROXY http_proxy)"
+  up_https="$(pick_proxy_var HTTPS_PROXY https_proxy)"
+
   export HTTP_PROXY="$proxy_url"
   export http_proxy="$proxy_url"
   export HTTPS_PROXY="$proxy_url"
@@ -67,7 +74,32 @@ http_proxy_main() {
 
   boot_log_message TRACE "Egress proxy vars set: HTTP_PROXY=$proxy_url NO_PROXY=$no_proxy_value"
 
-  render_supervisor_configs
+  # Scoped to the render only, so the (possibly credential-bearing)
+  # upstream never reaches the app's environment; the rendered conf is
+  # root-only for the same reason.
+  SMOKESCREEN_UPSTREAM_HTTP_PROXY="${up_http:-$all_up}" \
+  SMOKESCREEN_UPSTREAM_HTTPS_PROXY="${up_https:-$all_up}" \
+    render_supervisor_configs
+  chmod 0600 /etc/supervisor/conf.d/smokescreen.conf
+}
+
+#######################################################################
+# Prints the value of the uppercase var, falling back to the lowercase
+# one. Logs a WARNING when both are set and differ. Reads through
+# container-var so _FILE/_B64 forms are honoured.
+#
+# ARGUMENTS:
+#  $1 - Uppercase var name
+#  $2 - Lowercase var name
+#######################################################################
+pick_proxy_var() {
+  local upper lower
+  upper="$(container-var "$1")"
+  lower="$(container-var "$2")"
+  if [ -n "$upper" ] && [ -n "$lower" ] && [ "$upper" != "$lower" ]; then
+    boot_log_message WARNING "$1 and $2 are both set but differ; using $1"
+  fi
+  printf '%s' "${upper:-$lower}"
 }
 
 #######################################################################
@@ -237,4 +269,5 @@ merge_config_php_hosts() {
 }
 
 http_proxy_main
-unset http_proxy_main render_supervisor_configs extract_host build_no_proxy_default merge_config_php_hosts
+unset http_proxy_main render_supervisor_configs extract_host build_no_proxy_default merge_config_php_hosts \
+  pick_proxy_var

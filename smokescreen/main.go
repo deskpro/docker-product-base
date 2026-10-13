@@ -6,6 +6,14 @@
 package main
 
 import (
+	"context"
+	"net"
+	"net/url"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/sirupsen/logrus"
 	"github.com/stripe/smokescreen/cmd"
 	"github.com/stripe/smokescreen/pkg/smokescreen"
@@ -32,5 +40,64 @@ func main() {
 	// text formatter. Set it explicitly so all output is JSON.
 	conf.Log.Formatter = &logrus.JSONFormatter{}
 
+	// Upstream proxy from 42-http-proxy.sh, via the supervisor program
+	// env rather than --upstream-*-proxy-addr: the URL may hold
+	// credentials and argv is world-readable.
+	httpUp := os.Getenv("SMOKESCREEN_UPSTREAM_HTTP_PROXY")
+	httpsUp := os.Getenv("SMOKESCREEN_UPSTREAM_HTTPS_PROXY")
+	conf.UpstreamHttpProxyAddr = allowUpstream(conf, httpUp)
+	if httpsUp == httpUp {
+		conf.UpstreamHttpsProxyAddr = conf.UpstreamHttpProxyAddr
+	} else {
+		conf.UpstreamHttpsProxyAddr = allowUpstream(conf, httpsUp)
+	}
+
 	smokescreen.StartWithConfig(conf, nil)
+}
+
+// allowUpstream allow-lists the upstream proxy's address(es), otherwise
+// smokescreen's default private-range blocking denies the dial to e.g. a
+// 192.168.x.x upstream, and returns raw. Unusable values (unparseable,
+// SOCKS, smokescreen itself) are skipped and "" is returned.
+func allowUpstream(conf *smokescreen.Config, raw string) string {
+	if raw == "" {
+		return ""
+	}
+	withScheme := raw
+	if !strings.Contains(raw, "://") {
+		withScheme = "http://" + raw
+	}
+	u, err := url.Parse(withScheme)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		conf.Log.Warn("ignoring upstream proxy: not an http(s) proxy URL")
+		return ""
+	}
+	log := conf.Log.WithField("upstream", u.Redacted())
+
+	// Bounded so a slow resolver can't hold up smokescreen's listener.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	ips, err := net.DefaultResolver.LookupIP(ctx, "ip", u.Hostname())
+	if err != nil {
+		log.WithError(err).Warn("could not resolve upstream proxy; using it without an allow-address")
+	}
+
+	allow := make([]string, 0, len(ips))
+	for _, ip := range ips {
+		if ip.IsLoopback() && u.Port() == strconv.Itoa(int(conf.Port)) {
+			log.Warn("ignoring upstream proxy: it is smokescreen itself")
+			return ""
+		}
+		addr := ip.String()
+		if u.Port() != "" {
+			addr = net.JoinHostPort(addr, u.Port())
+		}
+		allow = append(allow, addr)
+	}
+	if err := conf.SetAllowAddresses(allow); err != nil {
+		log.WithError(err).Fatal("invalid upstream allow-address")
+	}
+
+	log.WithField("allow_addresses", allow).Info("upstream proxy configured")
+	return raw
 }
