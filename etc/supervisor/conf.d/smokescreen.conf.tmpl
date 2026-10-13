@@ -14,9 +14,6 @@ file under CUSTOM_MOUNT_BASEDIR/config/smokescreen.d/ (copied to
 at it. This is smokescreen's own top-level config schema
 (pkg/smokescreen/config_loader.go: deny_ranges, allow_ranges, acl_file, ...)
 -- not the version/services ACL-only schema used by --egress-acl-file.
-
-SMOKESCREEN_UPSTREAM_HTTP(S)_PROXY: upstream proxy derived by
-42-http-proxy.sh, applied (and allow-listed) by smokescreen/main.go.
 */}}
 [program:smokescreen]
 command=/usr/local/bin/smokescreen --listen-ip=127.0.0.1 --listen-port=3128{{ $cf := getenv "SMOKESCREEN_CONFIG_FILE" "" }}{{if $cf}} --config-file='{{ $cf }}'{{end}}
@@ -26,7 +23,9 @@ autorestart=true
 exitcodes=0
 user=smokescreen
 group=smokescreen
-startsecs=1
+{{/* > main.go's 3s upstream DNS timeout, so any resolve failure counts as a
+failed start and goes FATAL rather than restarting forever */}}
+startsecs=5
 startretries=3
 redirect_stderr=true
 stdout_logfile=/var/log/supervisor/smokescreen.log

@@ -75,18 +75,16 @@ http_proxy_main() {
   boot_log_message TRACE "Egress proxy vars set: HTTP_PROXY=$proxy_url NO_PROXY=$no_proxy_value"
 
   # Scoped to the render only, so the (possibly credential-bearing)
-  # upstream never reaches the app's environment; the rendered conf is
-  # root-only for the same reason.
+  # upstream never reaches the app's environment.
   SMOKESCREEN_UPSTREAM_HTTP_PROXY="${up_http:-$all_up}" \
   SMOKESCREEN_UPSTREAM_HTTPS_PROXY="${up_https:-$all_up}" \
     render_supervisor_configs
-  chmod 0600 /etc/supervisor/conf.d/smokescreen.conf
 }
 
 #######################################################################
-# Prints the value of the uppercase var, falling back to the lowercase
-# one. Logs a WARNING when both are set and differ. Reads through
-# container-var so _FILE/_B64 forms are honoured.
+# Prints the uppercase var, else the lowercase one (WARNING if both set
+# and different), via container-var so _FILE/_B64 work. Drops values with
+# a double quote or control character: they'd break supervisor environment=.
 #
 # ARGUMENTS:
 #  $1 - Uppercase var name
@@ -99,7 +97,12 @@ pick_proxy_var() {
   if [ -n "$upper" ] && [ -n "$lower" ] && [ "$upper" != "$lower" ]; then
     boot_log_message WARNING "$1 and $2 are both set but differ; using $1"
   fi
-  printf '%s' "${upper:-$lower}"
+  local value="${upper:-$lower}"
+  if [[ "$value" == *[\"[:cntrl:]]* ]]; then
+    boot_log_message WARNING "$1/$2 contains a double quote or control character; not using it as the smokescreen upstream"
+    return 0
+  fi
+  printf '%s' "$value"
 }
 
 #######################################################################
@@ -126,6 +129,10 @@ render_supervisor_configs() {
         exit 1
       fi
     fi
+
+    # Rendered confs can hold credential-bearing proxy URLs; only
+    # supervisord (root) reads them.
+    find "$i/conf.d" -maxdepth 1 -name '*.conf' -type f -exec chmod 0600 {} +
   fi
 
   set -o errexit

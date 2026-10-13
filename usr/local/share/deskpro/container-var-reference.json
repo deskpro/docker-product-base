@@ -1,7 +1,7 @@
 [
   {
     "name": "ALL_PROXY",
-    "description": "Set by 42-http-proxy.sh so all outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase all_proxy for tools that only honour the lowercase form. Only exported when DISABLE_DESKPRO_PROXY_SERVICE=false. If you set it yourself (e.g. a corporate proxy injected by the host) and smokescreen is enabled, your value is not lost: it becomes smokescreen's upstream proxy for whichever of HTTP/HTTPS has no more specific HTTP(S)_PROXY value (see SMOKESCREEN_UPSTREAM_HTTP_PROXY / SMOKESCREEN_UPSTREAM_HTTPS_PROXY).",
+    "description": "Set by 42-http-proxy.sh so all outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase all_proxy for tools that only honour the lowercase form. Only exported when DISABLE_DESKPRO_PROXY_SERVICE=false. If pre-set and smokescreen is enabled, it becomes smokescreen's upstream for whichever of HTTP/HTTPS has no HTTP(S)_PROXY value.",
     "type": "string",
     "default": "http://127.0.0.1:3128",
     "isPrivate": false,
@@ -484,7 +484,7 @@
   },
   {
     "name": "HTTP_PROXY",
-    "description": "Set by 42-http-proxy.sh so plain-HTTP outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase http_proxy. Only exported when DISABLE_DESKPRO_PROXY_SERVICE=false. If you set it yourself (e.g. a corporate proxy injected by the host) and smokescreen is enabled, your value is not lost: it becomes smokescreen's upstream proxy (see SMOKESCREEN_UPSTREAM_HTTP_PROXY / SMOKESCREEN_UPSTREAM_HTTPS_PROXY).",
+    "description": "Set by 42-http-proxy.sh so plain-HTTP outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase http_proxy. Only exported when DISABLE_DESKPRO_PROXY_SERVICE=false. If pre-set and smokescreen is enabled, it becomes smokescreen's upstream (SMOKESCREEN_UPSTREAM_*).",
     "type": "string",
     "default": "http://127.0.0.1:3128",
     "isPrivate": false,
@@ -500,7 +500,7 @@
   },
   {
     "name": "HTTPS_PROXY",
-    "description": "Set by 42-http-proxy.sh so HTTPS outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase https_proxy. Only exported when DISABLE_DESKPRO_PROXY_SERVICE=false. If you set it yourself (e.g. a corporate proxy injected by the host) and smokescreen is enabled, your value is not lost: it becomes smokescreen's upstream proxy (see SMOKESCREEN_UPSTREAM_HTTP_PROXY / SMOKESCREEN_UPSTREAM_HTTPS_PROXY).",
+    "description": "Set by 42-http-proxy.sh so HTTPS outbound traffic routes through the smokescreen egress proxy when it's enabled. Mirrored to lowercase https_proxy. Only exported when DISABLE_DESKPRO_PROXY_SERVICE=false. If pre-set and smokescreen is enabled, it becomes smokescreen's upstream (SMOKESCREEN_UPSTREAM_*).",
     "type": "string",
     "default": "http://127.0.0.1:3128",
     "isPrivate": false,
@@ -929,7 +929,7 @@
   },
   {
     "name": "SMOKESCREEN_UPSTREAM_HTTP_PROXY",
-    "description": "Internal, derived by 42-http-proxy.sh -- not for operators to set. When smokescreen is enabled: the operator's pre-set HTTP_PROXY (else http_proxy, else ALL_PROXY/all_proxy), passed only to the smokescreen program and applied as its upstream HTTP proxy.",
+    "description": "Internal; derived by 42-http-proxy.sh from a pre-set HTTP_PROXY/http_proxy (else ALL_PROXY) and passed only to smokescreen. Do not set.",
     "type": "string",
     "default": "",
     "isPrivate": true,
@@ -937,7 +937,7 @@
   },
   {
     "name": "SMOKESCREEN_UPSTREAM_HTTPS_PROXY",
-    "description": "As SMOKESCREEN_UPSTREAM_HTTP_PROXY, for HTTPS: from HTTPS_PROXY, else https_proxy, else ALL_PROXY/all_proxy.",
+    "description": "As SMOKESCREEN_UPSTREAM_HTTP_PROXY, from HTTPS_PROXY/https_proxy (else ALL_PROXY). Do not set.",
     "type": "string",
     "default": "",
     "isPrivate": true,

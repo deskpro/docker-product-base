@@ -7,7 +7,9 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -15,6 +17,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stripe/goproxy"
 	"github.com/stripe/smokescreen/cmd"
 	"github.com/stripe/smokescreen/pkg/smokescreen"
 )
@@ -43,61 +46,89 @@ func main() {
 	// Upstream proxy from 42-http-proxy.sh, via the supervisor program
 	// env rather than --upstream-*-proxy-addr: the URL may hold
 	// credentials and argv is world-readable.
-	httpUp := os.Getenv("SMOKESCREEN_UPSTREAM_HTTP_PROXY")
-	httpsUp := os.Getenv("SMOKESCREEN_UPSTREAM_HTTPS_PROXY")
-	conf.UpstreamHttpProxyAddr = allowUpstream(conf, httpUp)
-	if httpsUp == httpUp {
-		conf.UpstreamHttpsProxyAddr = conf.UpstreamHttpProxyAddr
-	} else {
-		conf.UpstreamHttpsProxyAddr = allowUpstream(conf, httpsUp)
+	httpUp := allowUpstream(conf, os.Getenv("SMOKESCREEN_UPSTREAM_HTTP_PROXY"))
+	httpsUp := allowUpstream(conf, os.Getenv("SMOKESCREEN_UPSTREAM_HTTPS_PROXY"))
+	if httpUp != nil {
+		conf.UpstreamHttpProxyAddr = httpUp.String()
+	}
+	if httpsUp != nil {
+		conf.UpstreamHttpsProxyAddr = httpsUp.String()
+		if httpsUp.User != nil {
+			conf.UpstreamProxyConnectReqHandler = connectAuth(httpsUp.User)
+		}
 	}
 
 	smokescreen.StartWithConfig(conf, nil)
 }
 
-// allowUpstream allow-lists the upstream proxy's address(es), otherwise
-// smokescreen's default private-range blocking denies the dial to e.g. a
-// 192.168.x.x upstream, and returns raw. Unusable values (unparseable,
-// SOCKS, smokescreen itself) are skipped and "" is returned.
-func allowUpstream(conf *smokescreen.Config, raw string) string {
+// allowUpstream allow-lists the upstream's ip:port(s), otherwise
+// smokescreen's private-range blocking denies the dial to e.g. a
+// 192.168.x.x upstream. Fatal if it doesn't resolve, so supervisor retries.
+func allowUpstream(conf *smokescreen.Config, raw string) *url.URL {
 	if raw == "" {
-		return ""
+		return nil
 	}
-	withScheme := raw
 	if !strings.Contains(raw, "://") {
-		withScheme = "http://" + raw
+		raw = "http://" + raw
 	}
-	u, err := url.Parse(withScheme)
-	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+	u, err := url.Parse(raw)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
 		conf.Log.Warn("ignoring upstream proxy: not an http(s) proxy URL")
-		return ""
+		return nil
 	}
-	log := conf.Log.WithField("upstream", u.Redacted())
+	port := u.Port()
+	if port == "" {
+		port = "80"
+		if u.Scheme == "https" {
+			port = "443"
+		}
+		u.Host = net.JoinHostPort(u.Hostname(), port)
+	}
+	// Scheme and host only: the userinfo may itself be the secret.
+	log := conf.Log.WithFields(logrus.Fields{
+		"upstream":        u.Scheme + "://" + u.Host,
+		"has_credentials": u.User != nil,
+	})
 
 	// Bounded so a slow resolver can't hold up smokescreen's listener.
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	ips, err := net.DefaultResolver.LookupIP(ctx, "ip", u.Hostname())
+	// Same resolver smokescreen dials with (honours resolver_addresses).
+	ips, err := conf.Resolver.LookupIP(ctx, "ip", u.Hostname())
 	if err != nil {
-		log.WithError(err).Warn("could not resolve upstream proxy; using it without an allow-address")
+		log.WithError(err).Fatal("could not resolve upstream proxy")
 	}
 
 	allow := make([]string, 0, len(ips))
 	for _, ip := range ips {
-		if ip.IsLoopback() && u.Port() == strconv.Itoa(int(conf.Port)) {
+		if ip.IsLoopback() && port == strconv.Itoa(int(conf.Port)) {
 			log.Warn("ignoring upstream proxy: it is smokescreen itself")
-			return ""
+			return nil
 		}
-		addr := ip.String()
-		if u.Port() != "" {
-			addr = net.JoinHostPort(addr, u.Port())
-		}
-		allow = append(allow, addr)
+		allow = append(allow, net.JoinHostPort(ip.String(), port))
 	}
 	if err := conf.SetAllowAddresses(allow); err != nil {
 		log.WithError(err).Fatal("invalid upstream allow-address")
 	}
 
 	log.WithField("allow_addresses", allow).Info("upstream proxy configured")
-	return raw
+	return u
+}
+
+// connectAuth rebuilds the CONNECT Proxy-Authorization from the decoded
+// userinfo: goproxy encodes the still-percent-escaped form, so passwords
+// with reserved characters (@ : %) would fail upstream auth. Requests where
+// the client chose its own upstream (X-Upstream-Https-Proxy) are left
+// alone so our credentials only ever go to our upstream. Drop this once
+// goproxy builds the header from the decoded Username()/Password().
+func connectAuth(user *url.Userinfo) func(*goproxy.ProxyCtx, *http.Request) error {
+	password, _ := user.Password()
+	header := "Basic " + base64.StdEncoding.EncodeToString([]byte(user.Username()+":"+password))
+	return func(ctx *goproxy.ProxyCtx, req *http.Request) error {
+		if ctx.Req != nil && ctx.Req.Header.Get(goproxy.PerRequestHTTPSProxyHeaderKey) != "" {
+			return nil
+		}
+		req.Header.Set("Proxy-Authorization", header)
+		return nil
+	}
 }
