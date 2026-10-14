@@ -17,7 +17,7 @@ at it. This is smokescreen's own top-level config schema
 */}}
 [program:smokescreen]
 command=/usr/local/bin/smokescreen --listen-ip=127.0.0.1 --listen-port=3128{{ $cf := getenv "SMOKESCREEN_CONFIG_FILE" "" }}{{if $cf}} --config-file='{{ $cf }}'{{end}}
-environment=SMOKESCREEN_UPSTREAM_HTTP_PROXY="{{ getenv "SMOKESCREEN_UPSTREAM_HTTP_PROXY" "" | strings.ReplaceAll "%" "%%" }}",SMOKESCREEN_UPSTREAM_HTTPS_PROXY="{{ getenv "SMOKESCREEN_UPSTREAM_HTTPS_PROXY" "" | strings.ReplaceAll "%" "%%" }}"
+environment=UPSTREAM_HTTP_PROXY="{{ getenv "UPSTREAM_HTTP_PROXY" "" | strings.ReplaceAll "%" "%%" }}",UPSTREAM_HTTPS_PROXY="{{ getenv "UPSTREAM_HTTPS_PROXY" "" | strings.ReplaceAll "%" "%%" }}"
 autostart={{ getenv "SVC_SMOKESCREEN_ENABLED" "false" | ternary "true" "false" }}
 autorestart=true
 exitcodes=0

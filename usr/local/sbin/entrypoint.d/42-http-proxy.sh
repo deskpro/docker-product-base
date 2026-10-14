@@ -76,8 +76,8 @@ http_proxy_main() {
 
   # Scoped to the render only, so the (possibly credential-bearing)
   # upstream never reaches the app's environment.
-  SMOKESCREEN_UPSTREAM_HTTP_PROXY="${up_http:-$all_up}" \
-  SMOKESCREEN_UPSTREAM_HTTPS_PROXY="${up_https:-$all_up}" \
+  UPSTREAM_HTTP_PROXY="${up_http:-$all_up}" \
+  UPSTREAM_HTTPS_PROXY="${up_https:-$all_up}" \
     render_supervisor_configs
 }
 

@@ -46,8 +46,8 @@ func main() {
 	// Upstream proxy from 42-http-proxy.sh, via the supervisor program
 	// env rather than --upstream-*-proxy-addr: the URL may hold
 	// credentials and argv is world-readable.
-	httpUp := allowUpstream(conf, os.Getenv("SMOKESCREEN_UPSTREAM_HTTP_PROXY"))
-	httpsUp := allowUpstream(conf, os.Getenv("SMOKESCREEN_UPSTREAM_HTTPS_PROXY"))
+	httpUp := allowUpstream(conf, os.Getenv("UPSTREAM_HTTP_PROXY"))
+	httpsUp := allowUpstream(conf, os.Getenv("UPSTREAM_HTTPS_PROXY"))
 	if httpUp != nil {
 		conf.UpstreamHttpProxyAddr = httpUp.String()
 	}

@@ -23,15 +23,15 @@ describe "smokescreen picks up pre-set *_PROXY vars as its upstream" do
 
   describe file(conf_path) do
     it { should be_mode 600 }
-    its(:content) { should include %(SMOKESCREEN_UPSTREAM_HTTP_PROXY="http://192.168.90.2:3128") }
+    its(:content) { should include %(UPSTREAM_HTTP_PROXY="http://192.168.90.2:3128") }
     # %% is supervisor's escape for a literal %.
-    its(:content) { should include %(SMOKESCREEN_UPSTREAM_HTTPS_PROXY="http://u:p%%40ss@127.0.0.1:8888") }
+    its(:content) { should include %(UPSTREAM_HTTPS_PROXY="http://u:p%%40ss@127.0.0.1:8888") }
     its(:content) { should_not include '10.0.0.9' }
   end
 
   it "keeps the upstream out of supervisord's (and so the app's) environment" do
     environ = File.read("/proc/#{File.read('/run/supervisord.pid').strip}/environ")
-    expect(environ).not_to include 'SMOKESCREEN_UPSTREAM_'
+    expect(environ).not_to include 'UPSTREAM_'
     expect(environ).not_to include '192.168.90.2'
     expect(environ).not_to include 'p%40ss'
   end
