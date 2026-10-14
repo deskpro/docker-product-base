@@ -4,6 +4,7 @@ go 1.26.8
 
 require (
 	github.com/sirupsen/logrus v1.9.1
+	github.com/stripe/goproxy v0.0.0-20260826103935-0cd07c409a76
 	github.com/stripe/smokescreen v0.0.5-0.20260909080646-82f05bfded58
 )
 
@@ -23,7 +24,6 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rs/xid v1.2.1 // indirect
-	github.com/stripe/goproxy v0.0.0-20260826103935-0cd07c409a76 // indirect
 	golang.org/x/mod v0.37.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect

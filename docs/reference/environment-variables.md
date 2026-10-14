@@ -216,7 +216,7 @@ Vector is intentionally exempt — it's not product code, and its AWS SDK needs 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `DISABLE_DESKPRO_PROXY_SERVICE` | `true` | **Operator switch; the egress proxy is off by default.** While `true`, the daemon is not started, the proxy vars below are not exported, and outbound traffic goes direct. Set `false` to enable the proxy (daemon plus env vars). While `true`, the daemon can still be started by setting `SVC_SMOKESCREEN_ENABLED` explicitly, in which case that value wins for the daemon. |
-| `HTTP_PROXY` / `http_proxy` | `http://127.0.0.1:3128` | Set automatically when the proxy is enabled. Not meant to be set directly. |
+| `HTTP_PROXY` / `http_proxy` | `http://127.0.0.1:3128` | Set automatically when the proxy is enabled. If pre-set, it becomes smokescreen's upstream — see [Upstream proxy](#upstream-proxy). |
 | `HTTPS_PROXY` / `https_proxy` | `http://127.0.0.1:3128` | As above, for HTTPS. |
 | `ALL_PROXY` / `all_proxy` | `http://127.0.0.1:3128` | As above, for tools that only read the generic form. |
 | `NO_PROXY` / `no_proxy` | `localhost,127.0.0.1,::1,host.docker.internal` + internal backend hosts | Hosts that bypass the proxy. The default is derived and additive: loopback (+ `host.docker.internal`), the host portion of whichever of `DESKPRO_DB_HOST`, `DESKPRO_DB_READ_HOST`, `DESKPRO_DB_REPORTS_HOST`, `DESKPRO_REDIS_HOST`, `DESKPRO_REDIS_URL`, `DESKPRO_ES_URL`, `DESKPRO_ES_TIKA_HOST`, `OTEL_EXPORTER_OTLP_ENDPOINT` are set, plus any hosts resolved from `config.php` (see `42-http-proxy.sh`). If you set `NO_PROXY` yourself, your entries are appended to that list, not a replacement for it. |
@@ -225,6 +225,21 @@ Vector is intentionally exempt — it's not product code, and its AWS SDK needs 
 | `DESKPRO_HTTPS_PROXY` | _(empty)_ | As above, mapped onto `HTTPS_PROXY`/`https_proxy`. |
 | `DESKPRO_ALL_PROXY` | _(empty)_ | As above, mapped onto `ALL_PROXY`/`all_proxy`. |
 | `SVC_SMOKESCREEN_ENABLED` | `false` | **Per-run-mode gate, operator-overridable** — normally derived in `15-run-mode.sh` (on for any run mode that executes product code when `DISABLE_DESKPRO_PROXY_SERVICE=false`, otherwise off); set it explicitly to pin the daemon on or off regardless of that derivation, including regardless of `DISABLE_DESKPRO_PROXY_SERVICE`. `isPrivate: true`, same as the other `SVC_*_ENABLED` vars. |
+
+### Upstream proxy
+
+If the host already sets a corporate proxy through the standard `HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY` vars (either case) and smokescreen is enabled (`DISABLE_DESKPRO_PROXY_SERVICE=false`), `42-http-proxy.sh` captures those values before pointing the app at `127.0.0.1:3128`, and smokescreen forwards to them. Egress becomes app → smokescreen → your proxy, with smokescreen still filtering each destination as it resolves it.
+
+- Uppercase wins over lowercase. If both are set and differ, a `WARNING` is logged.
+- `ALL_PROXY` / `all_proxy` fills whichever of HTTP / HTTPS is still empty. There's no cross-fill between HTTP and HTTPS.
+- Values containing a double quote or control character are ignored with a `WARNING` (percent-encode them). SOCKS upstreams aren't supported and are ignored with a warning.
+- A URL without a port gets the scheme default (`http` → 80, `https` → 443). Credentials in the URL (`http://user:pass@proxy:3128`) are sent to the upstream as `Proxy-Authorization`; percent-encoded characters are decoded first.
+- The upstream's `ip:port` is allow-listed so smokescreen's private-range blocking doesn't deny it. Its hostname is resolved once when smokescreen starts; if it doesn't resolve, smokescreen fails to start and, after supervisor's retries, the container stops (unless `NO_SHUTDOWN_ON_ERROR=true`). Restart the container if its addresses change. The container still needs working DNS, since smokescreen resolves every destination itself.
+- The upstream re-resolves destination hostnames itself, so a hostname with attacker-controlled DNS can still reach private addresses through it: the upstream should enforce its own private-range policy.
+- Credentials never appear in process arguments or logs; `/etc/supervisor/conf.d/*.conf` are mode `0600`.
+- An `https://` upstream's TLS certificate is not verified.
+
+`DESKPRO_*_PROXY` is unaffected: when set, it still bypasses smokescreen for the variable it covers.
 
 ## Control
 

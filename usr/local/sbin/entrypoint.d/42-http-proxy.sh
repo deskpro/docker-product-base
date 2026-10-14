@@ -56,6 +56,13 @@ http_proxy_main() {
   no_proxy_value="$(build_no_proxy_default)"
   no_proxy_value="$(merge_config_php_hosts "$no_proxy_value")"
 
+  # Any operator-set proxy becomes smokescreen's upstream rather than
+  # being lost to the overwrite below. ALL_PROXY fills either gap.
+  local all_up up_http up_https
+  all_up="$(pick_proxy_var ALL_PROXY all_proxy)"
+  up_http="$(pick_proxy_var HTTP_PROXY http_proxy)"
+  up_https="$(pick_proxy_var HTTPS_PROXY https_proxy)"
+
   export HTTP_PROXY="$proxy_url"
   export http_proxy="$proxy_url"
   export HTTPS_PROXY="$proxy_url"
@@ -67,7 +74,35 @@ http_proxy_main() {
 
   boot_log_message TRACE "Egress proxy vars set: HTTP_PROXY=$proxy_url NO_PROXY=$no_proxy_value"
 
-  render_supervisor_configs
+  # Scoped to the render only, so the (possibly credential-bearing)
+  # upstream never reaches the app's environment.
+  UPSTREAM_HTTP_PROXY="${up_http:-$all_up}" \
+  UPSTREAM_HTTPS_PROXY="${up_https:-$all_up}" \
+    render_supervisor_configs
+}
+
+#######################################################################
+# Prints the uppercase var, else the lowercase one (WARNING if both set
+# and different), via container-var so _FILE/_B64 work. Drops values with
+# a double quote or control character: they'd break supervisor environment=.
+#
+# ARGUMENTS:
+#  $1 - Uppercase var name
+#  $2 - Lowercase var name
+#######################################################################
+pick_proxy_var() {
+  local upper lower
+  upper="$(container-var "$1")"
+  lower="$(container-var "$2")"
+  if [ -n "$upper" ] && [ -n "$lower" ] && [ "$upper" != "$lower" ]; then
+    boot_log_message WARNING "$1 and $2 are both set but differ; using $1"
+  fi
+  local value="${upper:-$lower}"
+  if [[ "$value" == *[\"[:cntrl:]]* ]]; then
+    boot_log_message WARNING "$1/$2 contains a double quote or control character; not using it as the smokescreen upstream"
+    return 0
+  fi
+  printf '%s' "$value"
 }
 
 #######################################################################
@@ -94,6 +129,10 @@ render_supervisor_configs() {
         exit 1
       fi
     fi
+
+    # Rendered confs can hold credential-bearing proxy URLs; only
+    # supervisord (root) reads them.
+    find "$i/conf.d" -maxdepth 1 -name '*.conf' -type f -exec chmod 0600 {} +
   fi
 
   set -o errexit
@@ -237,4 +276,5 @@ merge_config_php_hosts() {
 }
 
 http_proxy_main
-unset http_proxy_main render_supervisor_configs extract_host build_no_proxy_default merge_config_php_hosts
+unset http_proxy_main render_supervisor_configs extract_host build_no_proxy_default merge_config_php_hosts \
+  pick_proxy_var
