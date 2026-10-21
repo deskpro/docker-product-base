@@ -1,3 +1,18 @@
+# Optional: build PHP from the php.net source tarball instead of installing it
+# from the SURY apt repo. This is a BUILD arg (not a runtime env var, so it is
+# intentionally not listed in container-var-reference.json).
+#   PHP_SOURCE_VERSION=""        (default) PHP 8.3.x comes from SURY apt, exactly as before.
+#   PHP_SOURCE_VERSION="8.3.35"  PHP is compiled from php-8.3.35.tar.gz (GPG-verified,
+#                                see builder-php-src) with the same SAPIs (cli, fpm)
+#                                and extension set; grpc/opentelemetry/protobuf/redis
+#                                are rebuilt against that PHP rather than reusing the
+#                                SURY-built .so files. Debian/SURY filesystem layout
+#                                (/etc/php/8.3/*, /usr/lib/php/20230831, php-fpm8.3,
+#                                phpenmod/phpdismod) is reproduced so nothing downstream changes.
+# Only a PHP 8.3.x version may be given (the extension API 20230831 and the
+# /etc/php/8.3 paths used throughout this image are 8.3-specific).
+ARG PHP_SOURCE_VERSION=""
+
 # builder stage -- builds PHP packages
 # outputs: /usr/lib/php/20230831/protobuf.so
 # outputs: /usr/lib/php/20230831/opentelemetry.so
@@ -17,6 +32,171 @@ RUN apt-get update \
     php-pear \
     && pecl install opentelemetry protobuf \
     && rm -rf /var/lib/apt/lists/*
+
+# builder stage -- OPTIONAL: compiles PHP 8.3 (cli + fpm) and the non-bundled
+# extensions (redis, grpc, opentelemetry, protobuf) from source.
+# Does nothing unless PHP_SOURCE_VERSION is set: when empty every step below is
+# skipped and /out is left empty, so the COPY in stage2 is a no-op and PHP keeps
+# coming from SURY apt (see stage1).
+# Mirrors the Debian/SURY layout so the rest of the image is unchanged:
+#   /usr/bin/php8.3 (+ php), /usr/sbin/php-fpm8.3, /usr/lib/php/20230831/*.so,
+#   /etc/php/8.3/{cli,fpm}/conf.d, /etc/php/8.3/mods-available, phpenmod/phpdismod.
+# outputs: /out/ (everything above) and /out/php-src-runtime-deps (apt packages the
+#          result links against; installed in stage2)
+FROM debian:13.5-slim AS builder-php-src
+ARG PHP_SOURCE_VERSION
+# php.net release signing keys for PHP 8.3 (https://www.php.net/gpg-keys.php#gpg-8.3)
+#   1198C0117593497A5EC5C199286AF1F9897469DC  Pierrick Charron
+#   AFD8691FDAEDF03BDF6E460563F15A9B715376CA  Eric Mann
+#   C28D937575603EB4ABB725861C0779DC5C0A9DE4  Jakub Zelenka
+ARG PHP_GPG_KEY_FINGERPRINTS="1198C0117593497A5EC5C199286AF1F9897469DC:AFD8691FDAEDF03BDF6E460563F15A9B715376CA:C28D937575603EB4ABB725861C0779DC5C0A9DE4"
+# PECL extensions: PECL publishes no signatures, so pin version + sha256 of the tarball
+ARG PECL_REDIS_VERSION="6.3.0"
+ARG PECL_REDIS_SHA256="0d5141f634bd1db6c1ddcda053d25ecf2c4fc1c395430d534fd3f8d51dd7f0b5"
+ARG PECL_GRPC_VERSION="1.84.0"
+ARG PECL_GRPC_SHA256="555716233a5cc9a6baa605719f87b7688a88fb8bfdd9b4493396276244d56625"
+ARG PECL_OPENTELEMETRY_VERSION="1.4.2"
+ARG PECL_OPENTELEMETRY_SHA256="a355329259f373c5c7327e66310481726cfabac50cb5483eba000bec791d5017"
+ARG PECL_PROTOBUF_VERSION="5.36.2"
+ARG PECL_PROTOBUF_SHA256="f0a17c67de29df0fb0e5215a381df9b155125e1ace6252dd617bf16b4194dd5b"
+
+RUN [ -z "$PHP_SOURCE_VERSION" ] || { \
+    case "$PHP_SOURCE_VERSION" in \
+    8.3.*) ;; \
+    *) echo "PHP_SOURCE_VERSION must be an 8.3.x release (got '$PHP_SOURCE_VERSION')" >&2; exit 1 ;; \
+    esac \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl gnupg dirmngr \
+    # Debian does not ship the c-client library the imap extension needs, so (as in the
+    # runtime image) take libc-client2007e-dev from SURY, pinned low so it is the only thing used from it
+    && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
+    && . /etc/os-release \
+    && echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ ${VERSION_CODENAME} main" > /etc/apt/sources.list.d/php.list \
+    && printf 'Package: *\nPin: origin packages.sury.org\nPin-Priority: 100\n' > /etc/apt/preferences.d/98sury \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    build-essential autoconf pkg-config re2c bison file libc-client2007e-dev \
+    libxml2-dev libssl-dev libsqlite3-dev libcurl4-openssl-dev libonig-dev \
+    libzip-dev zlib1g-dev libgd-dev libkrb5-dev libldap-dev libsasl2-dev \
+    libicu-dev libargon2-dev libsodium-dev libxslt1-dev libreadline-dev libffi-dev \
+    && rm -rf /var/lib/apt/lists/*; \
+    }
+
+# download php.net tarball and verify it against the pinned release keys
+RUN mkdir -p /out && { [ -z "$PHP_SOURCE_VERSION" ] || { \
+    mkdir -p /usr/src/php-dl && cd /usr/src/php-dl \
+    && curl -fsSLo php.tar.gz "https://www.php.net/distributions/php-${PHP_SOURCE_VERSION}.tar.gz" \
+    && curl -fsSLo php.tar.gz.asc "https://www.php.net/distributions/php-${PHP_SOURCE_VERSION}.tar.gz.asc" \
+    && export GNUPGHOME="$(mktemp -d)" \
+    && for fp in $(echo "$PHP_GPG_KEY_FINGERPRINTS" | tr ':' ' '); do \
+    for server in hkps://keyserver.ubuntu.com hkps://keys.openpgp.org; do \
+    gpg --batch --keyserver "$server" --recv-keys "$fp" && break; \
+    done; \
+    done \
+    # verify the keys we imported are exactly the pinned ones
+    && key_fingerprints="$(gpg --batch --with-colons --list-keys | awk -F: '$1 == "pub" { want = 1 } $1 == "fpr" && want { print $10; want = 0 }' | sort | paste -s -d:)" \
+    && pinned_fingerprints="$(echo "$PHP_GPG_KEY_FINGERPRINTS" | tr ':' '\n' | sort | paste -s -d:)" \
+    && { [ "$pinned_fingerprints" = "$key_fingerprints" ] || { \
+    echo "php.net key fingerprints do not match"; \
+    exit 1; \
+    }; } \
+    && gpg --batch --verify php.tar.gz.asc php.tar.gz \
+    && rm -rf "$GNUPGHOME"; \
+    }; }
+
+# compile PHP twice (cli, fpm) with Debian-style paths, so each SAPI reads
+# /etc/php/8.3/<sapi>/php.ini and /etc/php/8.3/<sapi>/conf.d. Bundled extensions
+# are compiled in, except opcache and phar which stay loadable (like the Debian
+# packages): opcache is enabled via mods-available, phar is enabled by default
+# and disabled again by `phpdismod phar` in stage2, same as with SURY.
+RUN [ -z "$PHP_SOURCE_VERSION" ] || { \
+    php_flags="--prefix=/usr --libdir=/usr/lib/php --mandir=/usr/share/man --localstatedir=/var \
+    --without-pear --disable-cgi --disable-phpdbg \
+    --enable-bcmath --enable-calendar --enable-ctype --enable-dom --enable-exif --enable-fileinfo \
+    --enable-ftp --enable-gd --with-external-gd --with-imap --with-imap-ssl --with-kerberos --enable-intl --enable-mbstring --enable-mysqlnd \
+    --enable-opcache=shared --enable-pcntl --enable-phar=shared --enable-posix --enable-shmop \
+    --enable-simplexml --enable-soap --enable-sockets --enable-sysvmsg --enable-sysvsem \
+    --enable-sysvshm --enable-tokenizer --enable-xml --enable-xmlreader --enable-xmlwriter \
+    --with-curl --with-ffi --with-gettext --with-iconv --with-ldap=/usr --with-ldap-sasl \
+    --with-mysqli=mysqlnd --with-openssl --with-password-argon2 --with-pdo-mysql=mysqlnd \
+    --with-pdo-sqlite --with-readline --with-sodium --with-sqlite3 --with-xsl --with-zip --with-zlib" \
+    && cd /usr/src \
+    && mkdir php-cli php-fpm \
+    && tar -xzf php-dl/php.tar.gz -C php-cli --strip-components=1 \
+    && tar -xzf php-dl/php.tar.gz -C php-fpm --strip-components=1 \
+    && cd /usr/src/php-cli \
+    && ./configure $php_flags \
+    --with-config-file-path=/etc/php/8.3/cli --with-config-file-scan-dir=/etc/php/8.3/cli/conf.d \
+    --enable-cli --disable-fpm \
+    && make -j"$(nproc)" \
+    && make install \
+    && cd /usr/src/php-fpm \
+    && ./configure $php_flags \
+    --with-config-file-path=/etc/php/8.3/fpm --with-config-file-scan-dir=/etc/php/8.3/fpm/conf.d \
+    --disable-cli --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data \
+    && make -j"$(nproc)" \
+    && install -m 0755 sapi/fpm/php-fpm /usr/sbin/php-fpm8.3 \
+    && cd / && rm -rf /usr/src/php-cli /usr/src/php-fpm; \
+    }
+
+# PECL extensions, built against the PHP above (phpize/php-config from the install)
+RUN [ -z "$PHP_SOURCE_VERSION" ] || { \
+    cd /usr/src \
+    && for spec in "redis:${PECL_REDIS_VERSION}:${PECL_REDIS_SHA256}" \
+    "grpc:${PECL_GRPC_VERSION}:${PECL_GRPC_SHA256}" \
+    "opentelemetry:${PECL_OPENTELEMETRY_VERSION}:${PECL_OPENTELEMETRY_SHA256}" \
+    "protobuf:${PECL_PROTOBUF_VERSION}:${PECL_PROTOBUF_SHA256}"; do \
+    name="${spec%%:*}"; rest="${spec#*:}"; version="${rest%%:*}"; sha256="${rest#*:}"; \
+    curl -fsSLo "${name}.tgz" "https://pecl.php.net/get/${name}-${version}.tgz" \
+    && echo "${sha256}  ${name}.tgz" | sha256sum -c - \
+    && mkdir "pecl-${name}" && tar -xzf "${name}.tgz" -C "pecl-${name}" --strip-components=1 \
+    && ( cd "pecl-${name}" && phpize && ./configure --enable-"${name}" && make -j"$(nproc)" && make install ) \
+    || exit 1; \
+    done \
+    && rm -rf /usr/src/pecl-* /usr/src/*.tgz; \
+    }
+
+# assemble /out in the Debian/SURY layout
+RUN [ -z "$PHP_SOURCE_VERSION" ] || { \
+    mkdir -p /out/usr/bin /out/usr/sbin /out/usr/lib/php \
+    /out/etc/php/8.3/mods-available /out/etc/php/8.3/cli/conf.d /out/etc/php/8.3/fpm/conf.d /out/etc/php/8.3/fpm/pool.d \
+    && cp /usr/bin/php /out/usr/bin/php8.3 \
+    && ln -s php8.3 /out/usr/bin/php \
+    && cp /usr/sbin/php-fpm8.3 /out/usr/sbin/php-fpm8.3 \
+    && cp -a /usr/lib/php/20230831 /out/usr/lib/php/20230831 \
+    && find /out -type f \( -name '*.so' -o -path '*/usr/bin/*' -o -path '*/usr/sbin/*' \) -exec strip --strip-unneeded {} + \
+    # minimal stand-in for Debian's phpenmod/phpdismod (same mods-available/<prio>-<name>.ini symlink scheme)
+    && printf '%s\n' \
+    '#!/bin/sh' \
+    'etc="${PHP_ETC:-/etc/php/8.3}"' \
+    'act="${0##*/}"' \
+    'for m in "$@"; do' \
+    '  case "$m" in -*) continue ;; esac' \
+    '  ini="$etc/mods-available/$m.ini"' \
+    '  [ -f "$ini" ] || { echo "WARNING: module $m ini file does not exist" >&2; continue; }' \
+    '  prio="$(sed -n "s/^; *priority=\([0-9][0-9]*\).*/\1/p" "$ini" | head -n 1)"' \
+    '  for sapi in cli fpm; do' \
+    '    link="$etc/$sapi/conf.d/${prio:-20}-$m.ini"' \
+    '    if [ "$act" = phpenmod ]; then ln -sf "../../mods-available/$m.ini" "$link"; else rm -f "$link"; fi' \
+    '  done' \
+    'done' > /out/usr/sbin/phpenmod \
+    && chmod 0755 /out/usr/sbin/phpenmod \
+    && ln -s phpenmod /out/usr/sbin/phpdismod \
+    # default-enabled modules (the rest are compiled in)
+    && printf '; priority=10\nzend_extension=opcache.so\n' > /out/etc/php/8.3/mods-available/opcache.ini \
+    && printf '; priority=20\nextension=phar.so\n' > /out/etc/php/8.3/mods-available/phar.ini \
+    && printf '; priority=20\nextension=redis.so\n' > /out/etc/php/8.3/mods-available/redis.ini \
+    && PHP_ETC=/out/etc/php/8.3 /out/usr/sbin/phpenmod opcache phar redis \
+    # smoke test the result before it leaves the builder
+    && /out/usr/bin/php8.3 -n -v \
+    && /out/usr/sbin/php-fpm8.3 -n -v \
+    # record which apt packages the binaries and extensions link against
+    && ( find /out -type f \( -name '*.so' -o -path '*/usr/bin/*' -o -path '*/usr/sbin/*' \) -exec ldd {} + 2>/dev/null \
+    | tee /tmp/ldd.out | awk '/=> \// { print $3 }' | sort -u | xargs -r realpath \
+    | xargs -r dpkg-query -S | sed 's/:.*//' | sort -u > /out/php-src-runtime-deps ) \
+    && ! grep 'not found' /tmp/ldd.out \
+    && [ -s /out/php-src-runtime-deps ]; \
+    }
 
 # Use pre-built gomplate v5.3.1 binary
 FROM debian:13.7-slim AS builder-go-binaries
@@ -161,6 +341,7 @@ RUN mkdir -p /etc/systemd/system \
     && touch /dev/log && chmod 666 /dev/log
 
 # Install PHP packages in separate step to isolate any issues
+ARG PHP_SOURCE_VERSION
 RUN export DEBIAN_FRONTEND=noninteractive \
     # Add PHP repository for latest versions
     && apt-get update \
@@ -168,8 +349,9 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list \
     && apt-get update \
+    && if [ -z "$PHP_SOURCE_VERSION" ]; then \
     # Install PHP packages
-    && apt-get install -y --no-install-recommends \
+    apt-get install -y --no-install-recommends \
     php8.3-bcmath \
     php8.3-cli \
     php8.3-common \
@@ -193,6 +375,12 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     php8.3-zip \
     php-common \
     php8.3 \
+    ; else \
+    # PHP_SOURCE_VERSION set: PHP comes from builder-php-src (see stage2). SURY stays
+    # configured only because libc-client2007e (imap) is not in Debian; pinned low
+    # so nothing else is taken from it.
+    printf 'Package: *\nPin: origin packages.sury.org\nPin-Priority: 100\n' > /etc/apt/preferences.d/98sury \
+    ; fi \
     # Clean up PHP installation
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/*
@@ -225,6 +413,18 @@ FROM stage1 AS stage2
 COPY --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
 COPY --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
 COPY --from=builder-php-exts /usr/lib/php/20230831/grpc.so /usr/lib/php/20230831/grpc.so
+# PHP_SOURCE_VERSION set: PHP built from source (cli, fpm, extensions, phpenmod/phpdismod),
+# overlaying the SURY-built .so files copied above with ones built against that PHP.
+# PHP_SOURCE_VERSION empty: /out is empty and this is a no-op.
+COPY --from=builder-php-src /out/ /
+# Runtime shared libs of the source-built PHP (no-op unless the file above exists)
+RUN if [ -f /php-src-runtime-deps ]; then \
+    apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends $(cat /php-src-runtime-deps) \
+    && rm -f /php-src-runtime-deps \
+    && apt-get -y clean \
+    && rm -rf /var/lib/apt/lists/*; \
+    fi
 COPY --from=ghcr.io/jqlang/jq:1.8.1 /jq /usr/local/bin/jq
 # Security-patched packages already installed in stage1
 COPY --from=builder-go-binaries /usr/local/bin/gomplate /usr/local/bin/gomplate
