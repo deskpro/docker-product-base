@@ -256,8 +256,8 @@ RUN apt-get update \
 # cache that can freeze earlier stages at a vulnerable version.
 #   openssl stack  -- CVE-2026-45447 (use-after-free, DoS/RCE)
 #   libssh2 (via libcurl) -- CVE-2026-55200 (use-after-free, PoC exists)
-ARG OPENSSL_VERSION="3.5.6-1~deb13u2"
-ARG LIBSSH2_VERSION="1.11.1-1+deb13u1"
+ARG OPENSSL_VERSION="3.5.7-1~deb13u3"
+ARG LIBSSH2_VERSION="1.11.1-1+deb13u2"
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     "openssl=${OPENSSL_VERSION}" \
