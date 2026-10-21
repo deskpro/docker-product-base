@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# Always build/push both platforms for this repo.
-PLATFORMS="linux/amd64,linux/arm64"
+# Temporarily amd64-only; arm64 restored in a follow-up.
+PLATFORMS="linux/amd64"
 
 # Multi-arch requires the docker-container buildx driver (buildkitd in a container).
 BUILDER_NAME="multiarch"
