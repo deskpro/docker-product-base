@@ -1,0 +1,61 @@
+# Shared PHP extensions produced by the source build (PHP_INSTALL_METHOD=source).
+#
+#   <module> <priority> [zend]
+#
+# Each module with a numeric priority gets /etc/php/8.3/mods-available/<module>.ini
+# and is enabled for every SAPI with phpenmod, exactly as the Debian (sury)
+# packages do it. The priorities are the ones those packages use, so the
+# conf.d/NN-<module>.ini load order -- and any operator override that relies
+# on it -- is unchanged.
+#
+# A priority of "-" means the module is built here but its .ini is written by
+# the Dockerfile's shared stage2 step, the same as for PHP_INSTALL_METHOD=deb.
+#
+# build.sh fails if a built .so is missing from this table, or a listed one
+# was not built.
+
+opcache        10  zend
+mysqlnd        10
+pdo            10
+xml            15
+bcmath         20
+calendar       20
+ctype          20
+curl           20
+dom            20
+exif           20
+ffi            20
+fileinfo       20
+ftp            20
+gd             20
+gettext        20
+iconv          20
+igbinary       20
+imap           20
+intl           20
+ldap           20
+mbstring       20
+mysqli         20
+pdo_mysql      20
+pdo_sqlite     20
+phar           20
+posix          20
+readline       20
+shmop          20
+simplexml      20
+soap           20
+sockets        20
+sqlite3        20
+sysvmsg        20
+sysvsem        20
+sysvshm        20
+tokenizer      20
+xmlreader      20
+xmlwriter      20
+xsl            20
+zip            20
+redis          25
+
+grpc           -
+protobuf       -
+opentelemetry  -

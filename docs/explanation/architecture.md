@@ -22,11 +22,15 @@ The [`Dockerfile`](../../Dockerfile) is multi-stage:
 | Stage | Purpose |
 | --- | --- |
 | `builder-php-exts` | Compiles PHP PECL extensions (`protobuf`, `opentelemetry`). |
+| `builder-php-source` | Only when `PHP_INSTALL_METHOD=source`: compiles PHP, its bundled extensions, UW-IMAP's c-client and the PECL extensions from verified source tarballs. See [php-source-build.md](./php-source-build.md). |
 | `builder-go-binaries` | Downloads a pinned [gomplate](https://docs.gomplate.ca/) binary used for config templating at runtime. |
 | `builder-smokescreen` | Builds [smokescreen](https://github.com/stripe/smokescreen) (an egress forward proxy) from source, pinned to an exact upstream commit via `smokescreen/go.mod` + `go.sum` (no binary releases exist to pin against instead). |
 | `builder-security-packages` | Installs a set of commonly-CVE'd libraries (sqlite, expat, aom, zlib, tiff, webp, openjp2, curl) from Debian system repos. Kept as a stage for historical reasons and to make it easy to swap in custom-built versions later. |
-| `stage1` | Debian 13.3-slim base, system packages, PHP 8.3 from [deb.sury.org](https://packages.sury.org/php/), nginx from the official nginx repo (pinned by version + verified GPG fingerprint). |
-| `stage2` | Copies the PHP extensions and gomplate from the builder stages, plus `jq`, `composer`, `vector`, `node`, and `tsx` from their official images. |
+| `stage1-base` | Debian 13 slim base and system packages. |
+| `stage1-php-deb` | Default (`PHP_INSTALL_METHOD=deb`): PHP 8.3 from [deb.sury.org](https://packages.sury.org/php/), plus the PECL extensions from `builder-php-exts`. |
+| `stage1-php-source` | `PHP_INSTALL_METHOD=source`: PHP from `builder-php-source`, its runtime libraries, and the Debian `/etc/php/8.3` layout. |
+| `stage1` | Whichever `stage1-php-*` was selected, plus nginx from the official nginx repo (pinned by version + verified GPG fingerprint). |
+| `stage2` | Copies gomplate from the builder stages, plus `jq`, `composer`, `vector`, `node`, and `tsx` from their official images. |
 | `build` | Final stage — copies Deskpro's own scripts, templates, and configs from `etc/`, `usr/local/bin/`, `usr/local/sbin/`, `usr/local/lib/`, `usr/local/share/deskpro/`, creates the `dp_app`, `vector`, and `nginx` users, sets ownership on log dirs, and wires up the `ENTRYPOINT` and `HEALTHCHECK`. |
 
 ## Runtime components

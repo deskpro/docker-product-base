@@ -4,12 +4,36 @@ describe package('nginx') do
   it { should be_installed }
 end
 
-describe package('php8.3-cli') do
-  it { should be_installed }
+describe file('/usr/local/share/deskpro/php-install-method') do
+  its(:content) { should match(/\A(deb|source)\n\z/) }
 end
 
-describe package('php8.3-fpm') do
-  it { should be_installed }
+php_install_method = File.read('/usr/local/share/deskpro/php-install-method').strip
+
+if php_install_method == 'source'
+  # PHP is compiled from source -- no PHP packages may sneak in alongside it
+  describe command("dpkg-query -W -f '${db:Status-Status} ${Package}\\n' 'php8.3*' 2>/dev/null | grep '^installed '") do
+    its(:stdout) { should be_empty }
+  end
+else
+  describe package('php8.3-cli') do
+    it { should be_installed }
+  end
+
+  describe package('php8.3-fpm') do
+    it { should be_installed }
+  end
+end
+
+# Each SAPI reads its own ini file and conf.d, as the Debian packages lay it out
+describe command('php -i') do
+  its(:stdout) { should contain('Loaded Configuration File => /etc/php/8.3/cli/php.ini') }
+  its(:stdout) { should contain('Scan this dir for additional .ini files => /etc/php/8.3/cli/conf.d') }
+end
+
+describe command('php-fpm8.3 -i') do
+  its(:stdout) { should contain('Loaded Configuration File => /etc/php/8.3/fpm/php.ini') }
+  its(:stdout) { should contain('Scan this dir for additional .ini files => /etc/php/8.3/fpm/conf.d') }
 end
 
 describe package('supervisor') do
