@@ -90,6 +90,15 @@ describe "Check default PHP and PHP-FPM configurations" do
     its(:value) { should be_empty }
   end
 
+  # CVE-2026-115560 - session upload progress writes request data into the session
+  describe command('phpinfo') do
+    its(:stdout) { should match /^session\.upload_progress\.enabled => Off => Off$/ }
+  end
+
+  describe command('php-fpm8.3 -i') do
+    its(:stdout) { should match /^session\.upload_progress\.enabled => Off => Off$/ }
+  end
+
   describe command('phpfpminfo --pool dp_default') do
     its(:stdout) { should contain "listen = /run/php_fpm_dp_default.sock" }
     its(:stdout) { should match /php_admin_value\[display_errors\] =\s*$/ }
