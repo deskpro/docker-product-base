@@ -5,10 +5,17 @@
 # outputs: /usr/bin/newrelic-daemon
 FROM debian:13.5-slim AS builder-php-exts
 ENV NEW_RELIC_AGENT_VERSION=12.7.0.36
+ARG TARGETARCH
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https curl lsb-release build-essential \
+    # sury's php/ repo has no arm64 builds; its freexian/ repo does
+    && case "$TARGETARCH" in \
+        amd64) SURY_REPO="php" ;; \
+        arm64) SURY_REPO="freexian" ;; \
+        *) echo "Unsupported TARGETARCH for sury: ${TARGETARCH:-<empty>}" >&2; exit 1 ;; \
+    esac \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
-    && sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' \
+    && echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/${SURY_REPO}/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --no-install-suggests -y \
     make \
@@ -150,12 +157,19 @@ RUN mkdir -p /etc/systemd/system \
     && touch /dev/log && chmod 666 /dev/log
 
 # Install PHP packages in separate step to isolate any issues
+ARG TARGETARCH
 RUN export DEBIAN_FRONTEND=noninteractive \
     # Add PHP repository for latest versions
     && apt-get update \
     && apt-get install -y ca-certificates apt-transport-https curl lsb-release \
+    # sury's php/ repo has no arm64 builds; its freexian/ repo does
+    && case "$TARGETARCH" in \
+        amd64) SURY_REPO="php" ;; \
+        arm64) SURY_REPO="freexian" ;; \
+        *) echo "Unsupported TARGETARCH for sury: ${TARGETARCH:-<empty>}" >&2; exit 1 ;; \
+    esac \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list \
+    && echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/${SURY_REPO}/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list \
     && apt-get update \
     # Install PHP packages
     && apt-get install -y --no-install-recommends \
