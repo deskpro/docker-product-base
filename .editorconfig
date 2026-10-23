@@ -21,3 +21,9 @@ trim_trailing_whitespace = true
 
 [deskpro-release]
 insert_final_newline = false
+
+# vendored upstream patches -- whitespace is significant
+[*.patch]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = false

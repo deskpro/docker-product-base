@@ -1,3 +1,10 @@
+# How PHP gets into the image:
+#   deb    -- sury's php8.3-* packages (default)
+#   source -- compiled from php.net source by builder-php-source, laid out
+#             like the packages (see docs/explanation/php-source-build.md)
+# Only the stages the chosen method needs are built.
+ARG PHP_INSTALL_METHOD="deb"
+
 # builder stage -- builds PHP packages
 # outputs: /usr/lib/php/20230831/protobuf.so
 # outputs: /usr/lib/php/20230831/opentelemetry.so
@@ -17,6 +24,30 @@ RUN apt-get update \
     php-pear \
     && pecl install opentelemetry protobuf \
     && rm -rf /var/lib/apt/lists/*
+
+# builder stage -- builds PHP and its extensions from source (PHP_INSTALL_METHOD=source)
+# outputs: /out (files for the runtime image's /) and /out-meta (inputs for install-runtime.sh)
+# Every download is pinned by sha256; the PHP tarball must also carry a
+# signature from one of php.net's PHP 8.3 release manager keys (listed at
+# https://www.php.net/gpg-keys.php). PECL publishes no signatures, so those
+# are pinned by sha256 only.
+FROM debian:13.5-slim AS builder-php-source
+ARG PHP_VERSION="8.3.36"
+ARG PHP_SHA256="dd54693aa334c5c4d72e9aee96b082c2473750a18a6c1d105789c93a3b1692fd"
+ARG PHP_GPG_KEY_FINGERPRINTS="1198C0117593497A5EC5C199286AF1F9897469DC:AFD8691FDAEDF03BDF6E460563F15A9B715376CA:C28D937575603EB4ABB725861C0779DC5C0A9DE4"
+# c-client for ext/imap, from sury's trixie build of Debian's uw-imap source package
+ARG UW_IMAP_VERSION="2007f~dfsg-7.1+0~20260622.6+debian13~1.gbpe1afca"
+ARG UW_IMAP_ORIG_SHA256="4fdec0b5a085a7269db87214276e14ce79afdf7efec2ca8d431ab176b9062a8a"
+ARG UW_IMAP_DEBIAN_SHA256="36d7750b1f346c564af3c83f0448872b1bb60e6fc4c7869a448dfc26ef1ebb46"
+# <name>-<version>:<sha256>, built in this order. Versions match what the deb
+# path currently ships (grpc/igbinary/redis from sury, the others from pecl).
+ARG PECL_EXTENSIONS="igbinary-3.2.16:8bf25d465abc7973d9e2c9a3039a5f8eea635b23bc1477017ff3999ff95836da redis-6.3.0:0d5141f634bd1db6c1ddcda053d25ecf2c4fc1c395430d534fd3f8d51dd7f0b5 protobuf-5.36.2:f0a17c67de29df0fb0e5215a381df9b155125e1ace6252dd617bf16b4194dd5b opentelemetry-1.4.2:a355329259f373c5c7327e66310481726cfabac50cb5483eba000bec791d5017 grpc-1.83.1:cb06519b1382f57ba6f5358504cb37e933d5a5892553300877fd4f3b04cf0560"
+COPY php-source/ /build/php-source/
+RUN /build/php-source/build.sh deps
+RUN /build/php-source/build.sh c-client
+RUN /build/php-source/build.sh php
+RUN /build/php-source/build.sh pecl
+RUN /build/php-source/build.sh collect
 
 # Use pre-built gomplate v5.2.0 binary to avoid vulnerable indirect dependencies
 FROM debian:13.5-slim AS builder-go-binaries
@@ -87,8 +118,8 @@ RUN mkdir -p /usr/local/bin /usr/local/lib \
     && ln -sf /usr/bin/curl /usr/local/bin/curl \
     && ln -sf /usr/bin/rsync /usr/local/bin/rsync \
     && echo "System package setup complete"
-# stage1 -- debian with security patches first, then packages
-FROM debian:13.5-slim AS stage1
+# stage1-base -- debian with security patches first, then packages
+FROM debian:13.5-slim AS stage1-base
 ARG BASE_IMAGE_COMMIT="unknown"
 LABEL org.deskpro.base-image-commit="$BASE_IMAGE_COMMIT"
 ENV TZ=UTC
@@ -160,6 +191,10 @@ RUN mkdir -p /etc/systemd/system \
     && apt-get update && apt-get install -y --no-install-recommends bsdutils && rm -rf /var/lib/apt/lists/* \
     && touch /dev/log && chmod 666 /dev/log
 
+# stage1-php-deb -- PHP from sury's packages (PHP_INSTALL_METHOD=deb)
+FROM stage1-base AS stage1-php-deb
+LABEL org.deskpro.php-install-method="deb"
+
 # Install PHP packages in separate step to isolate any issues
 RUN export DEBIAN_FRONTEND=noninteractive \
     # Add PHP repository for latest versions
@@ -195,7 +230,26 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     php8.3 \
     # Clean up PHP installation
     && apt-get -y clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /usr/local/share/deskpro \
+    && echo "deb" > /usr/local/share/deskpro/php-install-method
+
+COPY --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
+COPY --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
+COPY --from=builder-php-exts /usr/lib/php/20230831/grpc.so /usr/lib/php/20230831/grpc.so
+
+# stage1-php-source -- PHP compiled from source (PHP_INSTALL_METHOD=source)
+FROM stage1-base AS stage1-php-source
+LABEL org.deskpro.php-install-method="source"
+COPY --from=builder-php-source /out/ /
+COPY --from=builder-php-source /out-meta/ /tmp/php-source/
+RUN /tmp/php-source/install-runtime.sh \
+    && rm -rf /tmp/php-source \
+    && mkdir -p /usr/local/share/deskpro \
+    && echo "source" > /usr/local/share/deskpro/php-install-method
+
+# stage1 -- the chosen PHP, then nginx
+FROM stage1-php-${PHP_INSTALL_METHOD} AS stage1
 
 # Install nginx with OpenTelemetry module (inlined for proper dependency resolution)
 ARG NGINX_VERSION="1.30.2"
@@ -222,9 +276,6 @@ RUN apt-get update \
 
 # stage2 -- packages from other images
 FROM stage1 AS stage2
-COPY --from=builder-php-exts /usr/lib/php/20230831/protobuf.so /usr/lib/php/20230831/protobuf.so
-COPY --from=builder-php-exts /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/opentelemetry.so
-COPY --from=builder-php-exts /usr/lib/php/20230831/grpc.so /usr/lib/php/20230831/grpc.so
 COPY --from=ghcr.io/jqlang/jq:1.8.1 /jq /usr/local/bin/jq
 # Security-patched packages already installed in stage1
 COPY --from=builder-go-binaries /usr/local/bin/gomplate /usr/local/bin/gomplate

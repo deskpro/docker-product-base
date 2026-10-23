@@ -45,6 +45,7 @@ Understanding-oriented. For context and rationale.
 - [Architecture overview](./explanation/architecture.md) — layers, runtime components, how the product image layers on top.
 - [Container boot flow](./explanation/boot-flow.md) — what the entrypoint does, in order, and failure modes at each step.
 - [How configuration reaches the application](./explanation/configuration-flow.md) — env vars, templates, mounted files, and their precedence.
+- [Building PHP from source](./explanation/php-source-build.md) — the experimental `PHP_INSTALL_METHOD=source` build path and how it matches the deb layout.
 
 ## Sub-domains
 

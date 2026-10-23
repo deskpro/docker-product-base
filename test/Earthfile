@@ -1,6 +1,10 @@
 VERSION 0.8
 FROM scratch
 
+# How the image under test gets PHP: "deb" (sury packages, default) or
+# "source" (compiled from php.net source). e.g. earthly -P +test --PHP_INSTALL_METHOD=source
+ARG --global PHP_INSTALL_METHOD=deb
+
 # save-base-image saves the test image (that have all the test sources)
 # as deskpro/docker-product-base:test. Useful if you want to run the
 # image manually for some reason.
@@ -283,7 +287,7 @@ test-smokescreen:
 # Built on top of the product base image, this just adds test sources
 # and simulation sources used when testing various container features.
 base-image:
-    FROM DOCKERFILE -f ../Dockerfile ../
+    FROM DOCKERFILE --build-arg PHP_INSTALL_METHOD=$PHP_INSTALL_METHOD -f ../Dockerfile ../
     RUN DEBIAN_FRONTEND=noninteractive apt-get update \
         && apt-get install --no-install-recommends --no-install-suggests -y ruby iproute2 \
         && rm -rf /var/lib/apt/lists/* \
