@@ -68,6 +68,7 @@ cmd_deps() {
     file \
     gpg \
     gpg-agent \
+    patch \
     pkg-config \
     quilt \
     re2c \
@@ -148,6 +149,7 @@ php_common_args() {
     --with-sodium \
     --with-password-argon2 \
     --with-external-pcre \
+    --with-system-tzdata \
     --with-mhash \
     --enable-bcmath=shared \
     --enable-calendar=shared \
@@ -229,9 +231,17 @@ cmd_php() {
   local common
   mapfile -t common < <(php_common_args)
 
-  mkdir php-cli php-fpm
-  tar -xJf "$tarball" -C php-cli --strip-components=1
-  tar -xJf "$tarball" -C php-fpm --strip-components=1
+  # Debian's patches (see patches/README.md) change ext/date's config.m4, so
+  # configure is regenerated after applying them
+  local tree patch_file
+  for tree in php-cli php-fpm; do
+    mkdir "$tree"
+    tar -xJf "$tarball" -C "$tree" --strip-components=1
+    for patch_file in "$here"/patches/*.patch; do
+      patch --directory="$tree" --strip=1 --forward --fuzz=0 < "$patch_file"
+    done
+    (cd "$tree" && ./buildconf --force)
+  done
 
   (
     cd php-cli

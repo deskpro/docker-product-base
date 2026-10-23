@@ -25,6 +25,22 @@ else
   end
 end
 
+# PHP reads the system tzdata (kept current by apt) rather than a bundled copy,
+# which stops getting IANA updates once a PHP branch is security-only
+describe command('php -r "echo timezone_version_get();"') do
+  its(:stdout) { should eq '0.system' }
+end
+
+# systemd must come in without its recommends: they include dbus and its
+# setuid-root launch helper
+describe package('dbus') do
+  it { should_not be_installed }
+end
+
+describe file('/usr/lib/dbus-1.0/dbus-daemon-launch-helper') do
+  it { should_not exist }
+end
+
 # Each SAPI reads its own ini file and conf.d, as the Debian packages lay it out
 describe command('php -i') do
   its(:stdout) { should contain('Loaded Configuration File => /etc/php/8.3/cli/php.ini') }

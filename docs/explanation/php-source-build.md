@@ -38,6 +38,8 @@ Nothing outside the PHP stages knows which method was used. The rest of the imag
 | sury's `opcache.ini` sets `opcache.jit=off` | Written into the generated `opcache.ini` too. Without it, setting `PHP_OPCACHE_JIT_BUFFER_SIZE` would turn the tracing JIT on here but not on the deb build. |
 | MySQL default socket `/var/run/mysqld/mysqld.sock` | `--with-mysql-sock` |
 | `session.save_path` patched to `/var/lib/php/sessions` | Set explicitly in the repo's `php.ini` files. This makes no difference on the deb build. |
+| Timezone data comes from the system `tzdata` package | Debian's two tzdata patches are vendored in [`php-source/patches/`](../../php-source/patches/README.md) and PHP is built `--with-system-tzdata`. PHP 8.3 is security-only, so its bundled timezone DB stopped getting IANA updates. |
+| `php8.3-fpm` depends on `systemd`, installed without recommends | `install-runtime.sh` installs `systemd` the same way. Otherwise the nginx step later pulls it in with recommends, including dbus and its setuid-root launch helper. |
 
 The Dockerfile selects between `stage1-php-deb` and `stage1-php-source` with `FROM stage1-php-${PHP_INSTALL_METHOD}`. BuildKit only builds the stages the selected method needs, so the default build never compiles anything new.
 
@@ -59,8 +61,7 @@ The Dockerfile selects between `stage1-php-deb` and `stage1-php-source` with `FR
 These differences are deliberate, or inherent to building from upstream source:
 
 - **gd is PHP's bundled copy** rather than the system `libgd3`. Upstream recommends it, and it takes `libgd3`, `libheif`, `libtiff` and `libxpm` (and their CVEs) out of PHP's dependencies. XPM support is not built.
-- **Timezone data is PHP's bundled timezonedb.** Debian patches PHP to read the system tzdata (`timezone_version_get()` returns `0.system`).
-- **No Debian/sury patches to PHP itself.** Debian carries a small set of mostly packaging patches. The upstream behaviour applies instead.
+- **Only the tzdata patches from Debian/sury are applied.** The rest of their series is mostly packaging changes, so the upstream behaviour applies instead. That includes sury's `0049` patch, which compiles `telemetry.sury.org` into `php-fpm8.3`: every FPM start sends an encrypted DNS lookup carrying the package name and version. The source build makes no such lookup.
 - **No `php8.3-*` packages are registered with dpkg.** A downstream `apt-get install php8.3-<anything>` would pull in sury's `php8.3-common` and overwrite these files. Extra extensions have to be compiled in `builder-php-source` instead. The image ships no `phpize8.3`, just as the deb path ships no `php8.3-dev`.
 
 - **`igbinary APCu serializer ABI` reports `no`.** sury builds igbinary against APCu's headers, but neither image ships APCu, so this has no effect.

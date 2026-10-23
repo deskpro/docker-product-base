@@ -17,7 +17,12 @@ mapfile -t packages < "$here/runtime-packages.txt"
 apt-get update
 # php-common here is Debian's, not sury's, and only provides
 # phpenmod/phpdismod/phpquery -- no PHP binaries or extensions.
-apt-get install -y --no-install-recommends php-common "${packages[@]}"
+# tzdata: PHP is built --with-system-tzdata and reads /usr/share/zoneinfo.
+# systemd: php8.3-fpm depends on it, so on the deb path it is already
+# installed (without recommends) before the nginx step runs. Without it here,
+# nginx -> logrotate -> cron pulls it in *with* recommends: dbus (and its
+# setuid-root launch helper), systemd-timesyncd, systemd-cryptsetup, ...
+apt-get install -y --no-install-recommends php-common tzdata systemd "${packages[@]}"
 apt-get -y clean
 rm -rf /var/lib/apt/lists/*
 
