@@ -222,8 +222,8 @@ COPY --from=builder-go-binaries /usr/local/bin/gomplate /usr/local/bin/gomplate
 # Nginx installed directly in stage1 - no COPY needed
 COPY --from=composer:2.9.7 /usr/bin/composer /usr/local/bin/composer
 COPY --from=timberio/vector:0.51.1-debian /usr/bin/vector /usr/local/bin/vector
-COPY --from=node:22.22.3-bookworm /usr/local/bin /usr/local/bin
-COPY --from=node:22.22.3-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node:22.23.4-bookworm /usr/local/bin /usr/local/bin
+COPY --from=node:22.23.4-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
 # Upgrade npm -- the npm bundled with node ships a vulnerable picomatch
 # (CVE-2026-33671); this pinned npm pulls the patched picomatch 4.0.4.
 ARG NPM_VERSION="11.16.0"
