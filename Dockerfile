@@ -323,7 +323,7 @@ RUN apt-get update \
 # libssh2-1-dev pulls in libssl-dev, which requires a matching libssl3t64.
 ARG OPENSSL_VERSION="3.5.7-1~deb13u3"
 ARG LIBSSH2_VERSION="1.11.1-1+deb13u2"
-ARG LIBHEIF_VERSION="1.23.4-1~deb13u1"
+ARG LIBHEIF_VERSION="1.23.6-2~deb13u1"
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     "openssl=${OPENSSL_VERSION}" \
