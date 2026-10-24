@@ -1,3 +1,10 @@
+# Refuse brotli-encoded request bodies before they reach any upstream (PHP-FPM or the
+# messenger-api Node proxy). Matches the $dp_reject_content_encoding map in
+# 01-deskpro_setup.conf; 415 = Unsupported Media Type.
+if ($dp_reject_content_encoding) {
+    return 415;
+}
+
 root /srv/deskpro/serve/www;
 
 add_header X-Frame-Options $dp_x_frame_options;

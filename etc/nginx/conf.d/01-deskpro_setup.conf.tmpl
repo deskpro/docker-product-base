@@ -78,3 +78,11 @@ map $upstream_http_x_xss_protection $dp_x_xss_protection {
     default "1; mode=block";
     "1; mode=block" "";
 }
+
+# Reject brotli-encoded request bodies at the edge. The app stack does not accept
+# Content-Encoding: br on inbound requests, so refusing it here is defense-in-depth
+# against brotli-decoder flaws in upstream services (see deskpro_server_params).
+map $http_content_encoding $dp_reject_content_encoding {
+    default 0;
+    "~*\bbr\b" 1;
+}
