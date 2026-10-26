@@ -1,7 +1,7 @@
 # builder stage -- builds PHP packages
 # outputs: /usr/lib/php/20230831/protobuf.so
 # outputs: /usr/lib/php/20230831/opentelemetry.so
-FROM debian:13.5-slim AS builder-php-exts
+FROM debian:13.7-slim AS builder-php-exts
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https curl lsb-release build-essential \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
@@ -19,7 +19,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Use pre-built gomplate v5.2.0 binary to avoid vulnerable indirect dependencies
-FROM debian:13.5-slim AS builder-go-binaries
+FROM debian:13.7-slim AS builder-go-binaries
 ARG GOMPLATE_VERSION="5.2.0"
 ARG TARGETARCH
 ARG TARGETVARIANT
@@ -50,7 +50,7 @@ RUN apt-get update && apt-get install -y curl ca-certificates \
 #   Pinned commit: 82f05bfded5885914108d3f6eb9bf91ebd871728 (v0.0.5-0.20260909080646-82f05bfded58)
 #   Verified: GPG-signed by GitHub on the upstream commit (gauthamw-stripe, 2026-09-09)
 #   Checksum: see smokescreen/go.sum -- "github.com/stripe/smokescreen v0.0.5-..." h1: line
-FROM docker.io/library/golang:1.26.8 AS builder-smokescreen
+FROM docker.io/library/golang:1.26.10 AS builder-smokescreen
 WORKDIR /src
 COPY smokescreen/go.mod smokescreen/go.sum ./
 RUN go mod download
@@ -59,13 +59,13 @@ RUN CGO_ENABLED=0 go build -trimpath -o /out/smokescreen . \
     && /out/smokescreen --help
 
 # builder stage -- builds essential security-patched packages from source
-# SIMPLIFIED: Use system packages from debian:13.5-slim instead of source builds
-FROM debian:13.5-slim AS builder-security-packages
+# SIMPLIFIED: Use system packages from debian:13.7-slim instead of source builds
+FROM debian:13.7-slim AS builder-security-packages
 ARG USE_SYSTEM_PACKAGES_ONLY=true
 
 # If using system packages only, just install the latest available packages
 RUN if [ "$USE_SYSTEM_PACKAGES_ONLY" = "true" ]; then \
-    echo "Using debian:13.5-slim system packages instead of source builds" \
+    echo "Using debian:13.7-slim system packages instead of source builds" \
     && apt-get update \
     && apt-get install -y \
     sqlite3 libsqlite3-0 \
@@ -88,7 +88,7 @@ RUN mkdir -p /usr/local/bin /usr/local/lib \
     && ln -sf /usr/bin/rsync /usr/local/bin/rsync \
     && echo "System package setup complete"
 # stage1 -- debian with security patches first, then packages
-FROM debian:13.5-slim AS stage1
+FROM debian:13.7-slim AS stage1
 ARG BASE_IMAGE_COMMIT="unknown"
 LABEL org.deskpro.base-image-commit="$BASE_IMAGE_COMMIT"
 ENV TZ=UTC
@@ -105,7 +105,7 @@ RUN echo "System packages with symlinks copied successfully"
 # Configure dynamic linker and install system packages (simplified approach)
 RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local.conf \
     && ldconfig \
-    # Install system packages - debian:13.5-slim has latest security updates
+    # Install system packages - debian:13.7-slim has latest security updates
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y \
@@ -198,7 +198,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && rm -rf /var/lib/apt/lists/*
 
 # Install nginx with OpenTelemetry module (inlined for proper dependency resolution)
-ARG NGINX_VERSION="1.30.2"
+ARG NGINX_VERSION="1.30.6"
 ARG NGINX_GPG_KEY_FINGERPRINTS="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62:8540A6F18833A80E9C1653A42FD21310B49F6B46:9E9BE90EACBCDE69FE9B204CBCDCD8A38D88A2B3"
 
 RUN apt-get update \
@@ -230,7 +230,7 @@ COPY --from=ghcr.io/jqlang/jq:1.8.1 /jq /usr/local/bin/jq
 COPY --from=builder-go-binaries /usr/local/bin/gomplate /usr/local/bin/gomplate
 # Nginx installed directly in stage1 - no COPY needed
 COPY --from=composer:2.10.3 /usr/bin/composer /usr/local/bin/composer
-COPY --from=timberio/vector:0.51.1-debian /usr/bin/vector /usr/local/bin/vector
+COPY --from=timberio/vector:0.60.0-debian /usr/bin/vector /usr/local/bin/vector
 COPY --from=builder-smokescreen /out/smokescreen /usr/local/bin/smokescreen
 COPY --from=node:22.23.4-bookworm /usr/local/bin /usr/local/bin
 COPY --from=node:22.23.4-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
@@ -254,7 +254,7 @@ ARG ESBUILD_VERSION="0.28.1"
 ARG NPM_TAR_VERSION="7.5.22"
 ARG NPM_IP_ADDRESS_VERSION="10.7.1"
 ARG NPM_BRACE_EXPANSION_VERSION="5.0.12"
-ARG NPM_UNDICI_VERSION="8.10.2"
+ARG NPM_UNDICI_VERSION="8.12.3"
 RUN set -eu \
     && npm install --global "npm@${NPM_VERSION}" \
     && npm install --global "tsx@${TSX_VERSION}" \
@@ -386,6 +386,13 @@ RUN set -e \
     # Preserve nginx configuration from official package
     && chmod 0755 /etc/nginx /etc/nginx/conf.d \
     && rm -f /etc/nginx/conf.d/default.conf
+
+# Remove the emSign root CAs from the system trust list. Debian's ca-certificates
+# package ships them; mark them "!" in /etc/ca-certificates.conf and regenerate the
+# bundle. Runs after the last apt step in this stage so a later ca-certificates
+# install/upgrade cannot re-enable them.
+RUN sed -i -E 's#^(mozilla/emSign_.*\.crt)$#!\1#' /etc/ca-certificates.conf \
+    && update-ca-certificates --fresh
 
 # build -- final stage adds our custom stuff
 FROM stage2 AS build
