@@ -41,3 +41,10 @@ map $upstream_http_x_xss_protection $dp_x_xss_protection {
     default "1; mode=block";
     "1; mode=block" "";
 }
+
+# Flag requests that declare a brotli request-body content-encoding, which the
+# app stack does not accept.
+map $http_content_encoding $dp_reject_content_encoding {
+    default 0;
+    "~*\bbr\b" 1;
+}
