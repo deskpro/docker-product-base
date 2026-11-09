@@ -18,9 +18,9 @@ RUN apt-get update \
     && pecl install opentelemetry protobuf \
     && rm -rf /var/lib/apt/lists/*
 
-# Use pre-built gomplate v5.2.0 binary to avoid vulnerable indirect dependencies
+# Use pre-built gomplate v5.3.1 binary
 FROM debian:13.7-slim AS builder-go-binaries
-ARG GOMPLATE_VERSION="5.2.0"
+ARG GOMPLATE_VERSION="5.3.1"
 ARG TARGETARCH
 ARG TARGETVARIANT
 RUN apt-get update && apt-get install -y curl ca-certificates \
@@ -337,6 +337,9 @@ RUN apt-get update \
     libmount1 \
     libsmartcols1 \
     libuuid1 \
+    apt \
+    libapt-pkg7.0 \
+    apt-transport-https \
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/* \
     && dpkg-query -W bsdutils util-linux libmount1 libsmartcols1 libuuid1 liblastlog2-2
