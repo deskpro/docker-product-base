@@ -28,6 +28,32 @@ http {
     ssl_session_timeout 1h;
     ssl_session_tickets off;
 
+    # API keys are "{id}:{code}"; only the id may be captured, the code must never reach the log.
+    map $http_authorization $dp_api_key_id_v2 {
+        default "";
+        "~^\s*key[\s,]+(?<dp_v2_key_id>[0-9]+):" $dp_v2_key_id;
+    }
+
+    map $http_x_deskpro_api_key $dp_api_key_id_legacy {
+        default "";
+        "~^\s*(?<dp_legacy_key_id>[0-9]+):" $dp_legacy_key_id;
+    }
+
+    map $dp_api_key_id_v2 $dp_api_key_id {
+        default $dp_api_key_id_v2;
+        ""      $dp_api_key_id_legacy;
+    }
+
+    # Regexes are tried in order: the numbered key must match before the colon-less master key.
+    map $http_authorization $dp_api_auth_mode {
+        default "";
+        "~^\s*key[\s,]+[0-9]+:"      "key";
+        "~^\s*key[\s,]+[^\s,:]+\s*$" "master_key";
+        "~^\s*token[\s,]"            "token";
+        "~^\s*internal[\s,]"         "internal";
+        "~^\s*workspace[\s,]"        "workspace";
+    }
+
     log_format logjson escape=json
       '{'
       '"ts":"$time_iso8601", '
@@ -45,6 +71,8 @@ http {
       '"request_id":"$request_id", '
       '"request_log_transaction_id":"$http_x_log_transaction_id", '
       '"trace_id":"$http_traceparent", '
+      '"api_key_id":"$dp_api_key_id", '
+      '"api_auth_mode":"$dp_api_auth_mode", '
       '"bytes_request":"$request_length", '
       '"bytes_response":"$body_bytes_sent", '
       '"server_protocol":"$server_protocol", '
