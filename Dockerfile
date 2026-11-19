@@ -132,7 +132,7 @@ RUN [ -z "$PHP_SOURCE_VERSION" ] || { \
     && make install \
     && cd /usr/src/php-fpm \
     && EXTENSION_DIR=/usr/lib/php/20230831 ./configure $php_flags \
-    --with-config-file-path=/etc/php/8.3/fpm --with-config-file-scan-dir=/etc/php/8.3/fpm/conf.d \
+    --sysconfdir=/etc/php/8.3/fpm --with-config-file-path=/etc/php/8.3/fpm --with-config-file-scan-dir=/etc/php/8.3/fpm/conf.d \
     --disable-cli --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data \
     && make -j"$(nproc)" \
     && install -m 0755 sapi/fpm/php-fpm /usr/sbin/php-fpm8.3 \
