@@ -21,7 +21,7 @@ The [`Dockerfile`](../../Dockerfile) is multi-stage:
 
 | Stage | Purpose |
 | --- | --- |
-| `builder-php-exts` | Compiles PHP PECL extensions (`protobuf`, `opentelemetry`). |
+| `builder-php-exts` | Builds the PHP extensions the image adds on top of Sury's PHP: `opentelemetry` with [PIE](https://github.com/php/pie) (pinned release, `pie.phar` verified by SHA-256; extension pinned to an exact source commit), `protobuf` with `phpize` from the SHA-256-pinned PECL tarball (no official PIE package exists yet), and `grpc` from the `php8.3-grpc` apt package. |
 | `builder-go-binaries` | Downloads a pinned [gomplate](https://docs.gomplate.ca/) binary used for config templating at runtime. |
 | `builder-smokescreen` | Builds [smokescreen](https://github.com/stripe/smokescreen) (an egress forward proxy) from source, pinned to an exact upstream commit via `smokescreen/go.mod` + `go.sum` (no binary releases exist to pin against instead). |
 | `builder-security-packages` | Installs a set of commonly-CVE'd libraries (sqlite, expat, aom, zlib, tiff, webp, openjp2, curl) from Debian system repos. Kept as a stage for historical reasons and to make it easy to swap in custom-built versions later. |
