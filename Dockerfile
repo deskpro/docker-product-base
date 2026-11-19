@@ -1,7 +1,29 @@
-# builder stage -- builds PHP packages
-# outputs: /usr/lib/php/20230831/protobuf.so
-# outputs: /usr/lib/php/20230831/opentelemetry.so
+# builder stage -- builds PHP extensions from source
+# outputs: /usr/lib/php/20230831/opentelemetry.so (built with PIE, https://github.com/php/pie, commit-pinned)
+# outputs: /usr/lib/php/20230831/protobuf.so (built from the SHA-256-pinned PECL tarball)
+# outputs: /usr/lib/php/20230831/grpc.so (from the php8.3-grpc apt package)
 FROM debian:13.7-slim AS builder-php-exts
+# pie.phar is a single arch-independent asset. The SHA-256 below was checked
+# against the release's GitHub build-provenance attestation
+# (`gh attestation verify --owner php pie.phar`, signed by
+# php/pie/.github/workflows/build-assets.yml@refs/tags/<version>).
+# Re-check it the same way when bumping PIE_VERSION.
+ARG PIE_VERSION="1.5.5"
+ARG PIE_PHAR_SHA256="2ca0dff6868f1b53c095625674deef38ac698588e0a25e4321cd834a5b7553bc"
+# opentelemetry is pinned to an exact commit (`dev-main#<sha>`) rather than a
+# version tag, so a moved tag cannot change what gets built. This commit is the
+# official open-telemetry/ext-opentelemetry 1.5.0 release (same source as PECL
+# opentelemetry-1.5.0).
+ARG PIE_EXT_OPENTELEMETRY="open-telemetry/ext-opentelemetry:dev-main#dd0e147a80d0aeac15c95ec119b146c0b2bc3285"
+# protobuf has no official PIE package yet (protocolbuffers/protobuf#21808), so
+# it is built from the PECL tarball, pinned by SHA-256. PECL tarballs are not
+# signed: before pinning a new hash, check that every file in the tarball is
+# byte-identical to upstream protocolbuffers/protobuf at the matching release
+# tag (php/ext/google/protobuf, plus LICENSE and third_party/utf8_range).
+# 5.36.2 was checked against tag v36.2 (commit 2c74169b34066ceb8ddb6b882fcb3fb32d737a55):
+# all 32 files match.
+ARG PROTOBUF_VERSION="5.36.2"
+ARG PROTOBUF_TGZ_SHA256="f0a17c67de29df0fb0e5215a381df9b155125e1ace6252dd617bf16b4194dd5b"
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates apt-transport-https curl lsb-release build-essential \
     && curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
@@ -14,8 +36,26 @@ RUN apt-get update \
     php8.3-common \
     php8.3-xml \
     php8.3-grpc \
-    php-pear \
-    && pecl install opentelemetry protobuf \
+    unzip \
+    # opentelemetry: download PIE, verify it before running it, then build with it
+    && curl -fsSLo /tmp/pie.phar "https://github.com/php/pie/releases/download/${PIE_VERSION}/pie.phar" \
+    && echo "${PIE_PHAR_SHA256}  /tmp/pie.phar" | sha256sum --strict -c - \
+    && php /tmp/pie.phar install --no-cache "${PIE_EXT_OPENTELEMETRY}" \
+    && rm -f /tmp/pie.phar \
+    # protobuf: download the PECL tarball, verify it, then build it with phpize
+    && curl -fsSLo /tmp/protobuf.tgz "https://pecl.php.net/get/protobuf-${PROTOBUF_VERSION}.tgz" \
+    && echo "${PROTOBUF_TGZ_SHA256}  /tmp/protobuf.tgz" | sha256sum --strict -c - \
+    && mkdir /tmp/protobuf \
+    && tar -xzf /tmp/protobuf.tgz -C /tmp/protobuf --strip-components=1 "protobuf-${PROTOBUF_VERSION}" \
+    && cd /tmp/protobuf \
+    && phpize8.3 \
+    && ./configure --with-php-config=php-config8.3 \
+    && make -j"$(nproc)" \
+    && make install \
+    && cd / \
+    && rm -rf /tmp/protobuf /tmp/protobuf.tgz \
+    # keep the 0644 mode PECL used (PIE and make install leave 0755)
+    && chmod 0644 /usr/lib/php/20230831/opentelemetry.so /usr/lib/php/20230831/protobuf.so \
     && rm -rf /var/lib/apt/lists/*
 
 # Use pre-built gomplate v5.2.0 binary to avoid vulnerable indirect dependencies
