@@ -2,7 +2,7 @@
 # from the SURY apt repo. This is a BUILD arg (not a runtime env var, so it is
 # intentionally not listed in container-var-reference.json).
 #   PHP_SOURCE_VERSION=""        (default) PHP 8.3.x comes from SURY apt, exactly as before.
-#   PHP_SOURCE_VERSION="8.3.35"  PHP is compiled from php-8.3.35.tar.gz (GPG-verified,
+#   PHP_SOURCE_VERSION="8.3.37"  PHP is compiled from php-8.3.37.tar.gz (GPG-verified,
 #                                see builder-php-src) with the same SAPIs (cli, fpm)
 #                                and extension set; grpc/opentelemetry/protobuf/redis
 #                                are rebuilt against that PHP rather than reusing the
@@ -43,7 +43,7 @@ RUN apt-get update \
 #   /etc/php/8.3/{cli,fpm}/conf.d, /etc/php/8.3/mods-available, phpenmod/phpdismod.
 # outputs: /out/ (everything above) and /out/php-src-runtime-deps (apt packages the
 #          result links against; installed in stage2)
-FROM debian:13.5-slim AS builder-php-src
+FROM debian:13.7-slim AS builder-php-src
 ARG PHP_SOURCE_VERSION
 # php.net release signing keys for PHP 8.3 (https://www.php.net/gpg-keys.php#gpg-8.3)
 #   1198C0117593497A5EC5C199286AF1F9897469DC  Pierrick Charron
@@ -125,13 +125,13 @@ RUN [ -z "$PHP_SOURCE_VERSION" ] || { \
     && tar -xzf php-dl/php.tar.gz -C php-cli --strip-components=1 \
     && tar -xzf php-dl/php.tar.gz -C php-fpm --strip-components=1 \
     && cd /usr/src/php-cli \
-    && ./configure $php_flags \
+    && EXTENSION_DIR=/usr/lib/php/20230831 ./configure $php_flags \
     --with-config-file-path=/etc/php/8.3/cli --with-config-file-scan-dir=/etc/php/8.3/cli/conf.d \
     --enable-cli --disable-fpm \
     && make -j"$(nproc)" \
     && make install \
     && cd /usr/src/php-fpm \
-    && ./configure $php_flags \
+    && EXTENSION_DIR=/usr/lib/php/20230831 ./configure $php_flags \
     --with-config-file-path=/etc/php/8.3/fpm --with-config-file-scan-dir=/etc/php/8.3/fpm/conf.d \
     --disable-cli --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data \
     && make -j"$(nproc)" \
