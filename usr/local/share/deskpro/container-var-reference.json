@@ -606,6 +606,14 @@
     "default": "{{.container_name}}-{{.log_group}}.log"
   },
   {
+    "name": "LOGS_EXPORT_CLOUDWATCH_PROXY_ENABLED",
+    "description": "Onprem-relevant only (no-op on cloud, where no proxy env is set). Applies when LOGS_EXPORT_TARGET=cloudwatch. false (default): the vector CloudWatch sink bypasses any ambient HTTP_PROXY/HTTPS_PROXY, restoring pre-0.60 behaviour. true: the sink follows the ambient HTTP_PROXY, for sites shipping to real CloudWatch via a required corporate proxy.",
+    "type": "boolean",
+    "default": "false",
+    "isPrivate": false,
+    "setEnv": false
+  },
+  {
     "name": "NGINX_CLIENT_MAX_BODY_SIZE",
     "description": "The client_max_body_size for the nginx configuration.",
     "type": "string",
