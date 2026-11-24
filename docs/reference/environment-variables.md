@@ -167,6 +167,7 @@ Pool names: `DP_DEFAULT` (general), `DP_BROADCASTER` (long-lived broadcaster), `
 | `LOGS_EXPORT_TARGET` | auto (`dir` if `LOGS_EXPORT_DIR` set, else `stdout`) | Where vector sends logs. Also `cloudwatch`. |
 | `LOGS_EXPORT_DIR` | — | Output directory for `dir` target. |
 | `LOGS_EXPORT_FILENAME` | `{{.container_name}}-{{.log_group}}.log` | Gomplate template for exported filenames. |
+| `LOGS_EXPORT_CLOUDWATCH_PROXY_ENABLED` | `false` | `cloudwatch` target only. When false the sink bypasses ambient `HTTP_PROXY`; set `true` to follow it. |
 | `LOGS_OUTPUT_FORMAT` | `logfmt` | Also `json`. |
 | `LOGS_GID` | `1084` (vector group) | GID for exported log files. |
 | `DESKPRO_LOG_LEVEL` | `warning` | Application log level. |

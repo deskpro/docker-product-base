@@ -22,6 +22,7 @@ test:
         BUILD +test-custom-logs-group
         BUILD +test-smokescreen
         BUILD +test-opcache-override
+        BUILD +test-vector-noproxy
     END
     WAIT
         BUILD +test-autoinstall
@@ -164,6 +165,31 @@ test-opcache-override:
                 deskpro/docker-product-base:test web \
             && docker exec test /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/opcache_override' \
             && docker stop test
+    END
+
+# test-vector-noproxy checks the cloudwatch log-ship sink vs an ambient
+# HTTP_PROXY: default = sink opts out; LOGS_EXPORT_CLOUDWATCH_PROXY_ENABLED=true = opt-in intact.
+test-vector-noproxy:
+    FROM earthly/dind:alpine
+    WITH DOCKER --load deskpro/docker-product-base:test=+base-image
+        RUN \
+            docker run -d --name test-default \
+                -e HTTP_PROXY=http://127.0.0.1:1 \
+                -e HTTPS_PROXY=http://127.0.0.1:1 \
+                -e LOGS_EXPORT_TARGET=cloudwatch \
+                -e AWS_REGION=eu-west-1 \
+                deskpro/docker-product-base:test web \
+            && docker exec test-default /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/vector_noproxy/01_default_spec.rb' \
+            && docker stop test-default \
+            && docker run -d --name test-optin \
+                -e HTTP_PROXY=http://127.0.0.1:1 \
+                -e HTTPS_PROXY=http://127.0.0.1:1 \
+                -e LOGS_EXPORT_TARGET=cloudwatch \
+                -e LOGS_EXPORT_CLOUDWATCH_PROXY_ENABLED=true \
+                -e AWS_REGION=eu-west-1 \
+                deskpro/docker-product-base:test web \
+            && docker exec test-optin /bin/sh -c 'cd /test/serverspec && rspec spec/scenarios/vector_noproxy/02_optin_spec.rb' \
+            && docker stop test-optin
     END
 
 # test-smokescreen checks the smokescreen egress proxy: the
